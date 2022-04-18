@@ -1,0 +1,576 @@
+﻿using System;
+using System.Net;
+using System.Collections.Generic;
+using System.Data;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using Microsoft.AspNetCore.SignalR.Client;
+using WandSyncFile.Data.Mapping;
+using WandSyncFile.Helpers;
+using WandSyncFile.Service;
+using System.Threading;
+using System.Drawing;
+using static WandSyncFile.Constants.Values;
+using WandSyncFile.CustomControls;
+using Microsoft.Win32;
+using Newtonsoft.Json;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace WandSyncFile
+{
+    public partial class FormHome : Form
+    {
+        HubConnection connection;
+        ProjectService projectService;
+        CancellationToken cancellationToken;
+        DisplayFolder displayFolder;
+        public List<int> processingProject = new List<int>();
+        public List<string> processingUploadProject = new List<string>();
+        public List<string> processingUploadFixProject = new List<string>();
+       
+        public FormHome()
+        {
+            InitializeComponent();
+            setupAutoRun();
+
+            displayFolder = new DisplayFolder();
+            projectService = new ProjectService();
+            cancellationToken = new CancellationToken();
+            
+            HandleHubConnection();
+            DisplayAccountProfile();
+
+            ReadFileChange(cancellationToken);
+        }
+
+        public static bool Logged()
+        {
+            var token = Properties.Settings.Default.Token;
+
+            if (!string.IsNullOrEmpty(token))
+            {
+                try
+                {
+                    var account = new AccountService().GetAccount(token);
+                    if (account != null)
+                    {
+                        var accountService = new AccountService();
+                        accountService.SettingAccount(token, account);
+
+                        return true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Properties.Settings.Default.Reset();
+                    return false;
+                }
+            }
+
+            return false;
+        }
+
+        public void setupAutoRun()
+        {
+            RegistryKey reg = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+            if (reg.GetValue("Wand-Developed") == null)
+            {
+                reg.SetValue("Wand-Developed", Application.ExecutablePath.ToString());
+            }
+        }
+
+        public void addItem(DateTime created, string action, string projectName, int status)
+        {
+            try
+            {
+                var listItem = new CustomListView();
+                listItem.CreatedDate = created.ToString("dd/mm/yyyy");
+                listItem.CreateTime = created.ToString("hh:mm:ss");
+                listItem.ProjectName = projectName;
+                listItem.ButtonText = action;
+
+                if (action == "Download")
+                {
+                    listItem.ButtonColor = Color.FromArgb(178, 255, 212);
+                }
+                else if (action == "Upload")
+                {
+                    listItem.ButtonColor = Color.FromArgb(255, 219, 150);
+                }
+
+                listItem.StatusColor = Color.Red;
+
+                // processing
+                if (status == 0)
+                {
+                    listItem.StatusColor = Color.FromArgb(255, 219, 150);
+                }
+
+                // done
+                if (status == 1)
+                {
+                    listItem.StatusColor = Color.FromArgb(178, 255, 212);
+                }
+
+                // fail
+                if (status == 2)
+                {
+                    listItem.StatusColor = Color.FromArgb(255, 173, 173);
+                }
+
+                listItem.Width = flowLayoutPanel.Width;
+                flowLayoutPanel.Controls.Add(listItem);
+                flowLayoutPanel.Controls.SetChildIndex(listItem, 1);
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+
+        public void addItem(DateTime created, string action, bool isConnected)
+        {
+            try
+            {
+                var listItem = new CustomViewConnectHrm1();
+                listItem.CreatedDate = created.ToString("dd/mm/yyyy");
+                listItem.CreateTime = created.ToString("hh:mm:ss");
+                listItem.Action = action;
+                listItem.Width = flowLayoutPanel.Width;
+                if (isConnected)
+                {
+                    listItem.BackColor = Color.FromArgb(255, 82, 56);
+                }
+                else
+                {
+                    listItem.BackColor = Color.FromArgb(44, 44, 46);
+                }
+
+                flowLayoutPanel.Controls.Add(listItem);
+                flowLayoutPanel.Controls.SetChildIndex(listItem, 0);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+
+        public void ReadFileChange(CancellationToken cancellationToken)
+        {
+            Task.Factory.StartNew(async () =>
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    ReadAllFileChange();
+                    await Task.Delay(TimeSpan.FromSeconds(15), cancellationToken);
+                }
+            });
+        }
+
+        public void ReadAllFileChange()
+        {
+            var displayFolder = new DisplayFolder();
+            if (!UserRoleHelpers.IsEditors())
+            {
+                return;
+            }
+
+            // get all folder in project path
+            var projectLocalPath = Properties.Settings.Default.ProjectLocalPath;
+            var editorUserName = Properties.Settings.Default.Username;
+
+            if (!Directory.Exists(projectLocalPath))
+            {
+                return;
+            }
+
+            try
+            {
+                DirectoryInfo info = new DirectoryInfo(projectLocalPath);
+                var directories = info.GetDirectories().OrderBy(p => p.LastWriteTime).ToArray();
+
+                foreach (var projectDir in directories)
+                {
+                    DirectoryInfo projectDirInfo = new DirectoryInfo(projectDir.FullName);
+                    var logPath = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_PATH_FILE_NAME).FirstOrDefault();
+                    var logProjectName = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_FILE_NAME).FirstOrDefault();
+
+                    if(logPath == null)
+                    {
+                        continue;
+                    }
+
+                    var projectPath = File.ReadLines(logPath.FullName).FirstOrDefault();
+                    var projectName = File.ReadLines(logProjectName.FullName).FirstOrDefault();
+
+                    SyncDo(projectName, projectPath);
+
+                    SyncDone(projectName, projectPath);
+
+                    SyncFix(projectName, projectPath);
+                }
+
+            } catch(Exception e)
+            {
+
+            }
+        }
+
+        public void SyncFix(string projectName, string projectPath)
+        {
+            var projectLocalPath = Properties.Settings.Default.ProjectLocalPath;
+            var localProject = Path.Combine(projectLocalPath, projectName);
+            var editorUserName = Properties.Settings.Default.Username;
+
+            var projectDirectoties = Directory.GetDirectories(localProject).ToList();
+            var localFixFolderLast = projectDirectoties.Where(item => Path.GetFileName(item).Trim().StartsWith(Options.PROJECT_FIX_PATH_NAME)).OrderByDescending(item => Path.GetFileName(item)).FirstOrDefault();
+
+            if (localFixFolderLast == null)
+            {
+                return;
+            }
+
+            var folderFixName = Path.GetFileName(localFixFolderLast);
+            var serverFolderFix = Path.Combine(projectPath, folderFixName);
+
+            var isSyncFix = displayFolder.CheckFolderSync(localFixFolderLast, serverFolderFix, localFixFolderLast);
+
+            if (!isSyncFix && !processingUploadFixProject.Any(pName => pName == projectName))
+            {
+                var project = projectService.RequestGetProjectByName(projectName);
+
+                if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
+                {
+                    return;
+                }
+
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Upload", projectName, 0);
+                }));
+
+                processingUploadFixProject.Add(projectName);
+
+                FileHelpers.CopyDirectoryToServer(localFixFolderLast, serverFolderFix);
+
+                displayFolder.CheckFolderSync(localFixFolderLast, serverFolderFix, localFixFolderLast);
+
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Upload", projectName, 1);
+                }));
+                processingUploadFixProject.Remove(projectName);
+            }
+        }
+
+        public void SyncDo(string projectName, string projectPath)
+        {
+            var projectLocalPath = Properties.Settings.Default.ProjectLocalPath;
+            var localProject = Path.Combine(projectLocalPath, projectName);
+            var editorUserName = Properties.Settings.Default.Username;
+
+            var localProjectDoPath = Path.Combine(localProject, Options.PROJECT_DO_NAME);
+            var localEditorDoPath = Path.Combine(localProjectDoPath, editorUserName);
+
+            var serverDoPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME);
+            var serverEditorDoPath = Path.Combine(serverDoPath, editorUserName);
+            var isSyncDo = displayFolder.CheckFolderSyncCompleted(localEditorDoPath, serverEditorDoPath);
+            if (isSyncDo)
+            {
+                return;
+            }
+
+            var project = projectService.RequestGetProjectByName(projectName);
+
+            if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
+            {
+                return;
+            }
+
+            if (!isSyncDo && !processingProject.Any(pId => pId == project.Id))
+            {
+                displayFolder.CheckFolderSync(localEditorDoPath, serverEditorDoPath, localProjectDoPath);
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Download", projectName, 0);
+                }));
+
+                processingProject.Add(project.Id);
+
+                FileHelpers.DownloadFolderFromServer(serverEditorDoPath, localEditorDoPath);
+
+                // download folder Working
+                var localFolderWorking = Path.Combine(localProject, Options.PROJECT_WORKING_PATH_NAME);
+                var editorFolderWorking = Path.Combine(localFolderWorking, editorUserName);
+
+                displayFolder.CheckFolderSync(editorFolderWorking, localEditorDoPath, editorFolderWorking);
+
+                FileHelpers.DownloadFolder(localEditorDoPath, editorFolderWorking);
+
+                displayFolder.CheckFolderSync(editorFolderWorking, localEditorDoPath, editorFolderWorking);
+
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Download", projectName, 1);
+                }));
+
+                displayFolder.CheckFolderSync(localEditorDoPath, serverEditorDoPath, localProjectDoPath);
+
+                processingProject.Remove(project.Id);
+            }
+        }
+        
+        public void SyncDone(string projectName, string projectPath)
+        {
+            var projectLocalPath = Properties.Settings.Default.ProjectLocalPath;
+            var editorUserName = Properties.Settings.Default.Username;
+
+            var localProject = Path.Combine(projectLocalPath, projectName);
+            var localProjectDonePath = Path.Combine(localProject, Options.PROJECT_DONE_NAME);
+            var localEditorDonePath = Path.Combine(localProjectDonePath, editorUserName);
+
+
+            var serverDonePath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME);
+            var serverEditorDonePath = Path.Combine(serverDonePath, editorUserName);
+            var isSyncDone = displayFolder.CheckFolderSyncCompleted(localEditorDonePath, serverEditorDonePath);
+            if (isSyncDone)
+            {
+                return;
+            }
+
+            var project = projectService.RequestGetProjectByName(projectName);
+
+            if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
+            {
+                return;
+            }
+
+            if (!isSyncDone && !processingUploadProject.Any(pName => pName == projectName))
+            {
+                displayFolder.CheckFolderSync(localEditorDonePath, serverEditorDonePath, localProjectDonePath);
+
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Upload", projectName, 0);
+                }));
+
+                processingUploadProject.Add(projectName);
+
+                FileHelpers.SyncDirectoryDoneToServer(localEditorDonePath, serverEditorDonePath);
+                displayFolder.CheckFolderSync(localEditorDonePath, serverEditorDonePath, localProjectDonePath);
+
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Upload", projectName, 1);
+                }));
+                processingUploadProject.Remove(projectName);
+            }
+        }
+
+        public async void HandleHubConnection()
+        {
+            string connectedServer = DateTime.Now.ToString();
+
+            var reconnectSeconds = new List<TimeSpan> { TimeSpan.Zero, TimeSpan.Zero, TimeSpan.FromSeconds(5) };
+
+            var i = 5;
+            while (i <= 7200)
+            {
+                reconnectSeconds.Add(TimeSpan.FromSeconds(i));
+                i++;
+            }
+
+            connection = new HubConnectionBuilder()
+               .WithUrl($"{Url.ServerURI}/appHub")
+               .WithAutomaticReconnect(reconnectSeconds.ToArray())
+               .Build();
+            try
+            {
+                await connection.StartAsync();
+                Invoke((Action)(() =>
+                {
+                    addItem(DateTime.Now, "Connected!", true);
+                }));
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+                Invoke((Action)(() =>
+                {
+                    addItem(DateTime.Now, "Disconnect!", false);
+                }));
+            }
+
+            connection.Reconnecting += connectionId =>
+            {
+                Invoke((Action)(() =>
+                {
+                    addItem(DateTime.Now, "Reconnecting....", false);
+                }));
+                return Task.CompletedTask;
+            };
+
+            connection.Reconnected += connectionId =>
+            {
+                Invoke((Action)(() =>
+                {
+                    addItem(DateTime.Now, "Connected!", true);
+                }));
+
+                return Task.CompletedTask;
+            };
+
+
+            connection.Closed += async (error) =>
+            {
+                await Task.Delay(new Random().Next(0, 5) * 1000);
+                await connection.StartAsync();
+            };
+
+            var userId = Properties.Settings.Default.Id;
+            var userName = Properties.Settings.Default.Username;
+
+            connection.On<string, string, string>("SERVER_QUEUE_MESSAGE", async (user, action, data) =>
+            {
+                if (action == "UPDATE_LOCAL_PATH" && UserRoleHelpers.IsEditors() && user == userId.ToString())
+                {
+                    var userDetail = JsonConvert.DeserializeObject<UserDto>(data);
+                    if (!string.IsNullOrEmpty(userDetail.ProjectLocalPath))
+                    {
+                        Properties.Settings.Default.ProjectLocalPath = userDetail.ProjectLocalPath;
+                        Properties.Settings.Default.Save();
+                    }
+                }
+
+                if (action == "EDITOR_DOWNLOAD_FILE" && user == userId.ToString() && UserRoleHelpers.IsEditors())
+                {
+                    Task.Run(async () =>
+                    {
+                        var editorDownloadItem = JsonConvert.DeserializeObject<EditorDownloadFileProjectDto>(data);
+
+                        if(editorDownloadItem == null || !FileHelpers.ExitServerPath(editorDownloadItem.ProjectPath))
+                        {
+                            return;
+                        }
+
+                        var projectPath = editorDownloadItem.ProjectPath;
+                        var projectName = editorDownloadItem.ProjectName;
+
+                        var editorLocalPathDo = FileHelpers.GetEditorProjectDoLocalPath(projectName);
+                        var localProjectPath = FileHelpers.GetEditorProjectLocalPath(projectName);
+                        var localProjectDoPath = Path.Combine(localProjectPath, Options.PROJECT_DO_NAME);
+
+                        FileHelpers.CreateFolder(editorLocalPathDo);
+                        FileHelpers.AddFileLogProjectPath(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath);
+
+                        // Tạo thư mục Done
+                        var editorLocalDonepath = FileHelpers.GetEditorProjectDoneLocalPath(projectName);
+                        FileHelpers.CreateFolder(editorLocalDonepath);
+
+                        // check sync do path
+                        SyncDo(projectName, projectPath);
+
+                        var editorServerPathDo = FileHelpers.GetEditorProjectDoServerPath(projectPath);
+                        var editorLocalProjectPath = Path.Combine(Properties.Settings.Default.ProjectLocalPath, projectName);
+
+                        var localSamplePath = FileHelpers.GetEditorProjectSampleLocalPath(editorDownloadItem.ProjectName);
+                        var projectPathSample = Path.Combine(editorDownloadItem.ProjectPath, Options.PROJECT_SAMPLE_NAME);
+
+                        if (Directory.Exists(projectPathSample))
+                        {
+                            var sampleAlreadySync = displayFolder.CheckFolderSync(localSamplePath, projectPathSample);
+
+                            if (!sampleAlreadySync)
+                            {
+                                FileHelpers.DownloadFolderFromServer(projectPathSample, localSamplePath, null, true);
+                            }
+                        }
+
+                        // create folder Done by server Done
+
+                        FileHelpers.EditorCreateFolderDonePath(projectPath, projectName);
+
+                        displayFolder.CheckFolderSync(localSamplePath, projectPathSample);
+                    });
+                }
+
+                if (action == "EDITOR_CREATE_FOLDER_FIX" && UserRoleHelpers.IsEditors() && user == userId.ToString())
+                {
+                    Task.Run(async () => {
+
+                        var editorDownloadItem = JsonConvert.DeserializeObject<EditorDownloadFileProjectDto>(data);
+                        if (editorDownloadItem == null)
+                        {
+                            return;
+                        }
+
+                        var folderFix = editorDownloadItem.FilePath;
+                        var serverFileArr = Path.GetFullPath(folderFix).Split(new string[] { Path.GetFullPath(editorDownloadItem.ProjectPath) }, StringSplitOptions.None).Where(item => !string.IsNullOrEmpty(item)).ToList();
+                        if (serverFileArr.Count() <= 0)
+                        {
+                            return;
+                        }
+
+                        var localFolderFix = FileHelpers.GetEditorProjectLocalPath(editorDownloadItem.ProjectName) + serverFileArr.Last();
+                        FileHelpers.CreateFolder(localFolderFix);
+
+                        FileHelpers.AddFileLogProjectPath(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath);
+
+                        await connection.SendAsync("ReceiverMessageAsync", "CLIENT_FILE", editorDownloadItem.MessageId, "REMOVE_PROJECT_QUEUE_MESSAGE", null);
+                    });
+                }
+            });
+
+        }
+
+        private void FormHome_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        public void DisplayAccountProfile()
+        {
+            ovalPictureBox1.ImageLocation = "https://hrm.wand.vn/" + Properties.Settings.Default.Avatar;
+            lbHello.Text = "Hi, " + String.Concat(Properties.Settings.Default.LastName, " ", Properties.Settings.Default.FirstName);
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.Reset();
+            this.Close();
+            FormLogin login = new FormLogin();
+            login.Show();
+            return;
+        }
+
+        private void pictureBox2_Click(object sender, EventArgs e)
+        {
+            Hide();
+        }
+
+        private void flowLayoutPanel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void ovalPictureBox1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void pictureBox3_Click(object sender, EventArgs e)
+        {
+            WindowState = FormWindowState.Minimized;
+        }
+
+        private void notifyIcon2_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            ShowInTaskbar = true;
+            Show();
+        }
+    }
+}

@@ -1,0 +1,11 @@
+﻿# Build results
+bin/
+Bin/
+obj/
+Obj/
+
+# Visual Studio 2015 cache/options directory
+.vs/
+
+# The packages folder can be ignored because of Package Restore
+**/packages/*
