@@ -60,6 +60,44 @@ namespace WandSyncFile.Helpers
             return false;
         }
 
+        public bool CheckFolderFixSync(string clientFixpath, string serverFixPath, string iconChangeFolder = null)
+        {
+            iconChangeFolder = iconChangeFolder ?? clientFixpath;
+            if (!FileHelpers.ExitServerPath(serverFixPath))
+            {
+                return false;
+            }
+
+            if (!Directory.Exists(clientFixpath))
+            {
+                return false;
+            }
+            var clientFolderSize = FileHelpers.DirSize(clientFixpath);
+            var listFileFixClient = FileHelpers.LocalGetListFile(clientFixpath);
+
+            var listFilePath = new List<string>();
+
+            foreach (var localPath in listFileFixClient)
+            {
+                var clientFileArr = localPath.Split(new string[] { clientFixpath }, StringSplitOptions.None);
+                listFilePath.Add(clientFileArr.Last());
+            }
+
+            var listServerFixPathFile = listFilePath.Select(item => string.Concat(serverFixPath, item)).ToList();
+
+            var serverFolderSize = FileHelpers.FilesSizeServer(listServerFixPathFile);
+
+            if (clientFolderSize == serverFolderSize)
+            {
+                ChangeFolderIconCompleted(iconChangeFolder);
+                return true;
+            }
+
+            ChangeFolderIconLoading(iconChangeFolder);
+
+            return false;
+        }
+
         public void ChangeFolderIconCompleted(string folderPath)
         {
             var desktopFile = Path.Combine(folderPath, "desktop.ini");

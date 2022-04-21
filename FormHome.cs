@@ -29,7 +29,7 @@ namespace WandSyncFile
         public List<int> processingProject = new List<int>();
         public List<string> processingUploadProject = new List<string>();
         public List<string> processingUploadFixProject = new List<string>();
-       
+
         public FormHome()
         {
             InitializeComponent();
@@ -38,10 +38,9 @@ namespace WandSyncFile
             displayFolder = new DisplayFolder();
             projectService = new ProjectService();
             cancellationToken = new CancellationToken();
-            
+
             HandleHubConnection();
             DisplayAccountProfile();
-
             ReadFileChange(cancellationToken);
         }
 
@@ -198,7 +197,7 @@ namespace WandSyncFile
                     var logPath = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_PATH_FILE_NAME).FirstOrDefault();
                     var logProjectName = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_FILE_NAME).FirstOrDefault();
 
-                    if(logPath == null)
+                    if (logPath == null)
                     {
                         continue;
                     }
@@ -213,7 +212,8 @@ namespace WandSyncFile
                     SyncFix(projectName, projectPath);
                 }
 
-            } catch(Exception e)
+            }
+            catch (Exception e)
             {
 
             }
@@ -236,7 +236,7 @@ namespace WandSyncFile
             var folderFixName = Path.GetFileName(localFixFolderLast);
             var serverFolderFix = Path.Combine(projectPath, folderFixName);
 
-            var isSyncFix = displayFolder.CheckFolderSync(localFixFolderLast, serverFolderFix, localFixFolderLast);
+            var isSyncFix = displayFolder.CheckFolderFixSync(localFixFolderLast, serverFolderFix, localFixFolderLast);
 
             if (!isSyncFix && !processingUploadFixProject.Any(pName => pName == projectName))
             {
@@ -322,7 +322,7 @@ namespace WandSyncFile
                 processingProject.Remove(project.Id);
             }
         }
-        
+
         public void SyncDone(string projectName, string projectPath)
         {
             var projectLocalPath = Properties.Settings.Default.ProjectLocalPath;
@@ -368,6 +368,90 @@ namespace WandSyncFile
                 }));
                 processingUploadProject.Remove(projectName);
             }
+        }
+
+        public void CopyDoneAndFixFromServer(string projectName, string projectPath)
+        {
+            // download done
+            var projectLocalPath = Properties.Settings.Default.ProjectLocalPath;
+            var editorUserName = Properties.Settings.Default.Username;
+
+            var localProject = Path.Combine(projectLocalPath, projectName);
+            var localProjectDonePath = Path.Combine(localProject, Options.PROJECT_DONE_NAME);
+            var localEditorDonePath = Path.Combine(localProjectDonePath, editorUserName);
+
+            // Neu Done đã có ảnh -> Không tải nữa
+            FileHelpers.CreateFolder(localEditorDonePath);
+            var folderDoneHasFile = FileHelpers.HasFileInFolder(localEditorDonePath);
+            if (folderDoneHasFile)
+            {
+                return;
+            }
+
+            Invoke((Action)(async () =>
+            {
+                addItem(DateTime.Now, "Download Done", projectName, 0);
+            }));
+
+            // download done
+            var serverDonePath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME);
+            var serverEditorDonePath = Path.Combine(serverDonePath, editorUserName);
+
+            FileHelpers.DownloadFolderFromServer(serverEditorDonePath, localEditorDonePath);
+
+            Invoke((Action)(async () =>
+            {
+                addItem(DateTime.Now, "Download Done", projectName, 1);
+            }));
+
+            // download folder Working from done
+            var localFolderWorking = Path.Combine(localProject, Options.PROJECT_WORKING_PATH_NAME);
+            var editorFolderWorking = Path.Combine(localFolderWorking, editorUserName);
+
+            FileHelpers.CreateFolder(editorFolderWorking);
+
+            var checkWorking = displayFolder.CheckFolderSync(editorFolderWorking, localEditorDonePath, editorFolderWorking);
+            if (!checkWorking)
+            {
+                FileHelpers.DownloadFolder(localEditorDonePath, editorFolderWorking);
+            }
+
+            // download fix
+            var allFolderFix = FileHelpers.ServerGetListFix(projectPath);
+            if (allFolderFix == null)
+            {
+                return;
+            }
+
+            Invoke((Action)(async () =>
+            {
+                addItem(DateTime.Now, "Download Fix", projectName, 0);
+            }));
+
+            foreach (var folderFixItem in allFolderFix)
+            {
+                var folderFixName = FileHelpers.ServerGetFolderName(folderFixItem);
+                var localEditorFixPath = Path.Combine(localProject, folderFixName);
+
+                // chỉ lấy các file fix có trong Done
+
+                var allFileDoneName = FileHelpers.GetListFileNameByFolder(serverEditorDonePath);
+                var allFixByDoneName = FileHelpers.ServerGetListFixPathByDoneName(allFileDoneName, folderFixItem);
+
+                foreach (var fixItem in allFixByDoneName)
+                {
+                    var clientPath = Path.Combine(localEditorFixPath, Path.GetFileName(fixItem));
+                    FileHelpers.CopyFileFromServer(fixItem, clientPath);
+                }
+
+                // copy fix to working
+                FileHelpers.DownloadFolder(localEditorFixPath, editorFolderWorking);
+            }
+
+            Invoke((Action)(async () =>
+            {
+                addItem(DateTime.Now, "Download Fix", projectName, 1);
+            }));
         }
 
         public async void HandleHubConnection()
@@ -452,7 +536,7 @@ namespace WandSyncFile
                     {
                         var editorDownloadItem = JsonConvert.DeserializeObject<EditorDownloadFileProjectDto>(data);
 
-                        if(editorDownloadItem == null || !FileHelpers.ExitServerPath(editorDownloadItem.ProjectPath))
+                        if (editorDownloadItem == null || !FileHelpers.ExitServerPath(editorDownloadItem.ProjectPath))
                         {
                             return;
                         }
@@ -519,6 +603,8 @@ namespace WandSyncFile
                         FileHelpers.CreateFolder(localFolderFix);
 
                         FileHelpers.AddFileLogProjectPath(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath);
+
+                        CopyDoneAndFixFromServer(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath);
 
                         await connection.SendAsync("ReceiverMessageAsync", "CLIENT_FILE", editorDownloadItem.MessageId, "REMOVE_PROJECT_QUEUE_MESSAGE", null);
                     });

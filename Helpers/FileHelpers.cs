@@ -145,7 +145,7 @@ namespace WandSyncFile.Helpers
             {
                 FileAttributes attributes = File.GetAttributes(fi.FullName);
                 var fromPathEx = Path.GetExtension(fi.FullName);
-                
+
                 if (!attributes.HasFlag(FileAttributes.Hidden) && fromPathEx.ToLower() != ".tmp")
                 {
                     size += fi.Length;
@@ -158,6 +158,38 @@ namespace WandSyncFile.Helpers
                 size += DirSize(di.FullName);
             }
             return size;
+        }
+        public static long FilesSize(List<string> files)
+        {
+            long size = 0;
+            FileInfo[] fis = files.Select(item => new FileInfo(item)).ToArray();
+            foreach (FileInfo fi in fis)
+            {
+                FileAttributes attributes = File.GetAttributes(fi.FullName);
+                var fromPathEx = Path.GetExtension(fi.FullName);
+
+                if (!attributes.HasFlag(FileAttributes.Hidden) && fromPathEx.ToLower() != ".tmp")
+                {
+                    size += fi.Length;
+                }
+            }
+
+            return size;
+        }
+
+        public static List<string> LocalGetListFile(string path)
+        {
+            var listFileClient = Directory.GetFiles(path).Where(item => !File.GetAttributes(item).HasFlag(FileAttributes.Hidden)).Select(item => Path.GetFullPath(item)).ToList();
+
+            var listFolders = Directory.GetDirectories(path);
+
+            foreach (var folder in listFolders)
+            {
+                var listFileInFolder = Directory.GetFiles(path).Where(item => !File.GetAttributes(item).HasFlag(FileAttributes.Hidden)).Select(item => Path.GetFullPath(item)).ToList();
+                listFileClient.AddRange(listFileInFolder);
+            }
+
+            return listFileClient;
         }
 
         public static bool ExitServerPath(string path)
@@ -193,6 +225,32 @@ namespace WandSyncFile.Helpers
                 try
                 {
                     var size = DirSize(path);
+
+                    return size;
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                finally
+                {
+                    person.Undo();
+                    CloseHandle(token);
+                }
+            }
+
+            return 0;
+        }
+
+        public static long FilesSizeServer(List<string> files)
+        {
+            IntPtr token = IntPtr.Zero;
+            LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
+            using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
+            {
+                try
+                {
+                    var size = FilesSize(files);
 
                     return size;
                 }
@@ -253,11 +311,12 @@ namespace WandSyncFile.Helpers
                 throw new Exception(e.Message, e);
             }
         }
+
         public static bool HasFileInFolder(string path)
         {
             try
             {
-                if (Directory.GetFiles(path).Length > 0)
+                if (Directory.GetFiles(path).Where(item => !File.GetAttributes(item).HasFlag(FileAttributes.Hidden)).Count() > 0)
                 {
                     return true;
                 }
@@ -502,7 +561,126 @@ namespace WandSyncFile.Helpers
             }
         }
 
-        public static void CopyFile(string fromPath, string toPath, int eachReadLength = 1024 * 1024 * 5)
+        public static List<string> ServerGetListFileNameByFolder(string path)
+        {
+            try
+            {
+                IntPtr token = IntPtr.Zero;
+                LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
+                using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
+                {
+                    try
+                    {
+                        return GetListFileNameByFolder(path);
+                    }
+                    catch (IOException e)
+                    {
+                    }
+                    finally
+                    {
+                        person.Undo();
+                        CloseHandle(token);
+                    }
+                }
+
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message, e);
+            }
+
+            return null;
+        }
+
+
+        public static List<string> GetListFileNameByFolder(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                return null;
+            }
+
+            var files = Directory.GetFiles(path).Where(item => !File.GetAttributes(item).HasFlag(FileAttributes.Hidden)).Select(item => Path.GetFileName(item)).ToList();
+
+            var directories = Directory.GetDirectories(path);
+
+            foreach (var dir in directories)
+            {
+                var fileInDir = GetListFileNameByFolder(dir);
+                files.AddRange(fileInDir);
+            }
+
+            return files;
+        }
+
+        public static List<string> ServerGetListFixPathByDoneName(List<string> listDoneName, string fixPath)
+        {
+            try
+            {
+                IntPtr token = IntPtr.Zero;
+                LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
+                using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
+                {
+                    try
+                    {
+                        return GetListFixPathByDoneName(listDoneName, fixPath);
+                    }
+                    catch (IOException e)
+                    {
+                    }
+                    finally
+                    {
+                        person.Undo();
+                        CloseHandle(token);
+                    }
+                }
+
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message, e);
+            }
+
+            return null;
+        }
+
+        public static List<string> GetListFixPathByDoneName(List<string> listDoneName, string fixPath)
+        {
+            try
+            {
+                if (!Directory.Exists(fixPath))
+                {
+                    return null;
+                }
+
+                var fixFiles = Directory.GetFiles(fixPath).Where(item => !File.GetAttributes(item).HasFlag(FileAttributes.Hidden))
+                    .Select(item => Path.GetFullPath(item)).ToList();
+
+                if (listDoneName != null && listDoneName.Count() > 0)
+                {
+                    fixFiles = fixFiles.Where(itemFixPath => listDoneName.Any(doneName => itemFixPath.Trim().ToLower().Contains(doneName.Trim().ToLower()))).ToList();
+                }
+
+                var dir = Directory.GetDirectories(fixPath);
+                foreach (var dirItem in dir)
+                {
+                    var files = GetListFixPathByDoneName(listDoneName, Path.GetFullPath(dirItem));
+
+                    fixFiles.AddRange(files);
+                }
+
+                return fixFiles;
+
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message, e);
+            }
+
+            return null;
+        }
+
+        public static void CopyFile(string fromPath, string toPath, int eachReadLength = 1024 * 1024)
         {
             try
             {
@@ -514,7 +692,7 @@ namespace WandSyncFile.Helpers
                 }
 
                 var fromPathEx = Path.GetExtension(fromPath);
-                if(fromPathEx.ToLower() == ".tmp")
+                if (fromPathEx.ToLower() == ".tmp")
                 {
                     return;
                 }
@@ -672,7 +850,7 @@ namespace WandSyncFile.Helpers
             }
         }
 
-        
+
         public static void SyncDirectoryToServer(string fromPath, string toPath)
         {
             ServerImpersonate cls = new ServerImpersonate();
@@ -816,7 +994,7 @@ namespace WandSyncFile.Helpers
                 notMoveFolder = Path.GetFullPath(notMoveFolder);
                 directories = directories.Where(di => di != notMoveFolder).ToArray();
             }
-            
+
             foreach (string s in files)
             {
                 CopyFile(s, Path.Combine(toPath, Path.GetFileName(s)));
@@ -870,115 +1048,6 @@ namespace WandSyncFile.Helpers
             }
         }
 
-        public static void SyncFileFromLog(string filePath, string projectPath, string projectName)
-        {
-            if (filePath.Contains(Options.FILE_CREATE))
-            {
-                CreateAllFileInEditorLogFile(filePath, projectPath, projectName);
-            }
-            else if (filePath.Contains(Options.FILE_DELETE))
-            {
-                DeleteAllFileInLogFile(filePath, projectPath, projectName);
-            }
-        }
-
-        public static void CreateAllFileInEditorLogFile(string logPath, string projectPath, string projectName)
-        {
-            if (!File.Exists(logPath))
-            {
-                return;
-            }
-
-            var localProjectPath = Properties.Settings.Default.ProjectLocalPath;
-            var localProjectName = Path.Combine(localProjectPath, projectName);
-            var allFile = File.ReadLines(logPath).ToList();
-
-            if (allFile.Count <= 0)
-            {
-                return;
-            }
-
-            allFile.Distinct();
-
-            var foderChanges = new List<string>();
-            var localProjectDonePath = GetEditorProjectDoneLocalPath(projectName);
-
-            foreach (string line in allFile)
-            {
-                if (IsEditorDoneFile(projectName, line))
-                {
-                    foderChanges.Add(localProjectDonePath);
-                }
-                if (IsEditorFixFile(projectName, line))
-                {
-                    var fixPath = line.Split(new string[] { localProjectName }, StringSplitOptions.RemoveEmptyEntries).Where(item => !string.IsNullOrEmpty(item)).Last();
-                    var fixName = fixPath.Split(new string[] { "\\" }, StringSplitOptions.RemoveEmptyEntries).Where(item => !string.IsNullOrEmpty(item)).First();
-                    var projectLocalFix = Path.Combine(localProjectName, fixName);
-
-                    foderChanges.Add(projectLocalFix);
-                }
-            }
-
-            foderChanges = foderChanges.Distinct().ToList();
-
-            var serverDonePath = GetEditorProjectDoneServerPath(projectPath);
-            foreach (string line in foderChanges)
-            {
-                if (IsEditorDoneFile(projectName, line))
-                {
-                    CopyDirectoryToServer(line, serverDonePath);
-                }
-
-                if (IsEditorFixFile(projectName, line))
-                {
-                    var fixName = Path.GetFileName(line);
-                    var serverFixPath = Path.Combine(projectPath, fixName);
-                    CopyDirectoryToServer(line, serverFixPath);
-                }
-            }
-        }
-
-        public static void DeleteAllFileInLogFile(string logPath, string projectPath, string projectName)
-        {
-            if (!File.Exists(logPath))
-            {
-                return;
-            }
-
-            var localProjectPath = Properties.Settings.Default.ProjectLocalPath;
-            var allFile = File.ReadLines(logPath).ToList();
-
-            if (allFile.Count <= 0)
-            {
-                return;
-            }
-
-            allFile.Distinct();
-
-            foreach (string line in allFile)
-            {
-                var localPath = Path.Combine(localProjectPath, projectName);
-                localPath = Path.GetFullPath(localPath);
-                var projectPathFile = line.Split(new string[] { localPath }, StringSplitOptions.RemoveEmptyEntries);
-                var serverPath = projectPath + projectPathFile.Last();
-
-                if (!Directory.Exists(serverPath) || !File.Exists(serverPath))
-                {
-                    continue;
-                }
-
-                FileAttributes attributes = File.GetAttributes(serverPath);
-                if ((attributes & FileAttributes.Directory) == FileAttributes.Directory)
-                {
-                    DeleteFolderFromServer(serverPath);
-                }
-                else if (File.Exists(serverPath))
-                {
-                    DeleteFileFromServer(serverPath);
-                }
-            }
-        }
-
         public static void EditorCreateFolderDonePath(string projectPath, string projectName)
         {
             var editorUserName = Properties.Settings.Default.Username;
@@ -1026,42 +1095,6 @@ namespace WandSyncFile.Helpers
             }
         }
 
-        public static void UpdateAllFileInLogFile(string logPath, string projectPath, string projectName)
-        {
-            if (!File.Exists(logPath))
-            {
-                return;
-            }
-
-            var localProjectPath = Properties.Settings.Default.ProjectLocalPath;
-            var allFile = System.IO.File.ReadLines(logPath).ToList();
-
-            if (allFile.Count <= 0)
-            {
-                return;
-            }
-
-            allFile.Distinct();
-
-            foreach (string line in allFile)
-            {
-                var localPath = Path.Combine(localProjectPath, projectName);
-                localPath = Path.GetFullPath(localPath);
-                var projectPathFile = line.Split(new string[] { localPath }, StringSplitOptions.RemoveEmptyEntries);
-                var serverPath = projectPath + projectPathFile.Last();
-
-                var isFolder = Directory.Exists(line) && Directory.GetFiles(line).Length > 0;
-                if (isFolder)
-                {
-                    CopyDirectory(line, serverPath);
-                }
-                else if (File.Exists(line))
-                {
-                    CopyFile(line, serverPath, 1024 * 1024 * 5);
-                }
-            }
-        }
-
         public static string GetEditorProjectLocalPath(string projectName)
         {
             var editorLocalPath = Properties.Settings.Default.ProjectLocalPath;
@@ -1082,15 +1115,6 @@ namespace WandSyncFile.Helpers
             var editorDoPath = Path.Combine(editorProjectPath, Options.PROJECT_DO_NAME);
 
             return Path.Combine(editorDoPath, editorUserName);
-        }
-
-        public static string GetEditorProjectDoneServerPath(string projectPath)
-        {
-            var projectDonePath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME);
-            var editorUserName = Properties.Settings.Default.Username;
-            var editorDonePath = Path.Combine(projectDonePath, editorUserName);
-
-            return editorDonePath;
         }
 
         public static string GetEditorProjectDoneLocalPath(string projectName)
@@ -1120,12 +1144,6 @@ namespace WandSyncFile.Helpers
             return Path.Combine(editorDoPath, editorUserName);
         }
 
-        public static string GetProjectSampleServerPath(string projectPath)
-        {
-            var samplePath = Path.Combine(projectPath, Options.PROJECT_SAMPLE_NAME);
-
-            return samplePath;
-        }
         public static string GetEditorProjectFixLocalPath(string projectName)
         {
             var editorLocalPath = Properties.Settings.Default.ProjectLocalPath;
@@ -1218,43 +1236,6 @@ namespace WandSyncFile.Helpers
             }
         }
 
-        public static string GetProjectNameByPath(string path)
-        {
-            var editorLocalPath = Properties.Settings.Default.ProjectLocalPath;
-            var projectPathArr = path.Split(new string[] { editorLocalPath }, StringSplitOptions.None);
-            if (projectPathArr == null || projectPathArr.Count() <= 0)
-            {
-                return null;
-            }
-
-            var projectArr = projectPathArr.Where(item => !string.IsNullOrEmpty(item)).LastOrDefault();
-            var projectFolderArr = projectArr.Split(new string[] { "\\" }, StringSplitOptions.None).Where(item => !string.IsNullOrEmpty(item)).ToList();
-            if (projectFolderArr == null || projectFolderArr.Count() <= 0)
-            {
-                return null;
-            }
-
-            return projectFolderArr.FirstOrDefault();
-        }
-
-        public static bool IsEditorDoneFile(string projectName, string filePath)
-        {
-            var editorProjectDonePath = EditorLocalDonePath(projectName);
-
-            var isFileDone = filePath.Contains(editorProjectDonePath);
-
-            return isFileDone;
-        }
-
-        public static bool IsEditorFixFile(string projectName, string filePath)
-        {
-            var editorProjectDonePath = GetEditorProjectFixLocalPath(projectName);
-
-            var isFileFix = filePath.Contains(editorProjectDonePath);
-
-            return isFileFix;
-        }
-
         public static string EditorLocalDonePath(string projectName)
         {
             var editorLocalPath = Properties.Settings.Default.ProjectLocalPath;
@@ -1295,21 +1276,63 @@ namespace WandSyncFile.Helpers
             return false;
         }
 
-        public static string AddFileLogChange(string projectName, string filePath, string option)
+        public static List<string> ServerGetListFix(string projectPath)
         {
-            var currentDate = DateTime.Now.ToString("yyyyMMddHHmmss");
-            var createPath = Path.Combine(Properties.Settings.Default.ProjectLocalPath, projectName + "_" + option + "_" + currentDate + ".txt");
-            if (!File.Exists(createPath))
+            IntPtr token = IntPtr.Zero;
+            LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
+            using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
             {
-                using (var file = File.Create(createPath))
+                try
                 {
-                    File.SetAttributes(createPath, FileAttributes.Hidden);
+                    var projectDirectoties = Directory.GetDirectories(projectPath).Select(item => item.ToLower()).ToList();
+                    var folderFixName = Options.PROJECT_FIX_PATH_NAME.ToLower();
+                    var fixFolders = projectDirectoties.Where(item => Path.GetFileName(item).Trim().StartsWith(folderFixName)).Select(item => Path.GetFullPath(item)).ToList();
+
+                    return fixFolders;
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                finally
+                {
+                    person.Undo();
+                    CloseHandle(token);
                 }
             }
-            File.AppendAllText(createPath, filePath + Environment.NewLine);
 
-            return createPath;
+            return null;
         }
+
+        public static string ServerGetFolderName(string path)
+        {
+            IntPtr token = IntPtr.Zero;
+            LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
+            using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
+            {
+                try
+                {
+                    if (!Directory.Exists(path))
+                    {
+                        return null;
+                    }
+
+                    return Path.GetFileName(path);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                finally
+                {
+                    person.Undo();
+                    CloseHandle(token);
+                }
+            }
+
+            return null;
+        }
+
         public static string AddFileLogProjectPath(string projectName, string projectPath)
         {
             var localProjectPath = Path.Combine(Properties.Settings.Default.ProjectLocalPath, projectName);
@@ -1331,7 +1354,7 @@ namespace WandSyncFile.Helpers
                 {
                     File.SetAttributes(createPathName, FileAttributes.Hidden);
                 }
-                 File.AppendAllText(createPathName, projectName);
+                File.AppendAllText(createPathName, projectName);
             }
 
             return createPath;
