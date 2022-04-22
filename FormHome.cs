@@ -164,7 +164,7 @@ namespace WandSyncFile
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     ReadAllFileChange();
-                    await Task.Delay(TimeSpan.FromSeconds(15), cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(120), cancellationToken);
                 }
             });
         }
