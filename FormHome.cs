@@ -164,7 +164,7 @@ namespace WandSyncFile
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     ReadAllFileChange();
-                    await Task.Delay(TimeSpan.FromSeconds(120), cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(180), cancellationToken);
                 }
             });
         }
@@ -300,7 +300,7 @@ namespace WandSyncFile
 
                 processingProject.Add(project.Id);
 
-                FileHelpers.DownloadFolderFromServer(serverEditorDoPath, localEditorDoPath);
+                FileHelpers.DownloadFolderFromServer(serverEditorDoPath, localEditorDoPath , null, true);
 
                 // download folder Working
                 var localFolderWorking = Path.Combine(localProject, Options.PROJECT_WORKING_PATH_NAME);
