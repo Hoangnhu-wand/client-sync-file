@@ -85,7 +85,7 @@ namespace WandSyncFile
             try
             {
                 var listItem = new CustomListView();
-                listItem.CreatedDate = created.ToString("dd/mm/yyyy");
+                listItem.CreatedDate = created.ToString("dd/M/yyyy");
                 listItem.CreateTime = created.ToString("hh:mm:ss");
                 listItem.ProjectName = projectName;
                 listItem.ButtonText = action;
@@ -366,6 +366,7 @@ namespace WandSyncFile
                 {
                     addItem(DateTime.Now, "Upload", projectName, 1);
                 }));
+
                 processingUploadProject.Remove(projectName);
             }
         }
@@ -517,6 +518,7 @@ namespace WandSyncFile
 
             var userId = Properties.Settings.Default.Id;
             var userName = Properties.Settings.Default.Username;
+            var localPath = Properties.Settings.Default.ProjectLocalPath;
 
             connection.On<string, string, string>("SERVER_QUEUE_MESSAGE", async (user, action, data) =>
             {
@@ -584,7 +586,8 @@ namespace WandSyncFile
 
                 if (action == "EDITOR_CREATE_FOLDER_FIX" && UserRoleHelpers.IsEditors() && user == userId.ToString())
                 {
-                    Task.Run(async () => {
+                    Task.Run(async () =>
+                    {
 
                         var editorDownloadItem = JsonConvert.DeserializeObject<EditorDownloadFileProjectDto>(data);
                         if (editorDownloadItem == null)
@@ -611,6 +614,79 @@ namespace WandSyncFile
                 }
             });
 
+            connection.On<string, string, string>("WAND_ADDON_MESSAGE", async (user, action, localProjectName) =>
+            {
+                if (action == "UPLOAD_DONE" && UserRoleHelpers.IsEditors() && user == userName)
+                {
+                    Task.Run(() =>
+                    {
+                        var localProjectPath = Path.Combine(localPath, localProjectName);
+
+                        var projectPath = FileHelpers.GetProjectPathByLog(localProjectPath);
+                        var projectName = FileHelpers.GetProjectNameByLog(localProjectPath);
+
+                        if (string.IsNullOrEmpty(projectPath) || string.IsNullOrEmpty(projectName))
+                        {
+                            return;
+                        }
+
+                        SyncDone(projectName, projectPath);
+                    });
+                }
+
+                if (action == "UPLOAD_FIX" && UserRoleHelpers.IsEditors() && user == userName)
+                {
+                    Task.Run(() =>
+                    {
+                        var localProjectPath = Path.Combine(localPath, localProjectName);
+
+                        var projectPath = FileHelpers.GetProjectPathByLog(localProjectPath);
+                        var projectName = FileHelpers.GetProjectNameByLog(localProjectPath);
+
+                        if (string.IsNullOrEmpty(projectPath) || string.IsNullOrEmpty(projectName))
+                        {
+                            return;
+                        }
+
+                        SyncFix(projectName, projectPath);
+                    });
+                }
+
+            });
+
+            connection.On<string, string, string>("HRM_PROJECT", async (users, action, projectName) =>
+            {
+                if(action == "EDITOR_REMOVE_COMPLETED" && users.Any(u => u == userId))
+                {
+                    Task.Run(() =>
+                    {
+                        var localProjectPath = Path.Combine(localPath, projectName);
+                        if(!Directory.Exists(localProjectPath))
+                        {
+                            return;
+                        }
+
+                        var project = projectService.RequestGetProjectByName(projectName);
+
+                        if (project != null && project.StatusId == (int)PROJECT_STATUS.COMPLETED)
+                        {
+                            DirectoryInfo di = new DirectoryInfo(localProjectPath);
+                            var allFolders = di.GetDirectories();
+
+                            FileHelpers.FolderSetAttributeNormal(localProjectPath);
+
+                            try
+                            {
+                                Directory.Delete(localProjectPath, true);
+                            } catch(Exception e)
+                            {
+                                Console.WriteLine(e.Message);
+                            } finally { }
+                        }
+                    });
+                }
+            });
+        
         }
 
         private void FormHome_Load(object sender, EventArgs e)

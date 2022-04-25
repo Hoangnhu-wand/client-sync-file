@@ -1359,5 +1359,61 @@ namespace WandSyncFile.Helpers
 
             return createPath;
         }
+    
+        public static string GetProjectPathByLog(string localProjectPath)
+        {
+            if (!Directory.Exists(localProjectPath))
+            {
+                return null;
+            }
+
+            DirectoryInfo projectDirInfo = new DirectoryInfo(localProjectPath);
+
+            var logPath = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_PATH_FILE_NAME).FirstOrDefault();
+
+            if (logPath == null)
+            {
+                return null;
+            }
+
+            var projectPath = File.ReadLines(logPath.FullName).FirstOrDefault();
+
+            return projectPath;
+        }
+        
+        public static string GetProjectNameByLog(string localProjectPath)
+        {
+            if (!Directory.Exists(localProjectPath))
+            {
+                return null;
+            }
+
+            DirectoryInfo projectDirInfo = new DirectoryInfo(localProjectPath);
+
+            var logProjectName = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_FILE_NAME).FirstOrDefault();
+
+            if (logProjectName == null)
+            {
+                return null;
+            }
+
+            var projectName = File.ReadLines(logProjectName.FullName).FirstOrDefault();
+
+            return projectName;
+        }
+
+        public static void FolderSetAttributeNormal(string path)
+        {
+            DirectoryInfo di = new DirectoryInfo(path);
+
+            di.Attributes = FileAttributes.Normal;
+
+            var allFolders = di.GetDirectories();
+
+            foreach (var folderItem in allFolders)
+            {
+                FolderSetAttributeNormal(folderItem.FullName);
+            }
+        }
     }
 }
