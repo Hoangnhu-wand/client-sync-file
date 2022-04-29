@@ -97,6 +97,9 @@ namespace WandSyncFile
                 else if (action == "Upload")
                 {
                     listItem.ButtonColor = Color.FromArgb(255, 219, 150);
+                } else if(action == "REMOVE")
+                {
+                    listItem.ButtonColor = Color.FromArgb(255, 219, 150);
                 }
 
                 listItem.StatusColor = Color.Red;
@@ -656,34 +659,57 @@ namespace WandSyncFile
 
             connection.On<string, string, string>("HRM_PROJECT", async (users, action, projectName) =>
             {
-                if(action == "EDITOR_REMOVE_COMPLETED" && users.Any(u => u == userId))
+                if(action == "EDITOR_REMOVE_COMPLETED")
                 {
-                    Task.Run(() =>
+                    if(string.IsNullOrEmpty(users))
                     {
-                        var localProjectPath = Path.Combine(localPath, projectName);
-                        if(!Directory.Exists(localProjectPath))
+                        return;
+                    }
+                    var listUsers = JsonConvert.DeserializeObject<List<int>>(users);
+                    if(listUsers.Any(u => u == userId))
+                    {
+                        Task.Run(() =>
                         {
-                            return;
-                        }
-
-                        var project = projectService.RequestGetProjectByName(projectName);
-
-                        if (project != null && project.StatusId == (int)PROJECT_STATUS.COMPLETED)
-                        {
-                            DirectoryInfo di = new DirectoryInfo(localProjectPath);
-                            var allFolders = di.GetDirectories();
-
-                            FileHelpers.FolderSetAttributeNormal(localProjectPath);
-
-                            try
+                            Invoke((Action)(() =>
                             {
-                                Directory.Delete(localProjectPath, true);
-                            } catch(Exception e)
+                                addItem(DateTime.Now, "REMOVE", projectName, 0);
+                            }));
+
+                            var localProjectPath = Path.Combine(localPath, projectName);
+                            if (!Directory.Exists(localProjectPath))
                             {
-                                Console.WriteLine(e.Message);
-                            } finally { }
-                        }
-                    });
+                                return;
+                            }
+
+                            var project = projectService.RequestGetProjectByName(projectName);
+
+                            if (project != null && project.StatusId == (int)PROJECT_STATUS.COMPLETED)
+                            {
+                                DirectoryInfo di = new DirectoryInfo(localProjectPath);
+                                var allFolders = di.GetDirectories();
+
+                                FileHelpers.FolderSetAttributeNormal(localProjectPath);
+
+                                try
+                                {
+                                    Directory.Delete(localProjectPath, true);
+                                    Invoke((Action)(() =>
+                                    {
+                                        addItem(DateTime.Now, "REMOVE", projectName, 1);
+                                    }));
+                                }
+                                catch (Exception e)
+                                {
+                                    Console.WriteLine(e.Message);
+                                    Invoke((Action)(() =>
+                                    {
+                                        addItem(DateTime.Now, "REMOVE", projectName, 2);
+                                    }));
+                                }
+                                finally { }
+                            }
+                        });
+                    }
                 }
             });
         
