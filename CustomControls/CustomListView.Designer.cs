@@ -132,6 +132,7 @@ namespace WandSyncFile.CustomControls
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.ForeColor = System.Drawing.Color.Coral;
+            this.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
             this.Name = "CustomListView";
             this.Size = new System.Drawing.Size(407, 37);
             this.Load += new System.EventHandler(this.CustomListView_Load);
