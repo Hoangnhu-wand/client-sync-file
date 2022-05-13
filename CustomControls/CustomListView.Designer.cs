@@ -43,7 +43,8 @@ namespace WandSyncFile.CustomControls
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(163)));
             this.label1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(252)))), ((int)(((byte)(252)))), ((int)(((byte)(252)))));
-            this.label1.Location = new System.Drawing.Point(10, 9);
+            this.label1.Location = new System.Drawing.Point(10, 10);
+            this.label1.Margin = new System.Windows.Forms.Padding(0);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(38, 15);
             this.label1.TabIndex = 0;
@@ -55,7 +56,8 @@ namespace WandSyncFile.CustomControls
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.label2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(252)))), ((int)(((byte)(252)))), ((int)(((byte)(252)))));
-            this.label2.Location = new System.Drawing.Point(70, 10);
+            this.label2.Location = new System.Drawing.Point(85, 10);
+            this.label2.Margin = new System.Windows.Forms.Padding(0);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(38, 15);
             this.label2.TabIndex = 1;
@@ -67,7 +69,8 @@ namespace WandSyncFile.CustomControls
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.label3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(216)))), ((int)(((byte)(216)))), ((int)(((byte)(216)))));
-            this.label3.Location = new System.Drawing.Point(254, 10);
+            this.label3.Location = new System.Drawing.Point(260, 10);
+            this.label3.Margin = new System.Windows.Forms.Padding(0);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(38, 15);
             this.label3.TabIndex = 4;
@@ -79,12 +82,13 @@ namespace WandSyncFile.CustomControls
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(111)))), ((int)(((byte)(118)))), ((int)(((byte)(126)))));
             this.panel1.Location = new System.Drawing.Point(0, 35);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(393, 1);
+            this.panel1.Size = new System.Drawing.Size(505, 1);
             this.panel1.TabIndex = 6;
             // 
             // panel2
             // 
-            this.panel2.Location = new System.Drawing.Point(373, 6);
+            this.panel2.Location = new System.Drawing.Point(473, 10);
+            this.panel2.Margin = new System.Windows.Forms.Padding(0);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(30, 19);
             this.panel2.TabIndex = 7;
@@ -96,7 +100,7 @@ namespace WandSyncFile.CustomControls
             this.buttonCustom2.FlatAppearance.BorderSize = 0;
             this.buttonCustom2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonCustom2.ForeColor = System.Drawing.Color.White;
-            this.buttonCustom2.Location = new System.Drawing.Point(383, 11);
+            this.buttonCustom2.Location = new System.Drawing.Point(483, 15);
             this.buttonCustom2.Name = "buttonCustom2";
             this.buttonCustom2.Size = new System.Drawing.Size(8, 8);
             this.buttonCustom2.TabIndex = 8;
@@ -111,9 +115,10 @@ namespace WandSyncFile.CustomControls
             this.buttonCustom1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonCustom1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(163)));
             this.buttonCustom1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(43)))), ((int)(((byte)(48)))));
-            this.buttonCustom1.Location = new System.Drawing.Point(135, 5);
+            this.buttonCustom1.Location = new System.Drawing.Point(143, 5);
+            this.buttonCustom1.Margin = new System.Windows.Forms.Padding(0);
             this.buttonCustom1.Name = "buttonCustom1";
-            this.buttonCustom1.Size = new System.Drawing.Size(69, 22);
+            this.buttonCustom1.Size = new System.Drawing.Size(100, 22);
             this.buttonCustom1.TabIndex = 2;
             this.buttonCustom1.Text = "Download";
             this.buttonCustom1.UseVisualStyleBackColor = false;
@@ -134,7 +139,7 @@ namespace WandSyncFile.CustomControls
             this.ForeColor = System.Drawing.Color.Coral;
             this.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
             this.Name = "CustomListView";
-            this.Size = new System.Drawing.Size(407, 37);
+            this.Size = new System.Drawing.Size(505, 37);
             this.Load += new System.EventHandler(this.CustomListView_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
