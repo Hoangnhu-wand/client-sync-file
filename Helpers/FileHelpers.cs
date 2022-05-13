@@ -1335,29 +1335,38 @@ namespace WandSyncFile.Helpers
 
         public static string AddFileLogProjectPath(string projectName, string projectPath)
         {
-            var localProjectPath = Path.Combine(Properties.Settings.Default.ProjectLocalPath, projectName);
-            var createPath = Path.Combine(localProjectPath, Options.PROJECT_PATH_FILE_NAME);
-
-            if (!File.Exists(createPath))
+            try
             {
-                using (var file = File.Create(createPath))
+                var localProjectPath = Path.Combine(Properties.Settings.Default.ProjectLocalPath, projectName);
+                var createPath = Path.Combine(localProjectPath, Options.PROJECT_PATH_FILE_NAME);
+
+                if (!File.Exists(createPath))
                 {
-                    File.SetAttributes(createPath, FileAttributes.Hidden);
+                    using (var file = File.Create(createPath))
+                    {
+                        File.SetAttributes(createPath, FileAttributes.Hidden);
+                    }
+                    File.AppendAllText(createPath, projectPath);
                 }
-                File.AppendAllText(createPath, projectPath);
+
+                var createPathName = Path.Combine(localProjectPath, Options.PROJECT_FILE_NAME);
+                if (!File.Exists(createPathName))
+                {
+                    using (var file = File.Create(createPathName))
+                    {
+                        File.SetAttributes(createPathName, FileAttributes.Hidden);
+                    }
+                    File.AppendAllText(createPathName, projectName);
+                }
+
+                return createPath;
+            } catch(Exception e)
+            {
+                Console.WriteLine(e.Message);
             }
 
-            var createPathName = Path.Combine(localProjectPath, Options.PROJECT_FILE_NAME);
-            if (!File.Exists(createPathName))
-            {
-                using (var file = File.Create(createPathName))
-                {
-                    File.SetAttributes(createPathName, FileAttributes.Hidden);
-                }
-                File.AppendAllText(createPathName, projectName);
-            }
-
-            return createPath;
+            return null;
+            
         }
     
         public static string GetProjectPathByLog(string localProjectPath)

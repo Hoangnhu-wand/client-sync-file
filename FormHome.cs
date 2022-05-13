@@ -545,16 +545,18 @@ namespace WandSyncFile
                         {
                             return;
                         }
-
-                        var projectPath = editorDownloadItem.ProjectPath;
-                        var projectName = editorDownloadItem.ProjectName;
-
+                        
+                        var projectPath = editorDownloadItem.ProjectPath.Trim();
+                        var projectName = editorDownloadItem.ProjectName.Trim();
+                        
                         var editorLocalPathDo = FileHelpers.GetEditorProjectDoLocalPath(projectName);
                         var localProjectPath = FileHelpers.GetEditorProjectLocalPath(projectName);
                         var localProjectDoPath = Path.Combine(localProjectPath, Options.PROJECT_DO_NAME);
 
+                        FileHelpers.CreateFolder(localProjectDoPath);
+
                         FileHelpers.CreateFolder(editorLocalPathDo);
-                        FileHelpers.AddFileLogProjectPath(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath);
+                        FileHelpers.AddFileLogProjectPath(projectName, projectPath);
 
                         // Tạo thư mục Done
                         var editorLocalDonepath = FileHelpers.GetEditorProjectDoneLocalPath(projectName);
@@ -566,8 +568,8 @@ namespace WandSyncFile
                         var editorServerPathDo = FileHelpers.GetEditorProjectDoServerPath(projectPath);
                         var editorLocalProjectPath = Path.Combine(Properties.Settings.Default.ProjectLocalPath, projectName);
 
-                        var localSamplePath = FileHelpers.GetEditorProjectSampleLocalPath(editorDownloadItem.ProjectName);
-                        var projectPathSample = Path.Combine(editorDownloadItem.ProjectPath, Options.PROJECT_SAMPLE_NAME);
+                        var localSamplePath = FileHelpers.GetEditorProjectSampleLocalPath(projectName);
+                        var projectPathSample = Path.Combine(projectPath, Options.PROJECT_SAMPLE_NAME);
 
                         if (Directory.Exists(projectPathSample))
                         {
