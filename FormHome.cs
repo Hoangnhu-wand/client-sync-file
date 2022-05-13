@@ -38,10 +38,11 @@ namespace WandSyncFile
             displayFolder = new DisplayFolder();
             projectService = new ProjectService();
             cancellationToken = new CancellationToken();
-
+            
             HandleHubConnection();
             DisplayAccountProfile();
-            ReadFileChange(cancellationToken);
+            ReadFileChange();
+            RemoveCompletedProject();
         }
 
         public static bool Logged()
@@ -160,17 +161,80 @@ namespace WandSyncFile
             }
         }
 
-        public void ReadFileChange(CancellationToken cancellationToken)
+        public void ReadFileChange()
         {
             Task.Factory.StartNew(async () =>
             {
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    ReadAllFileChange();
-                    await Task.Delay(TimeSpan.FromSeconds(180), cancellationToken);
-                }
+                ReadAllFileChange();
+                await Task.Delay(TimeSpan.FromSeconds(180));
             });
         }
+
+        public void RemoveCompletedProject()
+        {
+            Task.Factory.StartNew(async () =>
+            {
+                RemoveCompletedProjectFolder();
+                await Task.Delay(TimeSpan.FromHours(2));
+            });
+        }
+
+        public void RemoveCompletedProjectFolder()
+        {
+            var displayFolder = new DisplayFolder();
+            if (!UserRoleHelpers.IsEditors())
+            {
+                return;
+            }
+
+            // get all folder in project path
+            var projectLocalPath = Properties.Settings.Default.ProjectLocalPath;
+            var editorUserName = Properties.Settings.Default.Username;
+
+            if (!Directory.Exists(projectLocalPath))
+            {
+                return;
+            }
+
+            try
+            {
+                DirectoryInfo info = new DirectoryInfo(projectLocalPath);
+                var directories = info.GetDirectories().OrderBy(p => p.LastWriteTime).ToArray();
+
+                foreach (var projectDir in directories)
+                {
+                    DirectoryInfo projectDirInfo = new DirectoryInfo(projectDir.FullName);
+                    var logPath = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_PATH_FILE_NAME).FirstOrDefault();
+                    var logProjectName = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_FILE_NAME).FirstOrDefault();
+
+                    if (logPath == null)
+                    {
+                        continue;
+                    }
+
+                    var projectPath = File.ReadLines(logPath.FullName).FirstOrDefault();
+                    var projectName = File.ReadLines(logProjectName.FullName).FirstOrDefault();
+
+                    var project = projectService.RequestGetProjectByName(projectName);
+
+                    if (project != null &&  project.StatusId == (int)PROJECT_STATUS.COMPLETED)
+                    {
+                        var localProject = Path.Combine(projectLocalPath, projectName);
+                        if(Directory.Exists(localProject))
+                        {
+                            FileHelpers.FolderSetAttributeNormal(localProject);
+
+                            Directory.Delete(localProject, true);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+
+            }
+        }
+
 
         public void ReadAllFileChange()
         {
