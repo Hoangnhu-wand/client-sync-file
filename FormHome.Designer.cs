@@ -70,14 +70,14 @@ namespace WandSyncFile
             this.headerpanel.Controls.Add(this.label2);
             this.headerpanel.Location = new System.Drawing.Point(0, -3);
             this.headerpanel.Name = "headerpanel";
-            this.headerpanel.Size = new System.Drawing.Size(440, 518);
+            this.headerpanel.Size = new System.Drawing.Size(540, 518);
             this.headerpanel.TabIndex = 0;
             // 
             // pictureBox3
             // 
             this.pictureBox3.Cursor = System.Windows.Forms.Cursors.Hand;
             this.pictureBox3.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox3.Image")));
-            this.pictureBox3.Location = new System.Drawing.Point(371, 15);
+            this.pictureBox3.Location = new System.Drawing.Point(471, 15);
             this.pictureBox3.Name = "pictureBox3";
             this.pictureBox3.Size = new System.Drawing.Size(18, 18);
             this.pictureBox3.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -89,18 +89,20 @@ namespace WandSyncFile
             // 
             this.panel2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(43)))), ((int)(((byte)(48)))));
             this.panel2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(43)))), ((int)(((byte)(48)))));
-            this.panel2.Location = new System.Drawing.Point(3, 443);
+            this.panel2.Location = new System.Drawing.Point(0, 443);
+            this.panel2.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(432, 1);
+            this.panel2.Size = new System.Drawing.Size(540, 1);
             this.panel2.TabIndex = 31;
             // 
             // panel1
             // 
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(43)))), ((int)(((byte)(48)))));
             this.panel1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(43)))), ((int)(((byte)(48)))));
-            this.panel1.Location = new System.Drawing.Point(1, 53);
+            this.panel1.Location = new System.Drawing.Point(0, 53);
+            this.panel1.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(434, 1);
+            this.panel1.Size = new System.Drawing.Size(540, 1);
             this.panel1.TabIndex = 30;
             // 
             // ovalPictureBox1
@@ -120,7 +122,7 @@ namespace WandSyncFile
             this.pictureBox1.Enabled = false;
             this.pictureBox1.ErrorImage = null;
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(270, 473);
+            this.pictureBox1.Location = new System.Drawing.Point(370, 473);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(33, 18);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -136,7 +138,7 @@ namespace WandSyncFile
             this.flowLayoutPanel.Location = new System.Drawing.Point(18, 144);
             this.flowLayoutPanel.Margin = new System.Windows.Forms.Padding(0);
             this.flowLayoutPanel.Name = "flowLayoutPanel";
-            this.flowLayoutPanel.Size = new System.Drawing.Size(405, 270);
+            this.flowLayoutPanel.Size = new System.Drawing.Size(505, 270);
             this.flowLayoutPanel.TabIndex = 9;
             this.flowLayoutPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.flowLayoutPanel1_Paint);
             // 
@@ -145,7 +147,7 @@ namespace WandSyncFile
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Segoe UI", 8.25F);
             this.label5.ForeColor = System.Drawing.Color.White;
-            this.label5.Location = new System.Drawing.Point(309, 468);
+            this.label5.Location = new System.Drawing.Point(409, 468);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(73, 13);
             this.label5.TabIndex = 26;
@@ -168,7 +170,7 @@ namespace WandSyncFile
             this.label6.BackColor = System.Drawing.Color.Transparent;
             this.label6.Font = new System.Drawing.Font("Segoe UI Light", 8.25F);
             this.label6.ForeColor = System.Drawing.Color.Gainsboro;
-            this.label6.Location = new System.Drawing.Point(309, 484);
+            this.label6.Location = new System.Drawing.Point(409, 484);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(112, 18);
             this.label6.TabIndex = 27;
@@ -189,7 +191,7 @@ namespace WandSyncFile
             // 
             this.pictureBox2.Cursor = System.Windows.Forms.Cursors.Hand;
             this.pictureBox2.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox2.Image")));
-            this.pictureBox2.Location = new System.Drawing.Point(406, 16);
+            this.pictureBox2.Location = new System.Drawing.Point(506, 16);
             this.pictureBox2.Name = "pictureBox2";
             this.pictureBox2.Size = new System.Drawing.Size(18, 18);
             this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -222,7 +224,7 @@ namespace WandSyncFile
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(24)))), ((int)(((byte)(24)))));
-            this.ClientSize = new System.Drawing.Size(438, 518);
+            this.ClientSize = new System.Drawing.Size(540, 518);
             this.Controls.Add(this.headerpanel);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
