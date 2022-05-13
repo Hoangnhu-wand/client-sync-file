@@ -90,11 +90,11 @@ namespace WandSyncFile
                 listItem.ProjectName = projectName;
                 listItem.ButtonText = action;
 
-                if (action == "Download")
+                if (action == "Download Do")
                 {
                     listItem.ButtonColor = Color.FromArgb(178, 255, 212);
                 }
-                else if (action == "Upload")
+                else if (action == "Upload Done" || action == "Upload Fix")
                 {
                     listItem.ButtonColor = Color.FromArgb(255, 219, 150);
                 } else if(action == "REMOVE")
@@ -252,7 +252,7 @@ namespace WandSyncFile
 
                 Invoke((Action)(async () =>
                 {
-                    addItem(DateTime.Now, "Upload", projectName, 0);
+                    addItem(DateTime.Now, "Upload Fix", projectName, 0);
                 }));
 
                 processingUploadFixProject.Add(projectName);
@@ -263,7 +263,7 @@ namespace WandSyncFile
 
                 Invoke((Action)(async () =>
                 {
-                    addItem(DateTime.Now, "Upload", projectName, 1);
+                    addItem(DateTime.Now, "Upload Fix", projectName, 1);
                 }));
                 processingUploadFixProject.Remove(projectName);
             }
@@ -298,7 +298,7 @@ namespace WandSyncFile
                 displayFolder.CheckFolderSync(localEditorDoPath, serverEditorDoPath, localProjectDoPath);
                 Invoke((Action)(async () =>
                 {
-                    addItem(DateTime.Now, "Download", projectName, 0);
+                    addItem(DateTime.Now, "Download Do", projectName, 0);
                 }));
 
                 processingProject.Add(project.Id);
@@ -317,7 +317,7 @@ namespace WandSyncFile
 
                 Invoke((Action)(async () =>
                 {
-                    addItem(DateTime.Now, "Download", projectName, 1);
+                    addItem(DateTime.Now, "Download Do", projectName, 1);
                 }));
 
                 displayFolder.CheckFolderSync(localEditorDoPath, serverEditorDoPath, localProjectDoPath);
@@ -357,7 +357,7 @@ namespace WandSyncFile
 
                 Invoke((Action)(async () =>
                 {
-                    addItem(DateTime.Now, "Upload", projectName, 0);
+                    addItem(DateTime.Now, "Upload Done", projectName, 0);
                 }));
 
                 processingUploadProject.Add(projectName);
@@ -367,7 +367,7 @@ namespace WandSyncFile
 
                 Invoke((Action)(async () =>
                 {
-                    addItem(DateTime.Now, "Upload", projectName, 1);
+                    addItem(DateTime.Now, "Upload Done", projectName, 1);
                 }));
 
                 processingUploadProject.Remove(projectName);

@@ -87,7 +87,7 @@ namespace WandSyncFile.CustomControls
             // 
             // panel2
             // 
-            this.panel2.Location = new System.Drawing.Point(473, 10);
+            this.panel2.Location = new System.Drawing.Point(453, 10);
             this.panel2.Margin = new System.Windows.Forms.Padding(0);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(30, 19);
@@ -100,7 +100,7 @@ namespace WandSyncFile.CustomControls
             this.buttonCustom2.FlatAppearance.BorderSize = 0;
             this.buttonCustom2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonCustom2.ForeColor = System.Drawing.Color.White;
-            this.buttonCustom2.Location = new System.Drawing.Point(483, 15);
+            this.buttonCustom2.Location = new System.Drawing.Point(463, 15);
             this.buttonCustom2.Name = "buttonCustom2";
             this.buttonCustom2.Size = new System.Drawing.Size(8, 8);
             this.buttonCustom2.TabIndex = 8;
