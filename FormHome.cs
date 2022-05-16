@@ -25,6 +25,7 @@ namespace WandSyncFile
         HubConnection connection;
         ProjectService projectService;
         CancellationToken cancellationToken;
+        CancellationToken cancellationTokenRemoveProject;
         DisplayFolder displayFolder;
         public List<int> processingProject = new List<int>();
         public List<string> processingUploadProject = new List<string>();
@@ -38,11 +39,12 @@ namespace WandSyncFile
             displayFolder = new DisplayFolder();
             projectService = new ProjectService();
             cancellationToken = new CancellationToken();
+            cancellationTokenRemoveProject = new CancellationToken();
             
             HandleHubConnection();
             DisplayAccountProfile();
-            ReadFileChange();
-            RemoveCompletedProject();
+            ReadFileChange(cancellationToken);
+            RemoveCompletedProject(cancellationTokenRemoveProject);
         }
 
         public static bool Logged()
@@ -161,21 +163,27 @@ namespace WandSyncFile
             }
         }
 
-        public void ReadFileChange()
+        public void ReadFileChange(CancellationToken cancellationToken)
         {
             Task.Factory.StartNew(async () =>
             {
-                ReadAllFileChange();
-                await Task.Delay(TimeSpan.FromSeconds(180));
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    ReadAllFileChange();
+                    await Task.Delay(TimeSpan.FromSeconds(180), cancellationToken);
+                }
             });
         }
 
-        public void RemoveCompletedProject()
+        public void RemoveCompletedProject(CancellationToken cancellationToken)
         {
             Task.Factory.StartNew(async () =>
             {
-                RemoveCompletedProjectFolder();
-                await Task.Delay(TimeSpan.FromHours(2));
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    RemoveCompletedProjectFolder();
+                    await Task.Delay(TimeSpan.FromHours(2));
+                }
             });
         }
 
