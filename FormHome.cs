@@ -40,7 +40,7 @@ namespace WandSyncFile
             projectService = new ProjectService();
             cancellationToken = new CancellationToken();
             cancellationTokenRemoveProject = new CancellationToken();
-            
+
             HandleHubConnection();
             DisplayAccountProfile();
             ReadFileChange(cancellationToken);
@@ -449,13 +449,47 @@ namespace WandSyncFile
             }
         }
 
-        public void CopyDoneAndFixFromServer(string projectName, string projectPath)
+        public void CopyDoneAndFixFromServer(string projectName, string projectPath, int projectId)
         {
-            // download done
             var projectLocalPath = Properties.Settings.Default.ProjectLocalPath;
             var editorUserName = Properties.Settings.Default.Username;
-
             var localProject = Path.Combine(projectLocalPath, projectName);
+
+            if(!Directory.Exists(localProject))
+            {
+                Directory.CreateDirectory(localProject);
+            }
+
+            var folderProjectHasFile = FileHelpers.HasFileInFolder(localProject);
+            if (folderProjectHasFile)
+            {
+                return;
+            }
+
+            // download do 
+            var localDoPath = Path.Combine(localProject, Options.PROJECT_DO_NAME);
+            var localEditorDoPath = Path.Combine(localDoPath, editorUserName);
+
+            var serverDoPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME);
+            var serverEditorDoPath = Path.Combine(serverDoPath, editorUserName);
+
+            Invoke((Action)(async () =>
+            {
+                addItem(DateTime.Now, "Download Do", projectName, 0);
+            }));
+
+            processingProject.Add(projectId);
+
+            FileHelpers.DownloadFolderFromServer(serverEditorDoPath, localEditorDoPath);
+
+            Invoke((Action)(async () =>
+            {
+                addItem(DateTime.Now, "Download Do Completed", projectName, 0);
+            }));
+
+            processingProject.Remove(projectId);
+
+            // download done
             var localProjectDonePath = Path.Combine(localProject, Options.PROJECT_DONE_NAME);
             var localEditorDonePath = Path.Combine(localProjectDonePath, editorUserName);
 
@@ -687,7 +721,7 @@ namespace WandSyncFile
 
                         FileHelpers.AddFileLogProjectPath(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath);
 
-                        CopyDoneAndFixFromServer(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath);
+                        CopyDoneAndFixFromServer(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath, editorDownloadItem.ProjectId);
 
                         await connection.SendAsync("ReceiverMessageAsync", "CLIENT_FILE", editorDownloadItem.MessageId, "REMOVE_PROJECT_QUEUE_MESSAGE", null);
                     });
