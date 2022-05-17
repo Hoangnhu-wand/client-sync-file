@@ -133,10 +133,6 @@ namespace WandSyncFile
             // 
             this.flowLayoutPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.flowLayoutPanel.AutoScroll = false;
-            this.flowLayoutPanel.HorizontalScroll.Enabled = false;
-            this.flowLayoutPanel.HorizontalScroll.Visible = false;
-            this.flowLayoutPanel.HorizontalScroll.Maximum = 0;
             this.flowLayoutPanel.AutoScroll = true;
             this.flowLayoutPanel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(24)))), ((int)(((byte)(24)))));
             this.flowLayoutPanel.Location = new System.Drawing.Point(18, 144);
@@ -210,9 +206,10 @@ namespace WandSyncFile
             this.label2.ForeColor = System.Drawing.Color.White;
             this.label2.Location = new System.Drawing.Point(21, 16);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(73, 17);
+            this.label2.Size = new System.Drawing.Size(91, 17);
             this.label2.TabIndex = 4;
-            this.label2.Text = "Dashboard";
+            this.label2.Text = "Dashboard 17";
+            this.label2.Click += new System.EventHandler(this.label2_Click);
             // 
             // notifyIcon2
             // 

@@ -377,15 +377,18 @@ namespace WandSyncFile
 
                 FileHelpers.DownloadFolderFromServer(serverEditorDoPath, localEditorDoPath , null, true);
 
-                // download folder Working
-                var localFolderWorking = Path.Combine(localProject, Options.PROJECT_WORKING_PATH_NAME);
-                var editorFolderWorking = Path.Combine(localFolderWorking, editorUserName);
+                // download folder Working - với dự án khác needFix
+                if(project.StatusId != (int)PROJECT_STATUS.NEEDFIX)
+                {
+                    var localFolderWorking = Path.Combine(localProject, Options.PROJECT_WORKING_PATH_NAME);
+                    var editorFolderWorking = Path.Combine(localFolderWorking, editorUserName);
 
-                displayFolder.CheckFolderSync(editorFolderWorking, localEditorDoPath, editorFolderWorking);
+                    displayFolder.CheckFolderSync(editorFolderWorking, localEditorDoPath, editorFolderWorking);
 
-                FileHelpers.DownloadFolder(localEditorDoPath, editorFolderWorking);
+                    FileHelpers.DownloadFolder(localEditorDoPath, editorFolderWorking);
 
-                displayFolder.CheckFolderSync(editorFolderWorking, localEditorDoPath, editorFolderWorking);
+                    displayFolder.CheckFolderSync(editorFolderWorking, localEditorDoPath, editorFolderWorking);
+                }
 
                 Invoke((Action)(async () =>
                 {
@@ -833,6 +836,11 @@ namespace WandSyncFile
         {
             ShowInTaskbar = true;
             Show();
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
