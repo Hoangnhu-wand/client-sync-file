@@ -17,6 +17,7 @@ using WandSyncFile.CustomControls;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using Microsoft.Extensions.DependencyInjection;
+using WandSyncFile.Helpers;
 
 namespace WandSyncFile
 {
@@ -170,7 +171,7 @@ namespace WandSyncFile
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     ReadAllFileChange();
-                    await Task.Delay(TimeSpan.FromSeconds(180), cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(Options.TIME_SPAN_READ_FILE_CHANGE), cancellationToken);
                 }
             });
         }
@@ -182,7 +183,7 @@ namespace WandSyncFile
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     RemoveCompletedProjectFolder();
-                    await Task.Delay(TimeSpan.FromHours(2));
+                    await Task.Delay(TimeSpan.FromSeconds(Options.TIME_SPAN_REMOVE_COMPLETED_PROJECT));
                 }
             });
         }

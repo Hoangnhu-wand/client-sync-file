@@ -38,5 +38,9 @@ namespace WandSyncFile.Helpers
         public static string ROLE_SUBLEADER = "Sub-leader";
         public static string ROLE_ADMIN = "Administrators";
         public static string ROLE_EDITOR = "Editors";
+
+        // TimeSpan
+        public static int TIME_SPAN_READ_FILE_CHANGE = 10;
+        public static int TIME_SPAN_REMOVE_COMPLETED_PROJECT = 10;
     }
 }

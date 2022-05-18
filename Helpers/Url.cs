@@ -9,8 +9,6 @@ namespace WandSyncFile.Helpers
     public static class Url
     {
         public static string ServerURI = "http://localhost:6688";
-        //public static string ServerURI = "https://hrm.wand.vn";
-        //public static string ServerURI = "http://35.240.217.133:4455";
 
         public static string Login = $"{ServerURI}/api/auth/login";
         public static string GetAccount = $"{ServerURI}/api/accounts";
