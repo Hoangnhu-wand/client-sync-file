@@ -40,7 +40,7 @@ namespace WandSyncFile.Helpers
         public static string ROLE_EDITOR = "Editors";
 
         // TimeSpan
-        public static int TIME_SPAN_READ_FILE_CHANGE = 10;
-        public static int TIME_SPAN_REMOVE_COMPLETED_PROJECT = 10;
+        public static int TIME_SPAN_READ_FILE_CHANGE = 180;
+        public static int TIME_SPAN_REMOVE_COMPLETED_PROJECT = 7200;
     }
 }
