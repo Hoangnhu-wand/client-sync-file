@@ -635,16 +635,6 @@ namespace WandSyncFile
 
             connection.On<string, string, string>("SERVER_QUEUE_MESSAGE", async (user, action, data) =>
             {
-                if (action == "UPDATE_LOCAL_PATH" && UserRoleHelpers.IsEditors() && user == userId.ToString())
-                {
-                    var userDetail = JsonConvert.DeserializeObject<UserDto>(data);
-                    if (!string.IsNullOrEmpty(userDetail.ProjectLocalPath))
-                    {
-                        Properties.Settings.Default.ProjectLocalPath = userDetail.ProjectLocalPath;
-                        Properties.Settings.Default.Save();
-                    }
-                }
-
                 if (action == "EDITOR_DOWNLOAD_FILE" && user == userId.ToString() && UserRoleHelpers.IsEditors())
                 {
                     Task.Run(async () =>
@@ -824,7 +814,20 @@ namespace WandSyncFile
                     }
                 }
             });
-        
+
+            connection.On<string, string, string>("HRM_USER", async (user, action, data) =>
+            {
+                if (action == "UPDATE_LOCAL_PATH" && UserRoleHelpers.IsEditors() && user == userId.ToString())
+                {
+                    var userDetail = JsonConvert.DeserializeObject<UserDto>(data);
+                    if (!string.IsNullOrEmpty(userDetail.ProjectLocalPath))
+                    {
+                        Properties.Settings.Default.ProjectLocalPath = userDetail.ProjectLocalPath;
+                        Properties.Settings.Default.Save();
+                    }
+                }
+            });
+
         }
 
         private void FormHome_Load(object sender, EventArgs e)
