@@ -100,7 +100,8 @@ namespace WandSyncFile
                 else if (action == "Upload Done" || action == "Upload Fix")
                 {
                     listItem.ButtonColor = Color.FromArgb(255, 219, 150);
-                } else if(action == "REMOVE")
+                } 
+                else if(action == "Remove All")
                 {
                     listItem.ButtonColor = Color.FromArgb(255, 219, 150);
                 }
@@ -783,7 +784,7 @@ namespace WandSyncFile
                         {
                             Invoke((Action)(() =>
                             {
-                                addItem(DateTime.Now, "REMOVE", projectName, 0);
+                                addItem(DateTime.Now, "Remove All", projectName, 0);
                             }));
 
                             var localProjectPath = Path.Combine(localPath, projectName);
@@ -806,7 +807,7 @@ namespace WandSyncFile
                                     Directory.Delete(localProjectPath, true);
                                     Invoke((Action)(() =>
                                     {
-                                        addItem(DateTime.Now, "REMOVE", projectName, 1);
+                                        addItem(DateTime.Now, "Remove All", projectName, 1);
                                     }));
                                 }
                                 catch (Exception e)
@@ -814,7 +815,7 @@ namespace WandSyncFile
                                     Console.WriteLine(e.Message);
                                     Invoke((Action)(() =>
                                     {
-                                        addItem(DateTime.Now, "REMOVE", projectName, 2);
+                                        addItem(DateTime.Now, "Remove All", projectName, 2);
                                     }));
                                 }
                                 finally { }
