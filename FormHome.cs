@@ -17,7 +17,6 @@ using WandSyncFile.CustomControls;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using Microsoft.Extensions.DependencyInjection;
-using WandSyncFile.Helpers;
 
 namespace WandSyncFile
 {
