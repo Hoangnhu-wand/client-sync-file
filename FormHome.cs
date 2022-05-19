@@ -485,7 +485,7 @@ namespace WandSyncFile
 
             Invoke((Action)(async () =>
             {
-                addItem(DateTime.Now, "Download Do Completed", projectName, 0);
+                addItem(DateTime.Now, "Download Do", projectName, 1);
             }));
 
             processingProject.Remove(projectId);
