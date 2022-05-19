@@ -452,11 +452,11 @@ namespace WandSyncFile
 
         public void CopyDoneAndFixFromServer(string projectName, string projectPath, int projectId)
         {
-            var projectLocalPath = Properties.Settings.Default.ProjectLocalPath;
-            var editorUserName = Properties.Settings.Default.Username;
-            var localProject = Path.Combine(projectLocalPath, projectName);
+            var projectLocalPath = Properties.Settings.Default.ProjectLocalPath; //LocalPath
+            var editorUserName = Properties.Settings.Default.Username; // EditorName
+            var localProject = Path.Combine(projectLocalPath, projectName); // LocalPath\\ProjectName
 
-            if(!Directory.Exists(localProject))
+            if (!Directory.Exists(localProject))
             {
                 Directory.CreateDirectory(localProject);
             }
@@ -468,11 +468,11 @@ namespace WandSyncFile
             }
 
             // download do 
-            var localDoPath = Path.Combine(localProject, Options.PROJECT_DO_NAME);
-            var localEditorDoPath = Path.Combine(localDoPath, editorUserName);
+            var localDoPath = Path.Combine(localProject, Options.PROJECT_DO_NAME); // LocalPath\\ProjectName\\Do
+            var localEditorDoPath = Path.Combine(localDoPath, editorUserName); // LocalPath\\ProjectName\\Do\\EditorName
 
-            var serverDoPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME);
-            var serverEditorDoPath = Path.Combine(serverDoPath, editorUserName);
+            var serverDoPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME); // ServerPath\\James\\Do
+            var serverEditorDoPath = Path.Combine(serverDoPath, editorUserName); // ServerPath\\James\\Do\\EditorName
 
             Invoke((Action)(async () =>
             {
@@ -491,8 +491,8 @@ namespace WandSyncFile
             processingProject.Remove(projectId);
 
             // download done
-            var localProjectDonePath = Path.Combine(localProject, Options.PROJECT_DONE_NAME);
-            var localEditorDonePath = Path.Combine(localProjectDonePath, editorUserName);
+            var localProjectDonePath = Path.Combine(localProject, Options.PROJECT_DONE_NAME); // LocalPath\\ProjectName\\Done
+            var localEditorDonePath = Path.Combine(localProjectDonePath, editorUserName); // LocalPath\\ProjectName\\Done\\EditorName
 
             // Neu Done đã có ảnh -> Không tải nữa
             FileHelpers.CreateFolder(localEditorDonePath);
@@ -508,8 +508,8 @@ namespace WandSyncFile
             }));
 
             // download done
-            var serverDonePath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME);
-            var serverEditorDonePath = Path.Combine(serverDonePath, editorUserName);
+            var serverDonePath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME); // ServerPath\\James\\Done
+            var serverEditorDonePath = Path.Combine(serverDonePath, editorUserName); // ServerPath\\James\\Done\\EditorName
 
             FileHelpers.DownloadFolderFromServer(serverEditorDonePath, localEditorDonePath);
 
@@ -519,8 +519,8 @@ namespace WandSyncFile
             }));
 
             // download folder Working from done
-            var localFolderWorking = Path.Combine(localProject, Options.PROJECT_WORKING_PATH_NAME);
-            var editorFolderWorking = Path.Combine(localFolderWorking, editorUserName);
+            var localFolderWorking = Path.Combine(localProject, Options.PROJECT_WORKING_PATH_NAME); // LocalPath\\ProjectName\\Working
+            var editorFolderWorking = Path.Combine(localFolderWorking, editorUserName); // LocalPath\\ProjectName\\Working\\EditorName
 
             FileHelpers.CreateFolder(editorFolderWorking);
 
@@ -544,8 +544,8 @@ namespace WandSyncFile
 
             foreach (var folderFixItem in allFolderFix)
             {
-                var folderFixName = FileHelpers.ServerGetFolderName(folderFixItem);
-                var localEditorFixPath = Path.Combine(localProject, folderFixName);
+                var folderFixName = FileHelpers.ServerGetFolderName(folderFixItem); // fix_1
+                var localEditorFixPath = Path.Combine(localProject, folderFixName); // LocalPath\\ProjectName\\fix_1
 
                 // chỉ lấy các file fix có trong Done
 
@@ -554,7 +554,7 @@ namespace WandSyncFile
 
                 foreach (var fixItem in allFixByDoneName)
                 {
-                    var clientPath = Path.Combine(localEditorFixPath, Path.GetFileName(fixItem));
+                    var clientPath = Path.Combine(localEditorFixPath, Path.GetFileName(fixItem)); // LocalPath\\ProjectName\\fix_1\\Year 12 Formal (Photographer James)--4.jpg
                     FileHelpers.CopyFileFromServer(fixItem, clientPath);
                 }
 
@@ -646,12 +646,12 @@ namespace WandSyncFile
                             return;
                         }
                         
-                        var projectPath = editorDownloadItem.ProjectPath.Trim();
-                        var projectName = editorDownloadItem.ProjectName.Trim();
-                        
-                        var editorLocalPathDo = FileHelpers.GetEditorProjectDoLocalPath(projectName);
-                        var localProjectPath = FileHelpers.GetEditorProjectLocalPath(projectName);
-                        var localProjectDoPath = Path.Combine(localProjectPath, Options.PROJECT_DO_NAME);
+                        var projectPath = editorDownloadItem.ProjectPath.Trim(); // ServerPath\\ProjectName"
+                        var projectName = editorDownloadItem.ProjectName.Trim(); // ProjectName
+
+                        var editorLocalPathDo = FileHelpers.GetEditorProjectDoLocalPath(projectName); // LocalPath/ProjectName/Do/EditorName
+                        var localProjectPath = FileHelpers.GetEditorProjectLocalPath(projectName); // LocalPath/ProjectName
+                        var localProjectDoPath = Path.Combine(localProjectPath, Options.PROJECT_DO_NAME); // LocalPath/ProjectName/Do
 
                         FileHelpers.CreateFolder(localProjectDoPath);
 
@@ -694,20 +694,20 @@ namespace WandSyncFile
                     Task.Run(async () =>
                     {
 
-                        var editorDownloadItem = JsonConvert.DeserializeObject<EditorDownloadFileProjectDto>(data);
+                        var editorDownloadItem = JsonConvert.DeserializeObject<EditorDownloadFileProjectDto>(data); // get QUEUE
                         if (editorDownloadItem == null)
                         {
                             return;
                         }
 
-                        var folderFix = editorDownloadItem.FilePath;
+                        var folderFix = editorDownloadItem.FilePath; // ServerPath\\James\\Fix_3
                         var serverFileArr = Path.GetFullPath(folderFix).Split(new string[] { Path.GetFullPath(editorDownloadItem.ProjectPath) }, StringSplitOptions.None).Where(item => !string.IsNullOrEmpty(item)).ToList();
                         if (serverFileArr.Count() <= 0)
                         {
                             return;
                         }
 
-                        var localFolderFix = FileHelpers.GetEditorProjectLocalPath(editorDownloadItem.ProjectName) + serverFileArr.Last();
+                        var localFolderFix = FileHelpers.GetEditorProjectLocalPath(editorDownloadItem.ProjectName) + serverFileArr.Last(); //LocalPath\\ProjectName\\Fix_3
                         FileHelpers.CreateFolder(localFolderFix);
 
                         FileHelpers.AddFileLogProjectPath(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath);
