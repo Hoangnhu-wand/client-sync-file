@@ -29,7 +29,7 @@ namespace WandSyncFile
         DisplayFolder displayFolder;
         public List<int> processingProject = new List<int>();
         public List<int> processingUploadProject = new List<int>();
-        public List<string> processingUploadFixProject = new List<string>();
+        public List<int> processingUploadFixProject = new List<int>();
 
         public FormHome()
         {
@@ -319,21 +319,20 @@ namespace WandSyncFile
                 return;
             }
 
-            if (!isSyncFix && !processingUploadFixProject.Any(pName => pName == projectName))
+            var project = projectService.RequestGetProjectByName(projectName);
+            if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
             {
-                var project = projectService.RequestGetProjectByName(projectName);
+                return;
+            }
 
-                if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
-                {
-                    return;
-                }
-
+            if (!isSyncFix && !processingUploadFixProject.Any(pId => pId == project.Id))
+            {
                 Invoke((Action)(async () =>
                 {
                     addItem(DateTime.Now, "Upload Fix", projectName, 0);
                 }));
 
-                processingUploadFixProject.Add(projectName);
+                processingUploadFixProject.Add(project.Id);
 
                 FileHelpers.CopyDirectoryToServer(lastFixFolderLocalPath, lastFixFolderServerPath);
 
@@ -343,7 +342,7 @@ namespace WandSyncFile
                 {
                     addItem(DateTime.Now, "Upload Fix", projectName, 1);
                 }));
-                processingUploadFixProject.Remove(projectName);
+                processingUploadFixProject.Remove(project.Id);
             }
         }
 
