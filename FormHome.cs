@@ -345,16 +345,16 @@ namespace WandSyncFile
         public void SyncDo(string projectName, string projectPath)
         {
             var editorUserName = Properties.Settings.Default.Username;
-            var projectLocalPath = Properties.Settings.Default.ProjectLocalPath;
-            var localProject = Path.Combine(projectLocalPath, projectName);
+            var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            var localProjectDoPath = Path.Combine(localProject, Options.PROJECT_DO_NAME);
-            var localEditorDoPath = Path.Combine(localProjectDoPath, editorUserName);
+            var projectLocalPath = Path.Combine(localPath, projectName);
+            var projectDoLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME);
+            var projectDoEditorLocalPath = Path.Combine(projectDoLocalPath, editorUserName);
 
             var serverDoPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME);
             var serverEditorDoPath = Path.Combine(serverDoPath, editorUserName);
 
-            var isSyncDo = displayFolder.CheckFolderSyncCompleted(localEditorDoPath, serverEditorDoPath);
+            var isSyncDo = displayFolder.CheckFolderSyncCompleted(projectDoEditorLocalPath, serverEditorDoPath);
             if (isSyncDo)
             {
                 return;
@@ -369,7 +369,7 @@ namespace WandSyncFile
 
             if (!isSyncDo && !processingProject.Any(pId => pId == project.Id))
             {
-                displayFolder.CheckFolderSync(localEditorDoPath, serverEditorDoPath, localProjectDoPath);
+                displayFolder.CheckFolderSync(projectDoEditorLocalPath, serverEditorDoPath, projectDoLocalPath);
                 Invoke((Action)(async () =>
                 {
                     addItem(DateTime.Now, "Download Do", projectName, 0);
@@ -377,19 +377,19 @@ namespace WandSyncFile
 
                 processingProject.Add(project.Id);
 
-                FileHelpers.DownloadFolderFromServer(serverEditorDoPath, localEditorDoPath , null, true);
+                FileHelpers.DownloadFolderFromServer(serverEditorDoPath, projectDoEditorLocalPath, null, true);
 
                 // download folder Working - với dự án khác needFix
                 if(project.StatusId != (int)PROJECT_STATUS.NEEDFIX)
                 {
-                    var localFolderWorking = Path.Combine(localProject, Options.PROJECT_WORKING_PATH_NAME);
+                    var localFolderWorking = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME);
                     var editorFolderWorking = Path.Combine(localFolderWorking, editorUserName);
 
-                    displayFolder.CheckFolderSync(editorFolderWorking, localEditorDoPath, editorFolderWorking);
+                    displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
 
-                    FileHelpers.DownloadFolder(localEditorDoPath, editorFolderWorking);
+                    FileHelpers.DownloadFolder(projectDoEditorLocalPath, editorFolderWorking);
 
-                    displayFolder.CheckFolderSync(editorFolderWorking, localEditorDoPath, editorFolderWorking);
+                    displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
                 }
 
                 Invoke((Action)(async () =>
@@ -397,7 +397,7 @@ namespace WandSyncFile
                     addItem(DateTime.Now, "Download Do", projectName, 1);
                 }));
 
-                displayFolder.CheckFolderSync(localEditorDoPath, serverEditorDoPath, localProjectDoPath);
+                displayFolder.CheckFolderSync(projectDoEditorLocalPath, serverEditorDoPath, projectDoLocalPath);
 
                 processingProject.Remove(project.Id);
             }
