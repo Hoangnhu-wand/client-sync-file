@@ -377,29 +377,40 @@ namespace WandSyncFile
 
                 processingProject.Add(project.Id);
 
-                FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath, null, true);
+                try {
+                    FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath, null, true);
 
-                // download folder Working - với dự án khác needFix
-                if(project.StatusId != (int)PROJECT_STATUS.NEEDFIX)
-                {
-                    var localFolderWorking = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME);
-                    var editorFolderWorking = Path.Combine(localFolderWorking, editorUserName);
+                    // Copy Do sang Working
+                    if (project.StatusId != (int)PROJECT_STATUS.NEEDFIX)
+                    {
+                        var localFolderWorking = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME);
+                        var editorFolderWorking = Path.Combine(localFolderWorking, editorUserName);
 
-                    displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
+                        displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
 
-                    FileHelpers.DownloadFolder(projectDoEditorLocalPath, editorFolderWorking);
+                        FileHelpers.DownloadFolder(projectDoEditorLocalPath, editorFolderWorking);
 
-                    displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
+                        displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
+                    }
+
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Download Do", projectName, 1);
+                    }));
                 }
-
-                Invoke((Action)(async () =>
+                catch (Exception e)
                 {
-                    addItem(DateTime.Now, "Download Do", projectName, 1);
-                }));
-
-                displayFolder.CheckFolderSync(projectDoEditorLocalPath, projectDoEditorServerPath, projectDoLocalPath);
-
-                processingProject.Remove(project.Id);
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Download Do", projectName, 2);
+                    }));
+                }
+                finally
+                {
+                    displayFolder.CheckFolderSync(projectDoEditorLocalPath, projectDoEditorServerPath, projectDoLocalPath);
+                    
+                    processingProject.Remove(project.Id);
+                }
             }
         }
 
