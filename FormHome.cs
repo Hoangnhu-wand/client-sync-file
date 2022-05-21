@@ -416,10 +416,10 @@ namespace WandSyncFile
 
         public void SyncDone(string projectName, string projectPath)
         {
-            var projectLocalPath = Properties.Settings.Default.ProjectLocalPath;
             var editorUserName = Properties.Settings.Default.Username;
+            var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            var localProject = Path.Combine(projectLocalPath, projectName);
+            var localProject = Path.Combine(localPath, projectName);
             var localProjectDonePath = Path.Combine(localProject, Options.PROJECT_DONE_NAME);
             var localEditorDonePath = Path.Combine(localProjectDonePath, editorUserName);
 
