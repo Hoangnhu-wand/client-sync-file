@@ -370,6 +370,7 @@ namespace WandSyncFile
             if (!isSyncDo && !processingProject.Any(pId => pId == project.Id))
             {
                 displayFolder.CheckFolderSync(projectDoEditorLocalPath, projectDoEditorServerPath, projectDoLocalPath);
+
                 Invoke((Action)(async () =>
                 {
                     addItem(DateTime.Now, "Download Do", projectName, 0);
@@ -449,15 +450,25 @@ namespace WandSyncFile
 
                 processingUploadProject.Add(project.Id);
 
-                FileHelpers.SyncDirectoryDoneToServer(projectDoneEditorLocalPath, projectDoneEditorServerPath);
-                displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
+                try {
+                    FileHelpers.SyncDirectoryDoneToServer(projectDoneEditorLocalPath, projectDoneEditorServerPath);
 
-                Invoke((Action)(async () =>
-                {
-                    addItem(DateTime.Now, "Upload Done", projectName, 1);
-                }));
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Upload Done", projectName, 1);
+                    }));
+                }
+                catch (Exception e ) {
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Upload Done", projectName, 2);
+                    }));
+                }
+                finally {
+                    displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
 
-                processingUploadProject.Remove(project.Id);
+                    processingUploadProject.Remove(project.Id);
+                }
             }
         }
 
