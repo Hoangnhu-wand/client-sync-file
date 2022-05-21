@@ -703,27 +703,23 @@ namespace WandSyncFile
                         // check sync do path
                         SyncDo(projectName, projectPath);
 
-                        var editorServerPathDo = FileHelpers.GetEditorProjectDoServerPath(projectPath);
-                        var editorLocalProjectPath = Path.Combine(Properties.Settings.Default.ProjectLocalPath, projectName);
+                        var sampleLocalPath = FileHelpers.GetEditorProjectSampleLocalPath(projectName);
+                        var sampleServerPath = Path.Combine(projectPath, Options.PROJECT_SAMPLE_NAME);
 
-                        var localSamplePath = FileHelpers.GetEditorProjectSampleLocalPath(projectName);
-                        var projectPathSample = Path.Combine(projectPath, Options.PROJECT_SAMPLE_NAME);
-
-                        if (Directory.Exists(projectPathSample))
+                        if (Directory.Exists(sampleServerPath))
                         {
-                            var sampleAlreadySync = displayFolder.CheckFolderSync(localSamplePath, projectPathSample);
+                            var sampleAlreadySync = displayFolder.CheckFolderSync(sampleLocalPath, sampleServerPath);
 
                             if (!sampleAlreadySync)
                             {
-                                FileHelpers.DownloadFolderFromServer(projectPathSample, localSamplePath, null, true);
+                                FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true);
                             }
                         }
 
                         // create folder Done by server Done
-
                         FileHelpers.EditorCreateFolderDonePath(projectPath, projectName);
 
-                        displayFolder.CheckFolderSync(localSamplePath, projectPathSample);
+                        displayFolder.CheckFolderSync(sampleLocalPath, sampleServerPath);
                     });
                 }
 
