@@ -297,9 +297,10 @@ namespace WandSyncFile
 
         public void SyncFix(string projectName, string projectPath)
         {
-            var projectLocalPath = Properties.Settings.Default.ProjectLocalPath;
-            var localProject = Path.Combine(projectLocalPath, projectName);
             var editorUserName = Properties.Settings.Default.Username;
+            var projectLocalPath = Properties.Settings.Default.ProjectLocalPath;
+
+            var localProject = Path.Combine(projectLocalPath, projectName);
 
             var projectDirectoties = Directory.GetDirectories(localProject).ToList();
             var localFixFolderLast = projectDirectoties.Where(item => Path.GetFileName(item).Trim().StartsWith(Options.PROJECT_FIX_PATH_NAME)).OrderByDescending(item => Path.GetFileName(item)).FirstOrDefault();
