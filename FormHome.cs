@@ -310,10 +310,14 @@ namespace WandSyncFile
                 return;
             }
 
-            var folderFixName = Path.GetFileName(lastFixFolderLocalPath);
-            var serverFolderFix = Path.Combine(projectPath, folderFixName);
+            var lastFixFolderName = Path.GetFileName(lastFixFolderLocalPath);
+            var lastFixFolderServerPath = Path.Combine(projectPath, lastFixFolderName);
 
-            var isSyncFix = displayFolder.CheckFolderFixSync(lastFixFolderLocalPath, serverFolderFix, lastFixFolderLocalPath);
+            var isSyncFix = displayFolder.CheckFolderFixSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
+            if (isSyncFix)
+            {
+                return;
+            }
 
             if (!isSyncFix && !processingUploadFixProject.Any(pName => pName == projectName))
             {
@@ -331,9 +335,9 @@ namespace WandSyncFile
 
                 processingUploadFixProject.Add(projectName);
 
-                FileHelpers.CopyDirectoryToServer(lastFixFolderLocalPath, serverFolderFix);
+                FileHelpers.CopyDirectoryToServer(lastFixFolderLocalPath, lastFixFolderServerPath);
 
-                displayFolder.CheckFolderSync(lastFixFolderLocalPath, serverFolderFix, lastFixFolderLocalPath);
+                displayFolder.CheckFolderSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
 
                 Invoke((Action)(async () =>
                 {
