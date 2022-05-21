@@ -708,9 +708,9 @@ namespace WandSyncFile
 
                         if (Directory.Exists(sampleServerPath))
                         {
-                            var sampleAlreadySync = displayFolder.CheckFolderSync(sampleLocalPath, sampleServerPath);
+                            var isSyncSample = displayFolder.CheckFolderSync(sampleLocalPath, sampleServerPath);
 
-                            if (!sampleAlreadySync)
+                            if (!isSyncSample)
                             {
                                 FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true);
                             }
