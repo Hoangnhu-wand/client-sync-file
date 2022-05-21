@@ -351,10 +351,10 @@ namespace WandSyncFile
             var projectDoLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME);
             var projectDoEditorLocalPath = Path.Combine(projectDoLocalPath, editorUserName);
 
-            var serverDoPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME);
-            var serverEditorDoPath = Path.Combine(serverDoPath, editorUserName);
+            var projectDoServerPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME);
+            var projectDoEditorServerPath = Path.Combine(projectDoServerPath, editorUserName);
 
-            var isSyncDo = displayFolder.CheckFolderSyncCompleted(projectDoEditorLocalPath, serverEditorDoPath);
+            var isSyncDo = displayFolder.CheckFolderSyncCompleted(projectDoEditorLocalPath, projectDoEditorServerPath);
             if (isSyncDo)
             {
                 return;
@@ -369,7 +369,7 @@ namespace WandSyncFile
 
             if (!isSyncDo && !processingProject.Any(pId => pId == project.Id))
             {
-                displayFolder.CheckFolderSync(projectDoEditorLocalPath, serverEditorDoPath, projectDoLocalPath);
+                displayFolder.CheckFolderSync(projectDoEditorLocalPath, projectDoEditorServerPath, projectDoLocalPath);
                 Invoke((Action)(async () =>
                 {
                     addItem(DateTime.Now, "Download Do", projectName, 0);
@@ -377,7 +377,7 @@ namespace WandSyncFile
 
                 processingProject.Add(project.Id);
 
-                FileHelpers.DownloadFolderFromServer(serverEditorDoPath, projectDoEditorLocalPath, null, true);
+                FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath, null, true);
 
                 // download folder Working - với dự án khác needFix
                 if(project.StatusId != (int)PROJECT_STATUS.NEEDFIX)
@@ -397,7 +397,7 @@ namespace WandSyncFile
                     addItem(DateTime.Now, "Download Do", projectName, 1);
                 }));
 
-                displayFolder.CheckFolderSync(projectDoEditorLocalPath, serverEditorDoPath, projectDoLocalPath);
+                displayFolder.CheckFolderSync(projectDoEditorLocalPath, projectDoEditorServerPath, projectDoLocalPath);
 
                 processingProject.Remove(project.Id);
             }
