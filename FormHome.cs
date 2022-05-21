@@ -298,22 +298,22 @@ namespace WandSyncFile
         public void SyncFix(string projectName, string projectPath)
         {
             var editorUserName = Properties.Settings.Default.Username;
-            var projectLocalPath = Properties.Settings.Default.ProjectLocalPath;
+            var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            var localProject = Path.Combine(projectLocalPath, projectName);
+            var projectLocalPath = Path.Combine(localPath, projectName);
 
-            var projectDirectoties = Directory.GetDirectories(localProject).ToList();
-            var localFixFolderLast = projectDirectoties.Where(item => Path.GetFileName(item).Trim().StartsWith(Options.PROJECT_FIX_PATH_NAME)).OrderByDescending(item => Path.GetFileName(item)).FirstOrDefault();
+            var projectDirectoties = Directory.GetDirectories(projectLocalPath).ToList();
+            var lastFixFolderLocalPath = projectDirectoties.Where(item => Path.GetFileName(item).Trim().StartsWith(Options.PROJECT_FIX_PATH_NAME)).OrderByDescending(item => Path.GetFileName(item)).FirstOrDefault();
 
-            if (localFixFolderLast == null)
+            if (lastFixFolderLocalPath == null)
             {
                 return;
             }
 
-            var folderFixName = Path.GetFileName(localFixFolderLast);
+            var folderFixName = Path.GetFileName(lastFixFolderLocalPath);
             var serverFolderFix = Path.Combine(projectPath, folderFixName);
 
-            var isSyncFix = displayFolder.CheckFolderFixSync(localFixFolderLast, serverFolderFix, localFixFolderLast);
+            var isSyncFix = displayFolder.CheckFolderFixSync(lastFixFolderLocalPath, serverFolderFix, lastFixFolderLocalPath);
 
             if (!isSyncFix && !processingUploadFixProject.Any(pName => pName == projectName))
             {
@@ -331,9 +331,9 @@ namespace WandSyncFile
 
                 processingUploadFixProject.Add(projectName);
 
-                FileHelpers.CopyDirectoryToServer(localFixFolderLast, serverFolderFix);
+                FileHelpers.CopyDirectoryToServer(lastFixFolderLocalPath, serverFolderFix);
 
-                displayFolder.CheckFolderSync(localFixFolderLast, serverFolderFix, localFixFolderLast);
+                displayFolder.CheckFolderSync(lastFixFolderLocalPath, serverFolderFix, lastFixFolderLocalPath);
 
                 Invoke((Action)(async () =>
                 {
