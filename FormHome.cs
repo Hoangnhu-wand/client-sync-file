@@ -336,15 +336,25 @@ namespace WandSyncFile
 
                 processingUploadFixProject.Add(project.Id);
 
-                FileHelpers.CopyDirectoryToServer(lastFixFolderLocalPath, lastFixFolderServerPath);
+                try {
+                    FileHelpers.CopyDirectoryToServer(lastFixFolderLocalPath, lastFixFolderServerPath);
 
-                displayFolder.CheckFolderSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Upload Fix", projectName, 1);
+                    }));
+                }
+                catch(Exception e) {
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Upload Fix", projectName, 2);
+                    }));
+                }
+                finally {
+                    displayFolder.CheckFolderSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
 
-                Invoke((Action)(async () =>
-                {
-                    addItem(DateTime.Now, "Upload Fix", projectName, 1);
-                }));
-                processingUploadFixProject.Remove(project.Id);
+                    processingUploadFixProject.Remove(project.Id);
+                }
             }
         }
 
