@@ -419,21 +419,20 @@ namespace WandSyncFile
             var editorUserName = Properties.Settings.Default.Username;
             var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            var localProject = Path.Combine(localPath, projectName);
-            var localProjectDonePath = Path.Combine(localProject, Options.PROJECT_DONE_NAME);
-            var localEditorDonePath = Path.Combine(localProjectDonePath, editorUserName);
+            var projectLocalPath = Path.Combine(localPath, projectName);
+            var projectDoneLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME);
+            var projectDoneEditorLocalPath = Path.Combine(projectDoneLocalPath, editorUserName);
 
+            var projectDoneServerPath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME);
+            var projectDoneEditorServerPath = Path.Combine(projectDoneServerPath, editorUserName);
 
-            var serverDonePath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME);
-            var serverEditorDonePath = Path.Combine(serverDonePath, editorUserName);
-            var isSyncDone = displayFolder.CheckFolderSyncCompleted(localEditorDonePath, serverEditorDonePath);
+            var isSyncDone = displayFolder.CheckFolderSyncCompleted(projectDoneEditorLocalPath, projectDoneEditorServerPath);
             if (isSyncDone)
             {
                 return;
             }
 
             var project = projectService.RequestGetProjectByName(projectName);
-
             if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
             {
                 return;
@@ -441,7 +440,7 @@ namespace WandSyncFile
 
             if (!isSyncDone && !processingUploadProject.Any(pName => pName == projectName))
             {
-                displayFolder.CheckFolderSync(localEditorDonePath, serverEditorDonePath, localProjectDonePath);
+                displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
 
                 Invoke((Action)(async () =>
                 {
@@ -450,8 +449,8 @@ namespace WandSyncFile
 
                 processingUploadProject.Add(projectName);
 
-                FileHelpers.SyncDirectoryDoneToServer(localEditorDonePath, serverEditorDonePath);
-                displayFolder.CheckFolderSync(localEditorDonePath, serverEditorDonePath, localProjectDonePath);
+                FileHelpers.SyncDirectoryDoneToServer(projectDoneEditorLocalPath, projectDoneEditorServerPath);
+                displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
 
                 Invoke((Action)(async () =>
                 {
