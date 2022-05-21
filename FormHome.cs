@@ -327,6 +327,8 @@ namespace WandSyncFile
 
             if (!isSyncFix && !processingUploadFixProject.Any(pId => pId == project.Id))
             {
+                displayFolder.CheckFolderSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
+
                 Invoke((Action)(async () =>
                 {
                     addItem(DateTime.Now, "Upload Fix", projectName, 0);
