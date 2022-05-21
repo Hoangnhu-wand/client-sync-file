@@ -28,7 +28,7 @@ namespace WandSyncFile
         CancellationToken cancellationTokenRemoveProject;
         DisplayFolder displayFolder;
         public List<int> processingProject = new List<int>();
-        public List<string> processingUploadProject = new List<string>();
+        public List<int> processingUploadProject = new List<int>();
         public List<string> processingUploadFixProject = new List<string>();
 
         public FormHome()
@@ -438,7 +438,7 @@ namespace WandSyncFile
                 return;
             }
 
-            if (!isSyncDone && !processingUploadProject.Any(pName => pName == projectName))
+            if (!isSyncDone && !processingUploadProject.Any(pId => pId == project.Id))
             {
                 displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
 
@@ -447,7 +447,7 @@ namespace WandSyncFile
                     addItem(DateTime.Now, "Upload Done", projectName, 0);
                 }));
 
-                processingUploadProject.Add(projectName);
+                processingUploadProject.Add(project.Id);
 
                 FileHelpers.SyncDirectoryDoneToServer(projectDoneEditorLocalPath, projectDoneEditorServerPath);
                 displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
@@ -457,7 +457,7 @@ namespace WandSyncFile
                     addItem(DateTime.Now, "Upload Done", projectName, 1);
                 }));
 
-                processingUploadProject.Remove(projectName);
+                processingUploadProject.Remove(project.Id);
             }
         }
 
