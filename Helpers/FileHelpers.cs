@@ -1095,45 +1095,48 @@ namespace WandSyncFile.Helpers
             }
         }
 
-        public static string GetEditorProjectLocalPath(string projectName)
+        public static string GetProjectLocalPath(string projectName)
         {
-            var editorLocalPath = Properties.Settings.Default.ProjectLocalPath;
+            var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            if (string.IsNullOrEmpty(editorLocalPath))
+            if (string.IsNullOrEmpty(localPath))
             {
                 return "";
             }
-            var editorProjectPath = Path.Combine(editorLocalPath, projectName);
+            var editorProjectPath = Path.Combine(localPath, projectName);
 
             return editorProjectPath;
         }
 
-        public static string GetEditorProjectDoLocalPath(string projectName)
+        public static string GetProjectDoEditorLocalPath(string projectName)
         {
             var editorUserName = Properties.Settings.Default.Username;
-            var editorProjectPath = GetEditorProjectLocalPath(projectName);
-            var editorDoPath = Path.Combine(editorProjectPath, Options.PROJECT_DO_NAME);
+
+            var projectLocalPath = GetProjectLocalPath(projectName);
+            var editorDoPath = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME);
 
             return Path.Combine(editorDoPath, editorUserName);
         }
 
-        public static string GetEditorProjectDoneLocalPath(string projectName)
+        public static string GetProjectDoneEditorLocalPath(string projectName)
         {
-            var editorLocalPath = Properties.Settings.Default.ProjectLocalPath;
             var editorUserName = Properties.Settings.Default.Username;
-            var editorProjectPath = Path.Combine(editorLocalPath, projectName);
-            var editorDoPath = Path.Combine(editorProjectPath, Options.PROJECT_DONE_NAME);
+            var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            return Path.Combine(editorDoPath, editorUserName);
+            var projectLocalPath = Path.Combine(localPath, projectName);
+            var projectDoneLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME);
+
+            return Path.Combine(projectDoneLocalPath, editorUserName);
         }
 
-        public static string GetEditorProjectSampleLocalPath(string projectName)
+        public static string GetProjectSampleLocalPath(string projectName)
         {
-            var editorLocalPath = Properties.Settings.Default.ProjectLocalPath;
-            var editorProjectPath = Path.Combine(editorLocalPath, projectName);
-            var samplePath = Path.Combine(editorProjectPath, Options.PROJECT_SAMPLE_NAME);
+            var localPath = Properties.Settings.Default.ProjectLocalPath;
+            var projectLocalPath = Path.Combine(localPath, projectName);
 
-            return samplePath;
+            var sampleLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_SAMPLE_NAME);
+
+            return sampleLocalPath;
         }
 
         public static string GetEditorProjectDoServerPath(string projectPath)
