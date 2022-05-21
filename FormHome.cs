@@ -687,18 +687,18 @@ namespace WandSyncFile
                         var projectPath = editorDownloadItem.ProjectPath.Trim(); // ServerPath\\ProjectName"
                         var projectName = editorDownloadItem.ProjectName.Trim(); // ProjectName
 
-                        var editorLocalPathDo = FileHelpers.GetEditorProjectDoLocalPath(projectName); // LocalPath/ProjectName/Do/EditorName
-                        var localProjectPath = FileHelpers.GetEditorProjectLocalPath(projectName); // LocalPath/ProjectName
-                        var localProjectDoPath = Path.Combine(localProjectPath, Options.PROJECT_DO_NAME); // LocalPath/ProjectName/Do
+                        var projectLocalPath = FileHelpers.GetEditorProjectLocalPath(projectName); // LocalPath/ProjectName
+                        var projectDoLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME); // LocalPath/ProjectName/Do
+                        var projectDoEditorLocalPath = FileHelpers.GetEditorProjectDoLocalPath(projectName); // LocalPath/ProjectName/Do/EditorName
 
-                        FileHelpers.CreateFolder(localProjectDoPath);
+                        FileHelpers.CreateFolder(projectDoLocalPath);
+                        FileHelpers.CreateFolder(projectDoEditorLocalPath);
 
-                        FileHelpers.CreateFolder(editorLocalPathDo);
                         FileHelpers.AddFileLogProjectPath(projectName, projectPath);
 
                         // Tạo thư mục Done
-                        var editorLocalDonepath = FileHelpers.GetEditorProjectDoneLocalPath(projectName);
-                        FileHelpers.CreateFolder(editorLocalDonepath);
+                        var projectDoneEditorLocalPath = FileHelpers.GetEditorProjectDoneLocalPath(projectName);
+                        FileHelpers.CreateFolder(projectDoneEditorLocalPath);
 
                         // check sync do path
                         SyncDo(projectName, projectPath);
