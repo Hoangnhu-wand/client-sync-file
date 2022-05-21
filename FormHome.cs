@@ -344,15 +344,16 @@ namespace WandSyncFile
 
         public void SyncDo(string projectName, string projectPath)
         {
+            var editorUserName = Properties.Settings.Default.Username;
             var projectLocalPath = Properties.Settings.Default.ProjectLocalPath;
             var localProject = Path.Combine(projectLocalPath, projectName);
-            var editorUserName = Properties.Settings.Default.Username;
 
             var localProjectDoPath = Path.Combine(localProject, Options.PROJECT_DO_NAME);
             var localEditorDoPath = Path.Combine(localProjectDoPath, editorUserName);
 
             var serverDoPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME);
             var serverEditorDoPath = Path.Combine(serverDoPath, editorUserName);
+
             var isSyncDo = displayFolder.CheckFolderSyncCompleted(localEditorDoPath, serverEditorDoPath);
             if (isSyncDo)
             {
