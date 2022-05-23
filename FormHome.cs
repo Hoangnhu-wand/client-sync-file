@@ -586,8 +586,9 @@ namespace WandSyncFile
                 var folderFixName = FileHelpers.ServerGetFolderName(folderFixItem); // fix_1
                 var localEditorFixPath = Path.Combine(localProject, folderFixName); // LocalPath\\ProjectName\\fix_1
 
-                // chỉ lấy các file fix có trong Done
+                FileHelpers.CreateFolder(localEditorFixPath);
 
+                // chỉ lấy các file fix có trong Done
                 var allFileDoneName = FileHelpers.GetListFileNameByFolder(serverEditorDonePath);
                 var allFixByDoneName = FileHelpers.ServerGetListFixPathByDoneName(allFileDoneName, folderFixItem);
 
