@@ -796,7 +796,7 @@ namespace WandSyncFile
                 {
                     Task.Run(() =>
                     {
-                        var projectInfo = JsonConvert.DeserializeObject<ProjectInfo>(localProjectName);
+                        var projectInfo = JsonConvert.DeserializeObject<DownloadProjectInfo>(localProjectName);
 
                         if (projectInfo == null || !FileHelpers.ExitServerPath(projectInfo.Path))
                         {

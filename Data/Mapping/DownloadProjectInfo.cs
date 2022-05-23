@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WandSyncFile.Data.Mapping
 {
-    internal class ProjectInfo
+    internal class DownloadProjectInfo
     {
         public int Id { get; set; }
         public string Name { get; set; }
