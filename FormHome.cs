@@ -491,9 +491,10 @@ namespace WandSyncFile
 
         public void CopyDoneAndFixFromServer(string projectName, string projectPath, int projectId)
         {
-            var projectLocalPath = Properties.Settings.Default.ProjectLocalPath; //LocalPath
             var editorUserName = Properties.Settings.Default.Username; // EditorName
-            var localProject = Path.Combine(projectLocalPath, projectName); // LocalPath\\ProjectName
+            var localPath = Properties.Settings.Default.ProjectLocalPath; //LocalPath
+
+            var localProject = Path.Combine(localPath, projectName); // LocalPath\\ProjectName
 
             if (!Directory.Exists(localProject))
             {
