@@ -511,8 +511,8 @@ namespace WandSyncFile
             var projectDoLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME); // LocalPath\\ProjectName\\Do
             var projectDoEditorLocalPath = Path.Combine(projectDoLocalPath, editorUserName); // LocalPath\\ProjectName\\Do\\EditorName
 
-            var serverDoPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME); // ServerPath\\James\\Do
-            var serverEditorDoPath = Path.Combine(serverDoPath, editorUserName); // ServerPath\\James\\Do\\EditorName
+            var projectDoServerPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME); // ServerPath\\James\\Do
+            var projectDoEditorServerPath = Path.Combine(projectDoServerPath, editorUserName); // ServerPath\\James\\Do\\EditorName
 
             Invoke((Action)(async () =>
             {
@@ -521,7 +521,7 @@ namespace WandSyncFile
 
             processingProject.Add(projectId);
 
-            FileHelpers.DownloadFolderFromServer(serverEditorDoPath, projectDoEditorLocalPath);
+            FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath);
 
             Invoke((Action)(async () =>
             {
@@ -530,13 +530,13 @@ namespace WandSyncFile
 
             processingProject.Remove(projectId);
 
-            // download done
-            var localProjectDonePath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME); // LocalPath\\ProjectName\\Done
-            var localEditorDonePath = Path.Combine(localProjectDonePath, editorUserName); // LocalPath\\ProjectName\\Done\\EditorName
+            // Download Done
+            var projectDoneLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME); // LocalPath\\ProjectName\\Done
+            var projectDoneEditorLocalPath = Path.Combine(projectDoneLocalPath, editorUserName); // LocalPath\\ProjectName\\Done\\EditorName
 
             // Neu Done đã có ảnh -> Không tải nữa
-            FileHelpers.CreateFolder(localEditorDonePath);
-            var folderDoneHasFile = FileHelpers.HasFileInFolder(localEditorDonePath);
+            FileHelpers.CreateFolder(projectDoneEditorLocalPath);
+            var folderDoneHasFile = FileHelpers.HasFileInFolder(projectDoneEditorLocalPath);
             if (folderDoneHasFile)
             {
                 return;
@@ -548,10 +548,10 @@ namespace WandSyncFile
             }));
 
             // download done
-            var serverDonePath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME); // ServerPath\\James\\Done
-            var serverEditorDonePath = Path.Combine(serverDonePath, editorUserName); // ServerPath\\James\\Done\\EditorName
+            var projectDoneServerPath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME); // ServerPath\\James\\Done
+            var projectDoneEditorServerPath = Path.Combine(projectDoneServerPath, editorUserName); // ServerPath\\James\\Done\\EditorName
 
-            FileHelpers.DownloadFolderFromServer(serverEditorDonePath, localEditorDonePath);
+            FileHelpers.DownloadFolderFromServer(projectDoneEditorServerPath, projectDoneEditorLocalPath);
 
             Invoke((Action)(async () =>
             {
@@ -559,15 +559,15 @@ namespace WandSyncFile
             }));
 
             // download folder Working from done
-            var localFolderWorking = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME); // LocalPath\\ProjectName\\Working
-            var editorFolderWorking = Path.Combine(localFolderWorking, editorUserName); // LocalPath\\ProjectName\\Working\\EditorName
+            var projectWorkingLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME); // LocalPath\\ProjectName\\Working
+            var projectWorkingEditorLocalPath = Path.Combine(projectWorkingLocalPath, editorUserName); // LocalPath\\ProjectName\\Working\\EditorName
 
-            FileHelpers.CreateFolder(editorFolderWorking);
+            FileHelpers.CreateFolder(projectWorkingEditorLocalPath);
 
-            var checkWorking = displayFolder.CheckFolderSync(editorFolderWorking, localEditorDonePath, editorFolderWorking);
+            var checkWorking = displayFolder.CheckFolderSync(projectWorkingEditorLocalPath, projectDoneEditorLocalPath, projectWorkingEditorLocalPath);
             if (!checkWorking)
             {
-                FileHelpers.DownloadFolder(localEditorDonePath, editorFolderWorking);
+                FileHelpers.DownloadFolder(projectDoneEditorLocalPath, projectWorkingEditorLocalPath);
             }
 
             // download fix
@@ -590,7 +590,7 @@ namespace WandSyncFile
                 FileHelpers.CreateFolder(localEditorFixPath);
 
                 // chỉ lấy các file fix có trong Done
-                var allFileDoneName = FileHelpers.GetListFileNameByFolder(serverEditorDonePath);
+                var allFileDoneName = FileHelpers.GetListFileNameByFolder(projectDoneEditorServerPath);
                 var allFixByDoneName = FileHelpers.ServerGetListFixPathByDoneName(allFileDoneName, folderFixItem);
 
                 foreach (var fixItem in allFixByDoneName)
@@ -600,7 +600,7 @@ namespace WandSyncFile
                 }
 
                 // copy fix to working
-                FileHelpers.DownloadFolder(localEditorFixPath, editorFolderWorking);
+                FileHelpers.DownloadFolder(localEditorFixPath, projectWorkingEditorLocalPath);
             }
 
             Invoke((Action)(async () =>
