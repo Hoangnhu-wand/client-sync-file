@@ -17,6 +17,7 @@ using WandSyncFile.CustomControls;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using Microsoft.Extensions.DependencyInjection;
+using WandSyncFile.Data.Mapping;
 
 namespace WandSyncFile
 {
@@ -788,6 +789,56 @@ namespace WandSyncFile
                         }
 
                         SyncFix(projectName, projectPath);
+                    });
+                }
+
+                if (action == "DOWNLOAD_PROJECT" && UserRoleHelpers.IsEditors() && user == userName)
+                {
+                    Task.Run(() =>
+                    {
+                        var projectInfo = JsonConvert.DeserializeObject<ProjectInfo>(localProjectName);
+
+                        if (projectInfo == null || !FileHelpers.ExitServerPath(projectInfo.Path))
+                        {
+                            return;
+                        }
+
+                        var projectPath = projectInfo.Path.Trim(); // ServerPath\\ProjectName"
+                        var projectName = projectInfo.Name.Trim(); // ProjectName
+
+                        var projectLocalPath = FileHelpers.GetProjectLocalPath(projectName); // LocalPath/ProjectName
+                        var projectDoLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME); // LocalPath/ProjectName/Do
+                        var projectDoEditorLocalPath = FileHelpers.GetProjectDoEditorLocalPath(projectName); // LocalPath/ProjectName/Do/EditorName
+
+                        FileHelpers.CreateFolder(projectDoLocalPath);
+                        FileHelpers.CreateFolder(projectDoEditorLocalPath);
+
+                        FileHelpers.AddFileLogProjectPath(projectName, projectPath);
+
+                        // Tạo thư mục Done
+                        var projectDoneEditorLocalPath = FileHelpers.GetProjectDoneEditorLocalPath(projectName);
+                        FileHelpers.CreateFolder(projectDoneEditorLocalPath);
+
+                        // check sync do path
+                        SyncDo(projectName, projectPath);
+
+                        var sampleLocalPath = FileHelpers.GetProjectSampleLocalPath(projectName);
+                        var sampleServerPath = Path.Combine(projectPath, Options.PROJECT_SAMPLE_NAME);
+
+                        if (Directory.Exists(sampleServerPath))
+                        {
+                            var isSyncSample = displayFolder.CheckFolderSync(sampleLocalPath, sampleServerPath);
+
+                            if (!isSyncSample)
+                            {
+                                FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true);
+                            }
+                        }
+
+                        // create folder Done by server Done
+                        FileHelpers.EditorCreateFolderDonePath(projectPath, projectName);
+
+                        displayFolder.CheckFolderSync(sampleLocalPath, sampleServerPath);
                     });
                 }
 

@@ -441,6 +441,7 @@
       <DependentUpon>TextboxCustom.cs</DependentUpon>
     </Compile>
     <Compile Include="Data\Mapping\AccountDto.cs" />
+    <Compile Include="Data\Mapping\ProjectInfo.cs" />
     <Compile Include="Data\Mapping\EditorDownloadFileProjectDto.cs" />
     <Compile Include="Data\Mapping\OptionDto.cs" />
     <Compile Include="Data\Mapping\ProjectRequestDto.cs" />
