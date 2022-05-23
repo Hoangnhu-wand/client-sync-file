@@ -721,6 +721,8 @@ namespace WandSyncFile
                         FileHelpers.EditorCreateFolderDonePath(projectPath, projectName);
 
                         displayFolder.CheckFolderSync(sampleLocalPath, sampleServerPath);
+
+                        await connection.SendAsync("ReceiverMessageAsync", "CLIENT_FILE", editorDownloadItem.MessageId, "REMOVE_PROJECT_QUEUE_MESSAGE", null);
                     });
                 }
 
