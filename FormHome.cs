@@ -534,7 +534,6 @@ namespace WandSyncFile
             var projectDoneLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME); // LocalPath\\ProjectName\\Done
             var projectDoneEditorLocalPath = Path.Combine(projectDoneLocalPath, editorUserName); // LocalPath\\ProjectName\\Done\\EditorName
 
-            // Neu Done đã có ảnh -> Không tải nữa
             FileHelpers.CreateFolder(projectDoneEditorLocalPath);
             var folderDoneHasFile = FileHelpers.HasFileInFolder(projectDoneEditorLocalPath);
             if (folderDoneHasFile)
@@ -547,7 +546,6 @@ namespace WandSyncFile
                 addItem(DateTime.Now, "Download Done", projectName, 0);
             }));
 
-            // download done
             var projectDoneServerPath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME); // ServerPath\\James\\Done
             var projectDoneEditorServerPath = Path.Combine(projectDoneServerPath, editorUserName); // ServerPath\\James\\Done\\EditorName
 
@@ -558,7 +556,7 @@ namespace WandSyncFile
                 addItem(DateTime.Now, "Download Done", projectName, 1);
             }));
 
-            // download folder Working from done
+            // Copy Done -> Working
             var projectWorkingLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME); // LocalPath\\ProjectName\\Working
             var projectWorkingEditorLocalPath = Path.Combine(projectWorkingLocalPath, editorUserName); // LocalPath\\ProjectName\\Working\\EditorName
 
@@ -570,7 +568,7 @@ namespace WandSyncFile
                 FileHelpers.DownloadFolder(projectDoneEditorLocalPath, projectWorkingEditorLocalPath);
             }
 
-            // download fix
+            // Download Fix
             var allFolderFix = FileHelpers.ServerGetListFix(projectPath);
             if (allFolderFix == null)
             {
@@ -599,7 +597,7 @@ namespace WandSyncFile
                     FileHelpers.CopyFileFromServer(fixItem, clientPath);
                 }
 
-                // copy fix to working
+                // Copy Fix -> Working
                 FileHelpers.DownloadFolder(localEditorFixPath, projectWorkingEditorLocalPath);
             }
 
