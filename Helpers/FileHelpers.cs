@@ -1291,7 +1291,7 @@ namespace WandSyncFile.Helpers
             return false;
         }
 
-        public static List<string> ServerGetListFix(string projectPath)
+        public static List<string> GetListServerFolderFix(string projectPath)
         {
             IntPtr token = IntPtr.Zero;
             LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
@@ -1299,9 +1299,9 @@ namespace WandSyncFile.Helpers
             {
                 try
                 {
-                    var projectDirectoties = Directory.GetDirectories(projectPath).Select(item => item.ToLower()).ToList();
-                    var folderFixName = Options.PROJECT_FIX_PATH_NAME.ToLower();
-                    var fixFolders = projectDirectoties.Where(item => Path.GetFileName(item).Trim().StartsWith(folderFixName)).Select(item => Path.GetFullPath(item)).ToList();
+                    var projectDirectoties = Directory.GetDirectories(projectPath).ToList();
+                    var folderFixName = Options.PROJECT_FIX_PATH_NAME;
+                    var fixFolders = projectDirectoties.Where(item => Path.GetFileName(item).Trim().ToLower().StartsWith(folderFixName.ToLower())).Select(item => Path.GetFullPath(item)).ToList();
 
                     return fixFolders;
                 }

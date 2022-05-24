@@ -569,7 +569,7 @@ namespace WandSyncFile
             }
 
             // Download Fix
-            var allFolderFix = FileHelpers.ServerGetListFix(projectPath);
+            var allFolderFix = FileHelpers.GetListServerFolderFix(projectPath);
             if (allFolderFix == null)
             {
                 return;
