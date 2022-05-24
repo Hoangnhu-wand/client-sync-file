@@ -476,11 +476,11 @@ namespace WandSyncFile.Helpers
                     Directory.CreateDirectory(toPath);
                 }
 
-                FileInfo[] localFileInfo = new DirectoryInfo(fromPath).GetFiles();
-                var fromFiles = localFileInfo.Select(item => item.Name).ToList();
+                FileInfo[] fromFileInfo = new DirectoryInfo(fromPath).GetFiles();
+                var fromFiles = fromFileInfo.Select(item => item.Name).ToList();
 
-                FileInfo[] fileInfo = new DirectoryInfo(toPath).GetFiles();
-                var toFiles = fileInfo.Select(item => item.Name).ToList();
+                FileInfo[] toFileInfo = new DirectoryInfo(toPath).GetFiles();
+                var toFiles = toFileInfo.Select(item => item.Name).ToList();
 
                 var newFiles = fromFiles.Where(fromFile => !toFiles.Any(toFile => fromFile == toFile)).ToList();
 
