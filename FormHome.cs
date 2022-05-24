@@ -598,7 +598,7 @@ namespace WandSyncFile
                 }
 
                 // Copy Fix -> Working
-                FileHelpers.DownloadFolder(localEditorFixPath, projectWorkingEditorLocalPath);
+                FileHelpers.DownloadFolder(localEditorFixPath, projectWorkingEditorLocalPath, null, false, true);
             }
 
             Invoke((Action)(async () =>
