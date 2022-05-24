@@ -467,7 +467,7 @@ namespace WandSyncFile.Helpers
             }
         }
 
-        public static void DownloadFolder(string fromPath, string toPath, string withoutFolder = null, bool isSync = false)
+        public static void DownloadFolder(string fromPath, string toPath, string withoutFolder = null, bool isRemoveNotExists = false, bool isReplaceExists = false)
         {
             try
             {
@@ -484,9 +484,9 @@ namespace WandSyncFile.Helpers
 
                 var newFiles = fromFiles.Where(fromFile => !toFiles.Any(toFile => fromFile == toFile)).ToList();
 
-                if (isSync)
+                if (isRemoveNotExists)
                 {
-                    // remove
+                    // Xóa file khong co trong fromPath
                     var removeFiles = toFiles.Where(toFile => !fromFiles.Any(fromFile => fromFile == toFile)).ToList();
                     foreach (var deleteFile in removeFiles)
                     {
@@ -495,6 +495,18 @@ namespace WandSyncFile.Helpers
                         {
                             File.Delete(deleteFileItem);
                         }
+                    }
+                }
+
+                if (isReplaceExists)
+                {
+                    // Ghi đè file
+                    var existsFiles = fromFiles.Where(fromFile => toFiles.Any(toFile => fromFile == toFile)).ToList();
+                    foreach (var existsFile in existsFiles)
+                    {
+                        var fromExistsFileFile = Path.Combine(fromPath, existsFile);
+                        string toExistsFileFile = toPath + "/" + existsFile;
+                        CopyFile(fromExistsFileFile, toExistsFileFile, 1024 * 1024 * 5);
                     }
                 }
 
@@ -521,7 +533,7 @@ namespace WandSyncFile.Helpers
                     {
                         string name = Path.GetFileName(folder);
                         string dest = Path.Combine(toPath, name);
-                        DownloadFolder(folder, dest, withoutFolder, isSync);
+                        DownloadFolder(folder, dest, withoutFolder, isRemoveNotExists, isReplaceExists);
                     }
                 }
 
@@ -532,7 +544,7 @@ namespace WandSyncFile.Helpers
             }
         }
 
-        public static void DownloadFolderFromServer(string fromPath, string toPath, string withoutFolder = null, bool isSync = false)
+        public static void DownloadFolderFromServer(string fromPath, string toPath, string withoutFolder = null, bool isRemoveNotExists = false, bool isReplaceExists = false)
         {
             try
             {
@@ -542,7 +554,7 @@ namespace WandSyncFile.Helpers
                 {
                     try
                     {
-                        DownloadFolder(fromPath, toPath, withoutFolder, isSync);
+                        DownloadFolder(fromPath, toPath, withoutFolder, isRemoveNotExists, isReplaceExists);
                     }
                     catch (IOException e)
                     {

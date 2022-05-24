@@ -713,7 +713,7 @@ namespace WandSyncFile
 
                             if (!isSyncSample)
                             {
-                                FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true);
+                                FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true, true);
                             }
                         }
 
@@ -843,7 +843,7 @@ namespace WandSyncFile
 
                                 if (!isSyncSample)
                                 {
-                                    FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true);
+                                    FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true, true);
                                 }
                             }
 
