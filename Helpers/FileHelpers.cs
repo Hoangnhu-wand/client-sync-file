@@ -467,7 +467,7 @@ namespace WandSyncFile.Helpers
             }
         }
 
-        public static void DownloadFolder(string fromPath, string toPath, string withoutFolder = null, bool isSync = false)
+        public static void DownloadFolder(string fromPath, string toPath, string withoutFolder = null, bool isRemoveNotExists = false, bool isReplaceExists = false)
         {
             try
             {
@@ -476,17 +476,17 @@ namespace WandSyncFile.Helpers
                     Directory.CreateDirectory(toPath);
                 }
 
-                FileInfo[] localFileInfo = new DirectoryInfo(fromPath).GetFiles();
-                var fromFiles = localFileInfo.Select(item => item.Name).ToList();
+                FileInfo[] fromFileInfo = new DirectoryInfo(fromPath).GetFiles();
+                var fromFiles = fromFileInfo.Select(item => item.Name).ToList();
 
-                FileInfo[] fileInfo = new DirectoryInfo(toPath).GetFiles();
-                var toFiles = fileInfo.Select(item => item.Name).ToList();
+                FileInfo[] toFileInfo = new DirectoryInfo(toPath).GetFiles();
+                var toFiles = toFileInfo.Select(item => item.Name).ToList();
 
                 var newFiles = fromFiles.Where(fromFile => !toFiles.Any(toFile => fromFile == toFile)).ToList();
 
-                if (isSync)
+                if (isRemoveNotExists)
                 {
-                    // remove
+                    // Xóa file khong co trong fromPath
                     var removeFiles = toFiles.Where(toFile => !fromFiles.Any(fromFile => fromFile == toFile)).ToList();
                     foreach (var deleteFile in removeFiles)
                     {
@@ -495,6 +495,18 @@ namespace WandSyncFile.Helpers
                         {
                             File.Delete(deleteFileItem);
                         }
+                    }
+                }
+
+                if (isReplaceExists)
+                {
+                    // Ghi đè file
+                    var existsFiles = fromFiles.Where(fromFile => toFiles.Any(toFile => fromFile == toFile)).ToList();
+                    foreach (var existsFile in existsFiles)
+                    {
+                        var fromExistsFileFile = Path.Combine(fromPath, existsFile);
+                        string toExistsFileFile = toPath + "/" + existsFile;
+                        CopyFile(fromExistsFileFile, toExistsFileFile, 1024 * 1024 * 5);
                     }
                 }
 
@@ -521,7 +533,7 @@ namespace WandSyncFile.Helpers
                     {
                         string name = Path.GetFileName(folder);
                         string dest = Path.Combine(toPath, name);
-                        DownloadFolder(folder, dest, withoutFolder, isSync);
+                        DownloadFolder(folder, dest, withoutFolder, isRemoveNotExists, isReplaceExists);
                     }
                 }
 
@@ -532,7 +544,7 @@ namespace WandSyncFile.Helpers
             }
         }
 
-        public static void DownloadFolderFromServer(string fromPath, string toPath, string withoutFolder = null, bool isSync = false)
+        public static void DownloadFolderFromServer(string fromPath, string toPath, string withoutFolder = null, bool isRemoveNotExists = false, bool isReplaceExists = false)
         {
             try
             {
@@ -542,7 +554,7 @@ namespace WandSyncFile.Helpers
                 {
                     try
                     {
-                        DownloadFolder(fromPath, toPath, withoutFolder, isSync);
+                        DownloadFolder(fromPath, toPath, withoutFolder, isRemoveNotExists, isReplaceExists);
                     }
                     catch (IOException e)
                     {
@@ -1095,45 +1107,48 @@ namespace WandSyncFile.Helpers
             }
         }
 
-        public static string GetEditorProjectLocalPath(string projectName)
+        public static string GetProjectLocalPath(string projectName)
         {
-            var editorLocalPath = Properties.Settings.Default.ProjectLocalPath;
+            var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            if (string.IsNullOrEmpty(editorLocalPath))
+            if (string.IsNullOrEmpty(localPath))
             {
                 return "";
             }
-            var editorProjectPath = Path.Combine(editorLocalPath, projectName);
+            var editorProjectPath = Path.Combine(localPath, projectName);
 
             return editorProjectPath;
         }
 
-        public static string GetEditorProjectDoLocalPath(string projectName)
+        public static string GetProjectDoEditorLocalPath(string projectName)
         {
             var editorUserName = Properties.Settings.Default.Username;
-            var editorProjectPath = GetEditorProjectLocalPath(projectName);
-            var editorDoPath = Path.Combine(editorProjectPath, Options.PROJECT_DO_NAME);
+
+            var projectLocalPath = GetProjectLocalPath(projectName);
+            var editorDoPath = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME);
 
             return Path.Combine(editorDoPath, editorUserName);
         }
 
-        public static string GetEditorProjectDoneLocalPath(string projectName)
+        public static string GetProjectDoneEditorLocalPath(string projectName)
         {
-            var editorLocalPath = Properties.Settings.Default.ProjectLocalPath;
             var editorUserName = Properties.Settings.Default.Username;
-            var editorProjectPath = Path.Combine(editorLocalPath, projectName);
-            var editorDoPath = Path.Combine(editorProjectPath, Options.PROJECT_DONE_NAME);
+            var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            return Path.Combine(editorDoPath, editorUserName);
+            var projectLocalPath = Path.Combine(localPath, projectName);
+            var projectDoneLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME);
+
+            return Path.Combine(projectDoneLocalPath, editorUserName);
         }
 
-        public static string GetEditorProjectSampleLocalPath(string projectName)
+        public static string GetProjectSampleLocalPath(string projectName)
         {
-            var editorLocalPath = Properties.Settings.Default.ProjectLocalPath;
-            var editorProjectPath = Path.Combine(editorLocalPath, projectName);
-            var samplePath = Path.Combine(editorProjectPath, Options.PROJECT_SAMPLE_NAME);
+            var localPath = Properties.Settings.Default.ProjectLocalPath;
+            var projectLocalPath = Path.Combine(localPath, projectName);
 
-            return samplePath;
+            var sampleLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_SAMPLE_NAME);
+
+            return sampleLocalPath;
         }
 
         public static string GetEditorProjectDoServerPath(string projectPath)
@@ -1276,7 +1291,7 @@ namespace WandSyncFile.Helpers
             return false;
         }
 
-        public static List<string> ServerGetListFix(string projectPath)
+        public static List<string> GetListServerFolderFix(string projectPath)
         {
             IntPtr token = IntPtr.Zero;
             LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
@@ -1284,9 +1299,9 @@ namespace WandSyncFile.Helpers
             {
                 try
                 {
-                    var projectDirectoties = Directory.GetDirectories(projectPath).Select(item => item.ToLower()).ToList();
-                    var folderFixName = Options.PROJECT_FIX_PATH_NAME.ToLower();
-                    var fixFolders = projectDirectoties.Where(item => Path.GetFileName(item).Trim().StartsWith(folderFixName)).Select(item => Path.GetFullPath(item)).ToList();
+                    var projectDirectoties = Directory.GetDirectories(projectPath).ToList();
+                    var folderFixName = Options.PROJECT_FIX_PATH_NAME;
+                    var fixFolders = projectDirectoties.Where(item => Path.GetFileName(item).Trim().ToLower().StartsWith(folderFixName.ToLower())).Select(item => Path.GetFullPath(item)).ToList();
 
                     return fixFolders;
                 }
