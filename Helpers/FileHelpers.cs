@@ -715,39 +715,7 @@ namespace WandSyncFile.Helpers
                     Directory.CreateDirectory(directoryName);
                 }
 
-                FileStream fromFile = new FileStream(fromPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                FileStream toFile = new FileStream(toPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-
-                int toCopyLength = 0;
-                if (eachReadLength < fromFile.Length)
-                {
-                    byte[] buffer = new byte[eachReadLength];
-                    long copied = 0;
-                    while (copied <= fromFile.Length - eachReadLength)
-                    {
-                        toCopyLength = fromFile.Read(buffer, 0, eachReadLength);
-                        fromFile.Flush();
-                        toFile.Write(buffer, 0, eachReadLength);
-                        toFile.Flush();
-                        toFile.Position = fromFile.Position;
-                        copied += toCopyLength;
-                    }
-                    int left = (int)(fromFile.Length - copied);
-                    toCopyLength = fromFile.Read(buffer, 0, left);
-                    fromFile.Flush();
-                    toFile.Write(buffer, 0, left);
-                    toFile.Flush();
-                }
-                else
-                {
-                    byte[] buffer = new byte[fromFile.Length];
-                    fromFile.Read(buffer, 0, buffer.Length);
-                    fromFile.Flush();
-                    toFile.Write(buffer, 0, buffer.Length);
-                    toFile.Flush();
-                }
-                fromFile.Close();
-                toFile.Close();
+                File.Copy(fromPath, toPath, true);
 
                 var getListWrite = File.GetLastWriteTime(fromPath);
                 File.SetLastWriteTime(toPath, getListWrite);
