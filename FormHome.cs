@@ -541,6 +541,8 @@ namespace WandSyncFile
                 return;
             }
 
+            processingDoneProject.Add(projectId);
+
             Invoke((Action)(async () =>
             {
                 addItem(DateTime.Now, "Download Done", projectName, 0);
@@ -555,6 +557,8 @@ namespace WandSyncFile
             {
                 addItem(DateTime.Now, "Download Done", projectName, 1);
             }));
+
+            processingDoneProject.Remove(projectId);
 
             // Copy Done -> Working
             var projectWorkingLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME); // LocalPath\\ProjectName\\Working
