@@ -24,6 +24,7 @@ namespace WandSyncFile.Helpers
 
         public static string PROJECT_PATH_FILE_NAME = "Path";
         public static string PROJECT_FILE_NAME = "Name";
+        public static string PROJECT_LOG_NAME = "Log";
 
         public static string PROJECT_DO_NAME = "Do";
         public static string PROJECT_WORKING_PATH_NAME = "Working";

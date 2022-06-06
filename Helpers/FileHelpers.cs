@@ -754,6 +754,8 @@ namespace WandSyncFile.Helpers
             }
             catch (Exception e)
             {
+                var errMessage = DateTime.Now.ToString() + " " + e.Message + " ---- " + fromPath;
+                WriteLog(errMessage);
                 throw new Exception(e.Message, e);
             }
         }
@@ -1353,6 +1355,9 @@ namespace WandSyncFile.Helpers
             try
             {
                 var localProjectPath = Path.Combine(Properties.Settings.Default.ProjectLocalPath, projectName);
+
+                CreateFolder(localProjectPath);
+
                 var createPath = Path.Combine(localProjectPath, Options.PROJECT_PATH_FILE_NAME);
 
                 if (!File.Exists(createPath))
@@ -1377,13 +1382,45 @@ namespace WandSyncFile.Helpers
                 return createPath;
             } catch(Exception e)
             {
+                var errMessage = DateTime.Now.ToString() + " " + e.Message;
+                WriteLog(errMessage);
                 Console.WriteLine(e.Message);
             }
 
             return null;
             
         }
-    
+
+        public static string WriteLog(string content)
+        {
+            try
+            {
+                var localProjectPath = Properties.Settings.Default.ProjectLocalPath;
+                var createPath = Path.Combine(localProjectPath, Options.PROJECT_LOG_NAME);
+
+                CreateFolder(localProjectPath);
+
+                if (!File.Exists(createPath))
+                {
+                    using (var file = File.Create(createPath))
+                    {
+                        File.SetAttributes(createPath, FileAttributes.Hidden);
+                    }
+                    File.AppendAllText(createPath, content + "\n");
+                }
+                else
+                {
+                    File.AppendAllText(createPath, content + "\n");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+
+            return null;
+        }
+
         public static string GetProjectPathByLog(string localProjectPath)
         {
             if (!Directory.Exists(localProjectPath))
