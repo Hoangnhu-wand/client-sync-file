@@ -578,7 +578,7 @@ namespace WandSyncFile
 
                 Invoke((Action)(async () =>
                 {
-                    addItem(DateTime.Now, "Done => Working", projectName, 0);
+                    addItem(DateTime.Now, "Done => Working", projectName, 1);
                 }));
             }
 
@@ -599,6 +599,11 @@ namespace WandSyncFile
                 var folderFixName = FileHelpers.ServerGetFolderName(folderFixItem); // fix_1
                 var localEditorFixPath = Path.Combine(projectLocalPath, folderFixName); // LocalPath\\ProjectName\\fix_1
 
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, folderFixName, projectName, 0);
+                }));
+
                 FileHelpers.CreateFolder(localEditorFixPath);
 
                 // chỉ lấy các file fix có trong Done
@@ -611,8 +616,23 @@ namespace WandSyncFile
                     FileHelpers.CopyFileFromServer(fixItem, clientPath);
                 }
 
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, folderFixName, projectName, 1);
+                }));
+
                 // Copy Fix -> Working
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, folderFixName + " => Working", projectName, 0);
+                }));
+
                 FileHelpers.DownloadFolder(localEditorFixPath, projectWorkingEditorLocalPath, null, false, true);
+
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, folderFixName + " => Working", projectName, 1);
+                }));
             }
 
             Invoke((Action)(async () =>
