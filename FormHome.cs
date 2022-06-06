@@ -28,7 +28,7 @@ namespace WandSyncFile
         CancellationToken cancellationToken;
         CancellationToken cancellationTokenRemoveProject;
         DisplayFolder displayFolder;
-        public List<int> processingProject = new List<int>();
+        public List<int> processingDoProject = new List<int>();
         public List<int> processingUploadProject = new List<int>();
         public List<int> processingUploadFixProject = new List<int>();
 
@@ -384,7 +384,7 @@ namespace WandSyncFile
                 return;
             }
 
-            if (!isSyncDo && !processingProject.Any(pId => pId == project.Id))
+            if (!isSyncDo && !processingDoProject.Any(pId => pId == project.Id))
             {
                 displayFolder.CheckFolderSync(projectDoEditorLocalPath, projectDoEditorServerPath, projectDoLocalPath);
 
@@ -393,7 +393,7 @@ namespace WandSyncFile
                     addItem(DateTime.Now, "Download Do", projectName, 0);
                 }));
 
-                processingProject.Add(project.Id);
+                processingDoProject.Add(project.Id);
 
                 try {
                     FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath, null, true);
@@ -426,8 +426,8 @@ namespace WandSyncFile
                 finally
                 {
                     displayFolder.CheckFolderSync(projectDoEditorLocalPath, projectDoEditorServerPath, projectDoLocalPath);
-                    
-                    processingProject.Remove(project.Id);
+
+                    processingDoProject.Remove(project.Id);
                 }
             }
         }
@@ -519,7 +519,7 @@ namespace WandSyncFile
                 addItem(DateTime.Now, "Download Do", projectName, 0);
             }));
 
-            processingProject.Add(projectId);
+            processingDoProject.Add(projectId);
 
             FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath);
 
@@ -528,7 +528,7 @@ namespace WandSyncFile
                 addItem(DateTime.Now, "Download Do", projectName, 1);
             }));
 
-            processingProject.Remove(projectId);
+            processingDoProject.Remove(projectId);
 
             // Download Done
             var projectDoneLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME); // LocalPath\\ProjectName\\Done
