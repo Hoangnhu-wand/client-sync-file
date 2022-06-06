@@ -534,6 +534,9 @@ namespace WandSyncFile
             var projectDoneLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME); // LocalPath\\ProjectName\\Done
             var projectDoneEditorLocalPath = Path.Combine(projectDoneLocalPath, editorUserName); // LocalPath\\ProjectName\\Done\\EditorName
 
+            var projectDoneServerPath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME); // ServerPath\\James\\Done
+            var projectDoneEditorServerPath = Path.Combine(projectDoneServerPath, editorUserName); // ServerPath\\James\\Done\\EditorName
+
             FileHelpers.CreateFolder(projectDoneEditorLocalPath);
             var folderDoneHasFile = FileHelpers.HasFileInFolder(projectDoneEditorLocalPath);
             if (folderDoneHasFile)
@@ -541,15 +544,12 @@ namespace WandSyncFile
                 return;
             }
 
-            processingDoneProject.Add(projectId);
-
             Invoke((Action)(async () =>
             {
                 addItem(DateTime.Now, "Download Done", projectName, 0);
             }));
 
-            var projectDoneServerPath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME); // ServerPath\\James\\Done
-            var projectDoneEditorServerPath = Path.Combine(projectDoneServerPath, editorUserName); // ServerPath\\James\\Done\\EditorName
+            processingDoneProject.Add(projectId);
 
             FileHelpers.DownloadFolderFromServer(projectDoneEditorServerPath, projectDoneEditorLocalPath);
 
