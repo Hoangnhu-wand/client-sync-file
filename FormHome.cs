@@ -569,7 +569,17 @@ namespace WandSyncFile
             var checkWorking = displayFolder.CheckFolderSync(projectWorkingEditorLocalPath, projectDoneEditorLocalPath, projectWorkingEditorLocalPath);
             if (!checkWorking)
             {
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Done => Working", projectName, 0);
+                }));
+
                 FileHelpers.DownloadFolder(projectDoneEditorLocalPath, projectWorkingEditorLocalPath);
+
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Done => Working", projectName, 0);
+                }));
             }
 
             // Download Fix
