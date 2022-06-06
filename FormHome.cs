@@ -30,7 +30,7 @@ namespace WandSyncFile
         DisplayFolder displayFolder;
         public List<int> processingDoProject = new List<int>();
         public List<int> processingDoneProject = new List<int>();
-        public List<int> processingUploadFixProject = new List<int>();
+        public List<int> processingFixProject = new List<int>();
 
         public FormHome()
         {
@@ -326,7 +326,7 @@ namespace WandSyncFile
                 return;
             }
 
-            if (!isSyncFix && !processingUploadFixProject.Any(pId => pId == project.Id))
+            if (!isSyncFix && !processingFixProject.Any(pId => pId == project.Id))
             {
                 displayFolder.CheckFolderSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
 
@@ -335,7 +335,7 @@ namespace WandSyncFile
                     addItem(DateTime.Now, "Upload Fix", projectName, 0);
                 }));
 
-                processingUploadFixProject.Add(project.Id);
+                processingFixProject.Add(project.Id);
 
                 try {
                     FileHelpers.CopyDirectoryToServer(lastFixFolderLocalPath, lastFixFolderServerPath);
@@ -354,7 +354,7 @@ namespace WandSyncFile
                 finally {
                     displayFolder.CheckFolderSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
 
-                    processingUploadFixProject.Remove(project.Id);
+                    processingFixProject.Remove(project.Id);
                 }
             }
         }
