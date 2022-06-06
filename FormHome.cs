@@ -601,7 +601,7 @@ namespace WandSyncFile
 
                 Invoke((Action)(async () =>
                 {
-                    addItem(DateTime.Now, folderFixName, projectName, 0);
+                    addItem(DateTime.Now, "Download " + folderFixName, projectName, 0);
                 }));
 
                 FileHelpers.CreateFolder(localEditorFixPath);
@@ -618,7 +618,7 @@ namespace WandSyncFile
 
                 Invoke((Action)(async () =>
                 {
-                    addItem(DateTime.Now, folderFixName, projectName, 1);
+                    addItem(DateTime.Now, "Download " + folderFixName, projectName, 1);
                 }));
 
                 // Copy Fix -> Working
