@@ -94,18 +94,41 @@ namespace WandSyncFile
                 listItem.ProjectName = projectName;
                 listItem.ButtonText = action;
 
-                if (action == "Download Do")
+                var buttonColor = Color.FromArgb(178, 255, 212);
+
+                switch (action)
                 {
-                    listItem.ButtonColor = Color.FromArgb(178, 255, 212);
+                    case "Download Do":
+                        buttonColor = Color.FromArgb(194, 245, 233);
+                        break;
+                    case "Download Done":
+                    case "Upload Done":
+                    case "Done => Working":
+                        buttonColor = Color.FromArgb(178, 255, 212);
+                        break;
+                    case "Download Fix":
+                    case "Download Fix_1":
+                    case "Download Fix_2":
+                    case "Download Fix_3":
+                    case "Download Fix_4":
+                    case "Download Fix_5":
+                    case "Fix_1 => Working":
+                    case "Fix_2 => Working":
+                    case "Fix_3 => Working":
+                    case "Fix_4 => Working":
+                    case "Fix_5 => Working":
+                    case "Upload Fix":
+                        buttonColor = Color.FromArgb(255, 218, 246);
+                        break;
+                    case "Completed":
+                        buttonColor = Color.FromArgb(255, 219, 150);
+                        break;
+                    default:
+                        buttonColor = Color.FromArgb(178, 255, 212);
+                        break;
                 }
-                else if (action == "Upload Done" || action == "Upload Fix")
-                {
-                    listItem.ButtonColor = Color.FromArgb(255, 219, 150);
-                } 
-                else if(action == "Remove All")
-                {
-                    listItem.ButtonColor = Color.FromArgb(255, 219, 150);
-                }
+
+                listItem.ButtonColor = buttonColor;
 
                 listItem.StatusColor = Color.Red;
 
@@ -906,7 +929,7 @@ namespace WandSyncFile
                         {
                             Invoke((Action)(() =>
                             {
-                                addItem(DateTime.Now, "Remove All", projectName, 0);
+                                addItem(DateTime.Now, "Completed", projectName, 0);
                             }));
 
                             var localProjectPath = Path.Combine(localPath, projectName);
@@ -929,7 +952,7 @@ namespace WandSyncFile
                                     Directory.Delete(localProjectPath, true);
                                     Invoke((Action)(() =>
                                     {
-                                        addItem(DateTime.Now, "Remove All", projectName, 1);
+                                        addItem(DateTime.Now, "Completed", projectName, 1);
                                     }));
                                 }
                                 catch (Exception e)
@@ -937,7 +960,7 @@ namespace WandSyncFile
                                     Console.WriteLine(e.Message);
                                     Invoke((Action)(() =>
                                     {
-                                        addItem(DateTime.Now, "Remove All", projectName, 2);
+                                        addItem(DateTime.Now, "Completed", projectName, 2);
                                     }));
                                 }
                                 finally { }
