@@ -31,6 +31,8 @@ namespace WandSyncFile
         public List<int> processingDoProject = new List<int>();
         public List<int> processingDoneProject = new List<int>();
         public List<int> processingFixProject = new List<int>();
+        public bool _mouseDown;
+        public Point _lastLocation;
 
         public FormHome()
         {
@@ -1034,6 +1036,26 @@ namespace WandSyncFile
         private void label2_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void pnlHeader_MouseUp(object sender, MouseEventArgs e)
+        {
+            _mouseDown = false;
+        }
+
+        private void pnlHeader_MouseDown(object sender, MouseEventArgs e)
+        {
+            _mouseDown = true;
+            _lastLocation = e.Location;
+        }
+
+        private void pnlHeader_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (!_mouseDown) return;
+            Location = new Point(
+                (Location.X - _lastLocation.X) + e.X, (Location.Y - _lastLocation.Y) + e.Y);
+
+            Update();
         }
     }
 }
