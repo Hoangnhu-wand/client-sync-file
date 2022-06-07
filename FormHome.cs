@@ -126,6 +126,9 @@ namespace WandSyncFile
                     case "Completed":
                         buttonColor = Color.FromArgb(255, 219, 150);
                         break;
+                    case "Get Sample":
+                        buttonColor = Color.FromArgb(207, 223, 255);
+                        break;
                     default:
                         buttonColor = Color.FromArgb(178, 255, 212);
                         break;
@@ -783,7 +786,17 @@ namespace WandSyncFile
 
                             if (!isSyncSample)
                             {
+                                Invoke((Action)(() =>
+                                {
+                                    addItem(DateTime.Now, "Get Sample", projectName, 0);
+                                }));
+
                                 FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true, true);
+
+                                Invoke((Action)(() =>
+                                {
+                                    addItem(DateTime.Now, "Get Sample", projectName, 1);
+                                }));
                             }
                         }
 
@@ -913,7 +926,17 @@ namespace WandSyncFile
 
                                 if (!isSyncSample)
                                 {
+                                    Invoke((Action)(() =>
+                                    {
+                                        addItem(DateTime.Now, "Get Sample", projectName, 0);
+                                    }));
+
                                     FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true, true);
+
+                                    Invoke((Action)(() =>
+                                    {
+                                        addItem(DateTime.Now, "Get Sample", projectName, 1);
+                                    }));
                                 }
                             }
 
