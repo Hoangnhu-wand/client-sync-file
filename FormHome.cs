@@ -101,6 +101,7 @@ namespace WandSyncFile
                 switch (action)
                 {
                     case "Download Do":
+                    case "Do => Working":
                         buttonColor = Color.FromArgb(194, 245, 233);
                         break;
                     case "Download Done":
@@ -423,7 +424,12 @@ namespace WandSyncFile
                 try {
                     FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath, null, true);
 
-                    // Copy Do sang Working
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Download Do", projectName, 1);
+                    }));
+
+                    // Copy Do => Working
                     if (project.StatusId != (int)PROJECT_STATUS.NEEDFIX)
                     {
                         var localFolderWorking = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME);
@@ -431,15 +437,20 @@ namespace WandSyncFile
 
                         displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
 
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Do => Working", projectName, 0);
+                        }));
+
                         FileHelpers.DownloadFolder(projectDoEditorLocalPath, editorFolderWorking);
+
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Do => Working", projectName, 1);
+                        }));
 
                         displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
                     }
-
-                    Invoke((Action)(async () =>
-                    {
-                        addItem(DateTime.Now, "Download Do", projectName, 1);
-                    }));
                 }
                 catch (Exception e)
                 {
