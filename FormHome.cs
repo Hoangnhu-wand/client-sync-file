@@ -101,6 +101,7 @@ namespace WandSyncFile
                 switch (action)
                 {
                     case "Download Do":
+                    case "Do => Working":
                         buttonColor = Color.FromArgb(194, 245, 233);
                         break;
                     case "Download Done":
@@ -124,6 +125,9 @@ namespace WandSyncFile
                         break;
                     case "Completed":
                         buttonColor = Color.FromArgb(255, 219, 150);
+                        break;
+                    case "Get Sample":
+                        buttonColor = Color.FromArgb(207, 223, 255);
                         break;
                     default:
                         buttonColor = Color.FromArgb(178, 255, 212);
@@ -423,7 +427,12 @@ namespace WandSyncFile
                 try {
                     FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath, null, true);
 
-                    // Copy Do sang Working
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Download Do", projectName, 1);
+                    }));
+
+                    // Copy Do => Working
                     if (project.StatusId != (int)PROJECT_STATUS.NEEDFIX)
                     {
                         var localFolderWorking = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME);
@@ -431,15 +440,20 @@ namespace WandSyncFile
 
                         displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
 
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Do => Working", projectName, 0);
+                        }));
+
                         FileHelpers.DownloadFolder(projectDoEditorLocalPath, editorFolderWorking);
+
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Do => Working", projectName, 1);
+                        }));
 
                         displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
                     }
-
-                    Invoke((Action)(async () =>
-                    {
-                        addItem(DateTime.Now, "Download Do", projectName, 1);
-                    }));
                 }
                 catch (Exception e)
                 {
@@ -772,7 +786,17 @@ namespace WandSyncFile
 
                             if (!isSyncSample)
                             {
+                                Invoke((Action)(() =>
+                                {
+                                    addItem(DateTime.Now, "Get Sample", projectName, 0);
+                                }));
+
                                 FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true, true);
+
+                                Invoke((Action)(() =>
+                                {
+                                    addItem(DateTime.Now, "Get Sample", projectName, 1);
+                                }));
                             }
                         }
 
@@ -902,7 +926,17 @@ namespace WandSyncFile
 
                                 if (!isSyncSample)
                                 {
+                                    Invoke((Action)(() =>
+                                    {
+                                        addItem(DateTime.Now, "Get Sample", projectName, 0);
+                                    }));
+
                                     FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true, true);
+
+                                    Invoke((Action)(() =>
+                                    {
+                                        addItem(DateTime.Now, "Get Sample", projectName, 1);
+                                    }));
                                 }
                             }
 
