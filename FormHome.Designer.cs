@@ -132,8 +132,12 @@ namespace WandSyncFile
             // 
             // flowLayoutPanel
             // 
-            this.flowLayoutPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.flowLayoutPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.flowLayoutPanel.AutoScroll = false;
+            this.flowLayoutPanel.HorizontalScroll.Enabled = false;
+            this.flowLayoutPanel.HorizontalScroll.Visible = false;
+            this.flowLayoutPanel.HorizontalScroll.Maximum = 0;
             this.flowLayoutPanel.AutoScroll = true;
             this.flowLayoutPanel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(24)))), ((int)(((byte)(24)))));
             this.flowLayoutPanel.Location = new System.Drawing.Point(18, 144);
