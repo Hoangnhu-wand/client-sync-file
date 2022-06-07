@@ -32,7 +32,7 @@ namespace WandSyncFile
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormHome));
             this.headerpanel = new System.Windows.Forms.Panel();
-            this.panel1 = new System.Windows.Forms.Panel();
+            this.pnlHeaderBottom = new System.Windows.Forms.Panel();
             this.pictureBox3 = new System.Windows.Forms.PictureBox();
             this.panel2 = new System.Windows.Forms.Panel();
             this.ovalPictureBox1 = new WandSyncFile.CustomControls.OvalPictureBox();
@@ -57,7 +57,7 @@ namespace WandSyncFile
             // 
             this.headerpanel.AutoScroll = true;
             this.headerpanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(24)))), ((int)(((byte)(24)))));
-            this.headerpanel.Controls.Add(this.panel1);
+            this.headerpanel.Controls.Add(this.pnlHeaderBottom);
             this.headerpanel.Controls.Add(this.pictureBox3);
             this.headerpanel.Controls.Add(this.panel2);
             this.headerpanel.Controls.Add(this.ovalPictureBox1);
@@ -75,13 +75,13 @@ namespace WandSyncFile
             this.headerpanel.Size = new System.Drawing.Size(540, 718);
             this.headerpanel.TabIndex = 0;
             // 
-            // panel1
+            // pnlHeaderBottom
             // 
-            this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(43)))), ((int)(((byte)(48)))));
-            this.panel1.Location = new System.Drawing.Point(0, 50);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(540, 1);
-            this.panel1.TabIndex = 33;
+            this.pnlHeaderBottom.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(43)))), ((int)(((byte)(48)))));
+            this.pnlHeaderBottom.Location = new System.Drawing.Point(0, 50);
+            this.pnlHeaderBottom.Name = "pnlHeaderBottom";
+            this.pnlHeaderBottom.Size = new System.Drawing.Size(540, 1);
+            this.pnlHeaderBottom.TabIndex = 33;
             // 
             // pictureBox3
             // 
@@ -275,6 +275,6 @@ namespace WandSyncFile
         private System.Windows.Forms.Panel panel2;
         private System.Windows.Forms.PictureBox pictureBox3;
         private System.Windows.Forms.NotifyIcon notifyIcon2;
-        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Panel pnlHeaderBottom;
     }
 }
