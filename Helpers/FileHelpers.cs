@@ -715,45 +715,15 @@ namespace WandSyncFile.Helpers
                     Directory.CreateDirectory(directoryName);
                 }
 
-                FileStream fromFile = new FileStream(fromPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                FileStream toFile = new FileStream(toPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-
-                int toCopyLength = 0;
-                if (eachReadLength < fromFile.Length)
-                {
-                    byte[] buffer = new byte[eachReadLength];
-                    long copied = 0;
-                    while (copied <= fromFile.Length - eachReadLength)
-                    {
-                        toCopyLength = fromFile.Read(buffer, 0, eachReadLength);
-                        fromFile.Flush();
-                        toFile.Write(buffer, 0, eachReadLength);
-                        toFile.Flush();
-                        toFile.Position = fromFile.Position;
-                        copied += toCopyLength;
-                    }
-                    int left = (int)(fromFile.Length - copied);
-                    toCopyLength = fromFile.Read(buffer, 0, left);
-                    fromFile.Flush();
-                    toFile.Write(buffer, 0, left);
-                    toFile.Flush();
-                }
-                else
-                {
-                    byte[] buffer = new byte[fromFile.Length];
-                    fromFile.Read(buffer, 0, buffer.Length);
-                    fromFile.Flush();
-                    toFile.Write(buffer, 0, buffer.Length);
-                    toFile.Flush();
-                }
-                fromFile.Close();
-                toFile.Close();
+                File.Copy(fromPath, toPath, true);
 
                 var getListWrite = File.GetLastWriteTime(fromPath);
                 File.SetLastWriteTime(toPath, getListWrite);
             }
             catch (Exception e)
             {
+                var errMessage = DateTime.Now.ToString() + " " + e.Message + " ---- " + fromPath;
+                WriteLog(errMessage);
                 throw new Exception(e.Message, e);
             }
         }
@@ -1353,6 +1323,9 @@ namespace WandSyncFile.Helpers
             try
             {
                 var localProjectPath = Path.Combine(Properties.Settings.Default.ProjectLocalPath, projectName);
+
+                CreateFolder(localProjectPath);
+
                 var createPath = Path.Combine(localProjectPath, Options.PROJECT_PATH_FILE_NAME);
 
                 if (!File.Exists(createPath))
@@ -1377,13 +1350,45 @@ namespace WandSyncFile.Helpers
                 return createPath;
             } catch(Exception e)
             {
+                var errMessage = DateTime.Now.ToString() + " " + e.Message;
+                WriteLog(errMessage);
                 Console.WriteLine(e.Message);
             }
 
             return null;
             
         }
-    
+
+        public static string WriteLog(string content)
+        {
+            try
+            {
+                var localProjectPath = Properties.Settings.Default.ProjectLocalPath;
+                var createPath = Path.Combine(localProjectPath, Options.PROJECT_LOG_NAME);
+
+                CreateFolder(localProjectPath);
+
+                if (!File.Exists(createPath))
+                {
+                    using (var file = File.Create(createPath))
+                    {
+                        File.SetAttributes(createPath, FileAttributes.Hidden);
+                    }
+                    File.AppendAllText(createPath, content + "\n");
+                }
+                else
+                {
+                    File.AppendAllText(createPath, content + "\n");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+
+            return null;
+        }
+
         public static string GetProjectPathByLog(string localProjectPath)
         {
             if (!Directory.Exists(localProjectPath))

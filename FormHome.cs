@@ -28,9 +28,11 @@ namespace WandSyncFile
         CancellationToken cancellationToken;
         CancellationToken cancellationTokenRemoveProject;
         DisplayFolder displayFolder;
-        public List<int> processingProject = new List<int>();
-        public List<int> processingUploadProject = new List<int>();
-        public List<int> processingUploadFixProject = new List<int>();
+        public List<int> processingDoProject = new List<int>();
+        public List<int> processingDoneProject = new List<int>();
+        public List<int> processingFixProject = new List<int>();
+        public bool _mouseDown;
+        public Point _lastLocation;
 
         public FormHome()
         {
@@ -94,18 +96,41 @@ namespace WandSyncFile
                 listItem.ProjectName = projectName;
                 listItem.ButtonText = action;
 
-                if (action == "Download Do")
+                var buttonColor = Color.FromArgb(178, 255, 212);
+
+                switch (action)
                 {
-                    listItem.ButtonColor = Color.FromArgb(178, 255, 212);
+                    case "Download Do":
+                        buttonColor = Color.FromArgb(194, 245, 233);
+                        break;
+                    case "Download Done":
+                    case "Upload Done":
+                    case "Done => Working":
+                        buttonColor = Color.FromArgb(178, 255, 212);
+                        break;
+                    case "Download Fix":
+                    case "Download Fix_1":
+                    case "Download Fix_2":
+                    case "Download Fix_3":
+                    case "Download Fix_4":
+                    case "Download Fix_5":
+                    case "Fix_1 => Working":
+                    case "Fix_2 => Working":
+                    case "Fix_3 => Working":
+                    case "Fix_4 => Working":
+                    case "Fix_5 => Working":
+                    case "Upload Fix":
+                        buttonColor = Color.FromArgb(255, 218, 246);
+                        break;
+                    case "Completed":
+                        buttonColor = Color.FromArgb(255, 219, 150);
+                        break;
+                    default:
+                        buttonColor = Color.FromArgb(178, 255, 212);
+                        break;
                 }
-                else if (action == "Upload Done" || action == "Upload Fix")
-                {
-                    listItem.ButtonColor = Color.FromArgb(255, 219, 150);
-                } 
-                else if(action == "Remove All")
-                {
-                    listItem.ButtonColor = Color.FromArgb(255, 219, 150);
-                }
+
+                listItem.ButtonColor = buttonColor;
 
                 listItem.StatusColor = Color.Red;
 
@@ -326,7 +351,7 @@ namespace WandSyncFile
                 return;
             }
 
-            if (!isSyncFix && !processingUploadFixProject.Any(pId => pId == project.Id))
+            if (!isSyncFix && !processingFixProject.Any(pId => pId == project.Id))
             {
                 displayFolder.CheckFolderSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
 
@@ -335,7 +360,7 @@ namespace WandSyncFile
                     addItem(DateTime.Now, "Upload Fix", projectName, 0);
                 }));
 
-                processingUploadFixProject.Add(project.Id);
+                processingFixProject.Add(project.Id);
 
                 try {
                     FileHelpers.CopyDirectoryToServer(lastFixFolderLocalPath, lastFixFolderServerPath);
@@ -354,7 +379,7 @@ namespace WandSyncFile
                 finally {
                     displayFolder.CheckFolderSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
 
-                    processingUploadFixProject.Remove(project.Id);
+                    processingFixProject.Remove(project.Id);
                 }
             }
         }
@@ -384,7 +409,7 @@ namespace WandSyncFile
                 return;
             }
 
-            if (!isSyncDo && !processingProject.Any(pId => pId == project.Id))
+            if (!isSyncDo && !processingDoProject.Any(pId => pId == project.Id))
             {
                 displayFolder.CheckFolderSync(projectDoEditorLocalPath, projectDoEditorServerPath, projectDoLocalPath);
 
@@ -393,7 +418,7 @@ namespace WandSyncFile
                     addItem(DateTime.Now, "Download Do", projectName, 0);
                 }));
 
-                processingProject.Add(project.Id);
+                processingDoProject.Add(project.Id);
 
                 try {
                     FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath, null, true);
@@ -426,8 +451,8 @@ namespace WandSyncFile
                 finally
                 {
                     displayFolder.CheckFolderSync(projectDoEditorLocalPath, projectDoEditorServerPath, projectDoLocalPath);
-                    
-                    processingProject.Remove(project.Id);
+
+                    processingDoProject.Remove(project.Id);
                 }
             }
         }
@@ -456,7 +481,7 @@ namespace WandSyncFile
                 return;
             }
 
-            if (!isSyncDone && !processingUploadProject.Any(pId => pId == project.Id))
+            if (!isSyncDone && !processingDoneProject.Any(pId => pId == project.Id))
             {
                 displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
 
@@ -465,7 +490,7 @@ namespace WandSyncFile
                     addItem(DateTime.Now, "Upload Done", projectName, 0);
                 }));
 
-                processingUploadProject.Add(project.Id);
+                processingDoneProject.Add(project.Id);
 
                 try {
                     FileHelpers.SyncDirectoryDoneToServer(projectDoneEditorLocalPath, projectDoneEditorServerPath);
@@ -484,7 +509,7 @@ namespace WandSyncFile
                 finally {
                     displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
 
-                    processingUploadProject.Remove(project.Id);
+                    processingDoneProject.Remove(project.Id);
                 }
             }
         }
@@ -519,7 +544,7 @@ namespace WandSyncFile
                 addItem(DateTime.Now, "Download Do", projectName, 0);
             }));
 
-            processingProject.Add(projectId);
+            processingDoProject.Add(projectId);
 
             FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath);
 
@@ -528,11 +553,14 @@ namespace WandSyncFile
                 addItem(DateTime.Now, "Download Do", projectName, 1);
             }));
 
-            processingProject.Remove(projectId);
+            processingDoProject.Remove(projectId);
 
             // Download Done
             var projectDoneLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME); // LocalPath\\ProjectName\\Done
             var projectDoneEditorLocalPath = Path.Combine(projectDoneLocalPath, editorUserName); // LocalPath\\ProjectName\\Done\\EditorName
+
+            var projectDoneServerPath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME); // ServerPath\\James\\Done
+            var projectDoneEditorServerPath = Path.Combine(projectDoneServerPath, editorUserName); // ServerPath\\James\\Done\\EditorName
 
             FileHelpers.CreateFolder(projectDoneEditorLocalPath);
             var folderDoneHasFile = FileHelpers.HasFileInFolder(projectDoneEditorLocalPath);
@@ -546,8 +574,7 @@ namespace WandSyncFile
                 addItem(DateTime.Now, "Download Done", projectName, 0);
             }));
 
-            var projectDoneServerPath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME); // ServerPath\\James\\Done
-            var projectDoneEditorServerPath = Path.Combine(projectDoneServerPath, editorUserName); // ServerPath\\James\\Done\\EditorName
+            processingDoneProject.Add(projectId);
 
             FileHelpers.DownloadFolderFromServer(projectDoneEditorServerPath, projectDoneEditorLocalPath);
 
@@ -555,6 +582,8 @@ namespace WandSyncFile
             {
                 addItem(DateTime.Now, "Download Done", projectName, 1);
             }));
+
+            processingDoneProject.Remove(projectId);
 
             // Copy Done -> Working
             var projectWorkingLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME); // LocalPath\\ProjectName\\Working
@@ -565,7 +594,17 @@ namespace WandSyncFile
             var checkWorking = displayFolder.CheckFolderSync(projectWorkingEditorLocalPath, projectDoneEditorLocalPath, projectWorkingEditorLocalPath);
             if (!checkWorking)
             {
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Done => Working", projectName, 0);
+                }));
+
                 FileHelpers.DownloadFolder(projectDoneEditorLocalPath, projectWorkingEditorLocalPath);
+
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Done => Working", projectName, 1);
+                }));
             }
 
             // Download Fix
@@ -585,6 +624,11 @@ namespace WandSyncFile
                 var folderFixName = FileHelpers.ServerGetFolderName(folderFixItem); // fix_1
                 var localEditorFixPath = Path.Combine(projectLocalPath, folderFixName); // LocalPath\\ProjectName\\fix_1
 
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Download " + folderFixName, projectName, 0);
+                }));
+
                 FileHelpers.CreateFolder(localEditorFixPath);
 
                 // chỉ lấy các file fix có trong Done
@@ -597,8 +641,23 @@ namespace WandSyncFile
                     FileHelpers.CopyFileFromServer(fixItem, clientPath);
                 }
 
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Download " + folderFixName, projectName, 1);
+                }));
+
                 // Copy Fix -> Working
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, folderFixName + " => Working", projectName, 0);
+                }));
+
                 FileHelpers.DownloadFolder(localEditorFixPath, projectWorkingEditorLocalPath, null, false, true);
+
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, folderFixName + " => Working", projectName, 1);
+                }));
             }
 
             Invoke((Action)(async () =>
@@ -872,7 +931,7 @@ namespace WandSyncFile
                         {
                             Invoke((Action)(() =>
                             {
-                                addItem(DateTime.Now, "Remove All", projectName, 0);
+                                addItem(DateTime.Now, "Completed", projectName, 0);
                             }));
 
                             var localProjectPath = Path.Combine(localPath, projectName);
@@ -895,7 +954,7 @@ namespace WandSyncFile
                                     Directory.Delete(localProjectPath, true);
                                     Invoke((Action)(() =>
                                     {
-                                        addItem(DateTime.Now, "Remove All", projectName, 1);
+                                        addItem(DateTime.Now, "Completed", projectName, 1);
                                     }));
                                 }
                                 catch (Exception e)
@@ -903,7 +962,7 @@ namespace WandSyncFile
                                     Console.WriteLine(e.Message);
                                     Invoke((Action)(() =>
                                     {
-                                        addItem(DateTime.Now, "Remove All", projectName, 2);
+                                        addItem(DateTime.Now, "Completed", projectName, 2);
                                     }));
                                 }
                                 finally { }
@@ -977,6 +1036,26 @@ namespace WandSyncFile
         private void label2_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void pnlHeader_MouseUp(object sender, MouseEventArgs e)
+        {
+            _mouseDown = false;
+        }
+
+        private void pnlHeader_MouseDown(object sender, MouseEventArgs e)
+        {
+            _mouseDown = true;
+            _lastLocation = e.Location;
+        }
+
+        private void pnlHeader_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (!_mouseDown) return;
+            Location = new Point(
+                (Location.X - _lastLocation.X) + e.X, (Location.Y - _lastLocation.Y) + e.Y);
+
+            Update();
         }
     }
 }
