@@ -34,7 +34,7 @@ namespace WandSyncFile
             this.headerpanel = new System.Windows.Forms.Panel();
             this.pictureBox3 = new System.Windows.Forms.PictureBox();
             this.panel2 = new System.Windows.Forms.Panel();
-            this.panel1 = new System.Windows.Forms.Panel();
+            this.pnlHeader = new System.Windows.Forms.Panel();
             this.ovalPictureBox1 = new WandSyncFile.CustomControls.OvalPictureBox();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.flowLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
@@ -58,7 +58,7 @@ namespace WandSyncFile
             this.headerpanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(24)))), ((int)(((byte)(24)))));
             this.headerpanel.Controls.Add(this.pictureBox3);
             this.headerpanel.Controls.Add(this.panel2);
-            this.headerpanel.Controls.Add(this.panel1);
+            this.headerpanel.Controls.Add(this.pnlHeader);
             this.headerpanel.Controls.Add(this.ovalPictureBox1);
             this.headerpanel.Controls.Add(this.pictureBox1);
             this.headerpanel.Controls.Add(this.flowLayoutPanel);
@@ -95,15 +95,15 @@ namespace WandSyncFile
             this.panel2.Size = new System.Drawing.Size(540, 1);
             this.panel2.TabIndex = 31;
             // 
-            // panel1
+            // pnlHeader
             // 
-            this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(43)))), ((int)(((byte)(48)))));
-            this.panel1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(43)))), ((int)(((byte)(48)))));
-            this.panel1.Location = new System.Drawing.Point(0, 53);
-            this.panel1.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(540, 1);
-            this.panel1.TabIndex = 30;
+            this.pnlHeader.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(43)))), ((int)(((byte)(48)))));
+            this.pnlHeader.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(43)))), ((int)(((byte)(48)))));
+            this.pnlHeader.Location = new System.Drawing.Point(0, 53);
+            this.pnlHeader.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
+            this.pnlHeader.Name = "pnlHeader";
+            this.pnlHeader.Size = new System.Drawing.Size(540, 1);
+            this.pnlHeader.TabIndex = 30;
             // 
             // ovalPictureBox1
             // 
@@ -133,10 +133,6 @@ namespace WandSyncFile
             // 
             this.flowLayoutPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.flowLayoutPanel.AutoScroll = false;
-            this.flowLayoutPanel.HorizontalScroll.Enabled = false;
-            this.flowLayoutPanel.HorizontalScroll.Visible = false;
-            this.flowLayoutPanel.HorizontalScroll.Maximum = 0;
             this.flowLayoutPanel.AutoScroll = true;
             this.flowLayoutPanel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(24)))), ((int)(((byte)(24)))));
             this.flowLayoutPanel.Location = new System.Drawing.Point(18, 144);
@@ -259,7 +255,7 @@ namespace WandSyncFile
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label6;
         private CustomControls.OvalPictureBox ovalPictureBox1;
-        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Panel pnlHeader;
         private System.Windows.Forms.Panel panel2;
         private System.Windows.Forms.PictureBox pictureBox3;
         private System.Windows.Forms.NotifyIcon notifyIcon2;
