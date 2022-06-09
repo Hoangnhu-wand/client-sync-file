@@ -274,7 +274,6 @@ namespace WandSyncFile
             }
         }
 
-
         public void ReadAllFileChange()
         {
             var displayFolder = new DisplayFolder();
@@ -1051,11 +1050,6 @@ namespace WandSyncFile
 
         }
 
-        private void ovalPictureBox1_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void pictureBox3_Click(object sender, EventArgs e)
         {
             WindowState = FormWindowState.Minimized;
@@ -1065,11 +1059,6 @@ namespace WandSyncFile
         {
             ShowInTaskbar = true;
             Show();
-        }
-
-        private void label2_Click(object sender, EventArgs e)
-        {
-
         }
 
         private void pnlHeader_MouseUp(object sender, MouseEventArgs e)
