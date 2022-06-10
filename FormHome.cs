@@ -172,7 +172,7 @@ namespace WandSyncFile
             try
             {
                 var listItem = new CustomViewConnectHrm1();
-                listItem.CreatedDate = created.ToString("dd/mm/yyyy");
+                listItem.CreatedDate = created.ToString("dd/M/yyyy");
                 listItem.CreateTime = created.ToString("hh:mm:ss");
                 listItem.Action = action;
                 listItem.Width = flowLayoutPanel.Width;
