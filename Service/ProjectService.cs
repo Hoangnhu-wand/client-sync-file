@@ -107,7 +107,6 @@ namespace WandSyncFile.Service
             {
                 throw new Exception(e.Message, e);
             }
-            
         }
     }
 }
