@@ -462,6 +462,7 @@
       <DependentUpon>FormLogin.cs</DependentUpon>
     </Compile>
     <Compile Include="Helpers\DisplayFolder.cs" />
+    <Compile Include="Helpers\StringlHelpers.cs" />
     <Compile Include="Helpers\ServerImpersonate.cs" />
     <Compile Include="Helpers\UserRoleHelpers.cs" />
     <Compile Include="Helpers\HttpRequest.cs" />
@@ -480,9 +481,11 @@
     </EmbeddedResource>
     <EmbeddedResource Include="CustomControls\TextboxCustom.resx">
       <DependentUpon>TextboxCustom.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="FormHome.resx">
       <DependentUpon>FormHome.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="FormLogin.resx">
       <DependentUpon>FormLogin.cs</DependentUpon>
