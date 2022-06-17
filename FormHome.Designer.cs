@@ -115,7 +115,6 @@ namespace WandSyncFile
             this.ovalPictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.ovalPictureBox1.TabIndex = 29;
             this.ovalPictureBox1.TabStop = false;
-            this.ovalPictureBox1.Click += new System.EventHandler(this.ovalPictureBox1_Click);
             // 
             // pictureBox1
             // 
@@ -214,8 +213,7 @@ namespace WandSyncFile
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(111, 17);
             this.label2.TabIndex = 4;
-            this.label2.Text = "Dashboard v0706";
-            this.label2.Click += new System.EventHandler(this.label2_Click);
+            this.label2.Text = "Dashboard v1706";
             // 
             // pnlHeader
             // 

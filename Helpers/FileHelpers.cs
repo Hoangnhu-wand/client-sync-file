@@ -873,42 +873,11 @@ namespace WandSyncFile.Helpers
 
         public static void SyncDirectoryDone(string fromPath, string toPath)
         {
-            if (!Directory.Exists(toPath))
-            {
-                Directory.CreateDirectory(toPath);
-            }
-
             // sync done from client to server
-            var files = Directory.GetFiles(fromPath);
-            var directories = Directory.GetDirectories(fromPath);
-            directories = directories.Where(di => di != toPath).ToArray();
-
-            foreach (string s in files)
-            {
-                CopyFile(s, Path.Combine(toPath, Path.GetFileName(s)));
-            }
-
-            foreach (string d in directories)
-            {
-                CopyDirectory(Path.Combine(fromPath, Path.GetFileName(d)), Path.Combine(toPath, Path.GetFileName(d)));
-            }
+            DownloadFolder(fromPath, toPath, null, false, true);
 
             // sync done from server to client
-
-            var toFiles = Directory.GetFiles(toPath);
-            var toDirs = Directory.GetDirectories(toPath);
-            var addFilesFromServer = toFiles.Where(toFile => !files.Any(fromFile => new FileInfo(fromFile).Name == new FileInfo(toFile).Name)).ToList();
-
-            foreach (string s in addFilesFromServer)
-            {
-                CopyFile(s, Path.Combine(fromPath, Path.GetFileName(s)));
-            }
-
-            var addFolderFromServer = toDirs.Where(toDir => !directories.Any(fromFile => new FileInfo(fromFile).Name == new FileInfo(toDir).Name)).ToList();
-            foreach (var dir in addFolderFromServer)
-            {
-                CopyDirectory(Path.Combine(toPath, Path.GetFileName(dir)), Path.Combine(fromPath, Path.GetFileName(dir)));
-            }
+            DownloadFolder(toPath, fromPath, null, false, true);
         }
 
         public static void SyncDirectory(string fromPath, string toPath, string notMoveFolder = null)

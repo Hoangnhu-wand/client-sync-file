@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using WandSyncFile.Data.Mapping;
 using WandSyncFile.Helpers;
+using WandSyncFile.Helpers;
 
 namespace WandSyncFile.Service
 {
@@ -96,7 +97,8 @@ namespace WandSyncFile.Service
         {
             try
             {
-                var url = Url.GetProject + $"?name={name}";
+                var standardizedName = StringHelpers.GetStandardizedName(name); 
+                var url = Url.GetProject + $"?name={standardizedName}";
                 var data = HttpRequest.GetAsync(url);
                 var project = JsonConvert.DeserializeObject<ProjectRequestDto>(data);
                 return project.Result;
@@ -105,7 +107,6 @@ namespace WandSyncFile.Service
             {
                 throw new Exception(e.Message, e);
             }
-            
         }
     }
 }

@@ -172,7 +172,7 @@ namespace WandSyncFile
             try
             {
                 var listItem = new CustomViewConnectHrm1();
-                listItem.CreatedDate = created.ToString("dd/mm/yyyy");
+                listItem.CreatedDate = created.ToString("dd/M/yyyy");
                 listItem.CreateTime = created.ToString("hh:mm:ss");
                 listItem.Action = action;
                 listItem.Width = flowLayoutPanel.Width;
@@ -273,7 +273,6 @@ namespace WandSyncFile
 
             }
         }
-
 
         public void ReadAllFileChange()
         {
@@ -684,6 +683,10 @@ namespace WandSyncFile
         {
             string connectedServer = DateTime.Now.ToString();
 
+            var userId = Properties.Settings.Default.Id;
+            var userName = Properties.Settings.Default.Username;
+            var localPath = Properties.Settings.Default.ProjectLocalPath;
+
             var reconnectSeconds = new List<TimeSpan> { TimeSpan.Zero, TimeSpan.Zero, TimeSpan.FromSeconds(5) };
 
             var i = 5;
@@ -705,6 +708,13 @@ namespace WandSyncFile
                     addItem(DateTime.Now, "Connected!", true);
                 }));
 
+                if (!Directory.Exists(localPath))
+                {
+                    Invoke((Action)(() =>
+                    {
+                        addItem(DateTime.Now, "Error - Folder does not exist: " + localPath, false);
+                    }));
+                }
             }
             catch (Exception ex)
             {
@@ -741,9 +751,7 @@ namespace WandSyncFile
                 await connection.StartAsync();
             };
 
-            var userId = Properties.Settings.Default.Id;
-            var userName = Properties.Settings.Default.Username;
-            var localPath = Properties.Settings.Default.ProjectLocalPath;
+            
 
             connection.On<string, string, string>("SERVER_QUEUE_MESSAGE", async (user, action, data) =>
             {
@@ -1051,11 +1059,6 @@ namespace WandSyncFile
 
         }
 
-        private void ovalPictureBox1_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void pictureBox3_Click(object sender, EventArgs e)
         {
             WindowState = FormWindowState.Minimized;
@@ -1065,11 +1068,6 @@ namespace WandSyncFile
         {
             ShowInTaskbar = true;
             Show();
-        }
-
-        private void label2_Click(object sender, EventArgs e)
-        {
-
         }
 
         private void pnlHeader_MouseUp(object sender, MouseEventArgs e)
