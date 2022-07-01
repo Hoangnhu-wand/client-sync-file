@@ -16,11 +16,6 @@ namespace WandSyncFile.Helpers
         public static string SEVER_USERNAME_07 = @"Administrator";
         public static string SERVER_PASSWORD_07 = "Wand12345";
 
-        // dropbox
-        public static string SERVER_USERNAME101 = @"leader";
-        public static string SERVER_PASSWORD101 = "wand@ld1234";
-        public static string SERVER_FILE101 = @"\\172.16.0.6";
-
         public static string PROJECT_PATH_FILE_NAME = "Path";
         public static string PROJECT_FILE_NAME = "Name";
         public static string PROJECT_LOG_NAME = "Log";
