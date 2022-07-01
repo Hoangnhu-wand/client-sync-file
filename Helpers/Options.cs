@@ -8,14 +8,13 @@ namespace WandSyncFile.Helpers
 {
     public static class Options
     {
-        public static string SERVER_FILE_105 = @"172.16.0.7";
+        public static string SERVER_FILE_07 = @"172.16.0.7";
         public static string FILE_DELETE = "DELETE";
         public static string FILE_RENAME = "RENAME";
         public static string FILE_CREATE = "CREATE";
 
-        public static string SEVER_USERNAME105 = @"Administrator";
-        public static string SERVER_PASSWORD105 = "Wand12345";
-        public static string SERVER_FILE105 = @"\\172.16.0.7";
+        public static string SEVER_USERNAME_07 = @"Administrator";
+        public static string SERVER_PASSWORD_07 = "Wand12345";
 
         // dropbox
         public static string SERVER_USERNAME101 = @"leader";

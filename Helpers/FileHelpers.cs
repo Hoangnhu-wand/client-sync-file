@@ -195,7 +195,7 @@ namespace WandSyncFile.Helpers
         public static bool ExitServerPath(string path)
         {
             IntPtr token = IntPtr.Zero;
-            LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
+            LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
             using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
             {
                 try
@@ -219,7 +219,7 @@ namespace WandSyncFile.Helpers
         public static long DirSizeServer(string path)
         {
             IntPtr token = IntPtr.Zero;
-            LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
+            LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
             using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
             {
                 try
@@ -245,7 +245,7 @@ namespace WandSyncFile.Helpers
         public static long FilesSizeServer(List<string> files)
         {
             IntPtr token = IntPtr.Zero;
-            LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
+            LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
             using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
             {
                 try
@@ -549,7 +549,7 @@ namespace WandSyncFile.Helpers
             try
             {
                 IntPtr token = IntPtr.Zero;
-                LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
+                LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
                 using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
                 {
                     try
@@ -578,7 +578,7 @@ namespace WandSyncFile.Helpers
             try
             {
                 IntPtr token = IntPtr.Zero;
-                LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
+                LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
                 using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
                 {
                     try
@@ -630,7 +630,7 @@ namespace WandSyncFile.Helpers
             try
             {
                 IntPtr token = IntPtr.Zero;
-                LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
+                LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
                 using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
                 {
                     try
@@ -817,7 +817,7 @@ namespace WandSyncFile.Helpers
         {
             ServerImpersonate cls = new ServerImpersonate();
 
-            IntPtr token = cls.ImpersonateUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105);
+            IntPtr token = cls.ImpersonateUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07);
 
             try
             {
@@ -837,7 +837,7 @@ namespace WandSyncFile.Helpers
         {
             ServerImpersonate cls = new ServerImpersonate();
 
-            IntPtr token = cls.ImpersonateUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105);
+            IntPtr token = cls.ImpersonateUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07);
 
             try
             {
@@ -856,7 +856,7 @@ namespace WandSyncFile.Helpers
         {
             ServerImpersonate cls = new ServerImpersonate();
 
-            IntPtr token = cls.ImpersonateUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105);
+            IntPtr token = cls.ImpersonateUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07);
 
             try
             {
@@ -1119,7 +1119,7 @@ namespace WandSyncFile.Helpers
         {
             ServerImpersonate cls = new ServerImpersonate();
 
-            IntPtr token = cls.ImpersonateUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105);
+            IntPtr token = cls.ImpersonateUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07);
 
             try
             {
@@ -1138,7 +1138,7 @@ namespace WandSyncFile.Helpers
         {
             IntPtr token = IntPtr.Zero;
 
-            LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
+            LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
             using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
             {
                 try
@@ -1166,7 +1166,7 @@ namespace WandSyncFile.Helpers
         {
             IntPtr token = IntPtr.Zero;
 
-            LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
+            LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
             using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
             {
                 try
@@ -1205,7 +1205,7 @@ namespace WandSyncFile.Helpers
         public static bool ProjectServerHasFix(string projectPath)
         {
             IntPtr token = IntPtr.Zero;
-            LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
+            LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
             using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
             {
                 try
@@ -1233,7 +1233,7 @@ namespace WandSyncFile.Helpers
         public static List<string> GetListServerFolderFix(string projectPath)
         {
             IntPtr token = IntPtr.Zero;
-            LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
+            LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
             using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
             {
                 try
@@ -1261,7 +1261,7 @@ namespace WandSyncFile.Helpers
         public static string ServerGetFolderName(string path)
         {
             IntPtr token = IntPtr.Zero;
-            LogonUser(Options.SEVER_USERNAME105, Options.SERVER_FILE_105, Options.SERVER_PASSWORD105, 9, 0, ref token);
+            LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
             using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
             {
                 try
