@@ -761,7 +761,7 @@ namespace WandSyncFile
                     {
                         var editorDownloadItem = JsonConvert.DeserializeObject<EditorDownloadFileProjectDto>(data);
 
-                        if (editorDownloadItem == null || !FileHelpers.ExitServerPath(editorDownloadItem.ProjectPath))
+                        if (editorDownloadItem == null || !FileHelpers.ExistsPathServer(editorDownloadItem.ProjectPath))
                         {
                             return;
                         }
@@ -891,7 +891,7 @@ namespace WandSyncFile
                     {
                         var projectInfo = JsonConvert.DeserializeObject<DownloadProjectInfo>(localProjectName);
 
-                        if (projectInfo == null || !FileHelpers.ExitServerPath(projectInfo.Path))
+                        if (projectInfo == null || !FileHelpers.ExistsPathServer(projectInfo.Path))
                         {
                             return;
                         }

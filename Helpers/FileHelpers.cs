@@ -192,7 +192,7 @@ namespace WandSyncFile.Helpers
             return listFileClient;
         }
 
-        public static bool ExitServerPath(string path)
+        public static bool ExistsPathServer(string path)
         {
             IntPtr token = IntPtr.Zero;
             LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
