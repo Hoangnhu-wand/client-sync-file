@@ -194,8 +194,18 @@ namespace WandSyncFile.Helpers
 
         public static bool ExistsPathServer(string path)
         {
+            var isFolder07 = path.Contains(Options.SERVER_FILE_07);
+            var isFolder08 = path.Contains(Options.SERVER_FILE_08);
+
             IntPtr token = IntPtr.Zero;
-            LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
+            if (isFolder07) { 
+                LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
+            }
+            else if(isFolder08)
+            {
+                LogonUser(Options.SEVER_USERNAME_08, Options.SERVER_FILE_08, Options.SERVER_PASSWORD_08, 9, 0, ref token);
+            }
+
             using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
             {
                 try
@@ -218,8 +228,19 @@ namespace WandSyncFile.Helpers
 
         public static long DirSizeServer(string path)
         {
+            var isFolder07 = path.Contains(Options.SERVER_FILE_07);
+            var isFolder08 = path.Contains(Options.SERVER_FILE_08);
+
             IntPtr token = IntPtr.Zero;
-            LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
+            if (isFolder07)
+            {
+                LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
+            }
+            else if (isFolder08)
+            {
+                LogonUser(Options.SEVER_USERNAME_08, Options.SERVER_FILE_08, Options.SERVER_PASSWORD_08, 9, 0, ref token);
+            }
+
             using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
             {
                 try
@@ -548,8 +569,19 @@ namespace WandSyncFile.Helpers
         {
             try
             {
+                var isFolder07 = fromPath.Contains(Options.SERVER_FILE_07);
+                var isFolder08 = fromPath.Contains(Options.SERVER_FILE_08);
+
                 IntPtr token = IntPtr.Zero;
-                LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
+                if (isFolder07)
+                {
+                    LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
+                }
+                else if (isFolder08)
+                {
+                    LogonUser(Options.SEVER_USERNAME_08, Options.SERVER_FILE_08, Options.SERVER_PASSWORD_08, 9, 0, ref token);
+                }
+
                 using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
                 {
                     try
