@@ -898,9 +898,24 @@ namespace WandSyncFile.Helpers
 
         public static void SyncDirectoryDoneToServer(string fromPath, string toPath)
         {
+            var isFolder07 = toPath.Contains(Options.SERVER_FILE_07);
+            var isFolder08 = toPath.Contains(Options.SERVER_FILE_08);
+
             ServerImpersonate cls = new ServerImpersonate();
 
-            IntPtr token = cls.ImpersonateUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07);
+            IntPtr token = IntPtr.Zero;
+            if (isFolder07)
+            {
+                token = cls.ImpersonateUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07);
+            }
+            else if (isFolder08)
+            {
+                token = cls.ImpersonateUser(Options.SEVER_USERNAME_08, Options.SERVER_FILE_08, Options.SERVER_PASSWORD_08);
+            }
+            else
+            {
+                token = cls.ImpersonateUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07);
+            }
 
             try
             {
