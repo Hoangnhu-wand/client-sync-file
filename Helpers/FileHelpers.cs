@@ -205,6 +205,10 @@ namespace WandSyncFile.Helpers
             {
                 LogonUser(Options.SEVER_USERNAME_08, Options.SERVER_FILE_08, Options.SERVER_PASSWORD_08, 9, 0, ref token);
             }
+            else
+            {
+                LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
+            }
 
             using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
             {
@@ -239,6 +243,10 @@ namespace WandSyncFile.Helpers
             else if (isFolder08)
             {
                 LogonUser(Options.SEVER_USERNAME_08, Options.SERVER_FILE_08, Options.SERVER_PASSWORD_08, 9, 0, ref token);
+            }
+            else
+            {
+                LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
             }
 
             using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
@@ -580,6 +588,10 @@ namespace WandSyncFile.Helpers
                 else if (isFolder08)
                 {
                     LogonUser(Options.SEVER_USERNAME_08, Options.SERVER_FILE_08, Options.SERVER_PASSWORD_08, 9, 0, ref token);
+                }
+                else
+                {
+                    LogonUser(Options.SEVER_USERNAME_07, Options.SERVER_FILE_07, Options.SERVER_PASSWORD_07, 9, 0, ref token);
                 }
 
                 using (WindowsImpersonationContext person = new WindowsIdentity(token).Impersonate())
