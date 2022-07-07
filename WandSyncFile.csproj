@@ -462,6 +462,7 @@
       <DependentUpon>FormLogin.cs</DependentUpon>
     </Compile>
     <Compile Include="Helpers\DisplayFolder.cs" />
+    <Compile Include="Helpers\UserHelpers.cs" />
     <Compile Include="Helpers\StringlHelpers.cs" />
     <Compile Include="Helpers\ServerImpersonate.cs" />
     <Compile Include="Helpers\UserRoleHelpers.cs" />
