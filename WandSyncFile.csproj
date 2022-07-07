@@ -468,7 +468,7 @@
     <Compile Include="Helpers\UserRoleHelpers.cs" />
     <Compile Include="Helpers\HttpRequest.cs" />
     <Compile Include="Constants\Options.cs" />
-    <Compile Include="Helpers\Url.cs" />
+    <Compile Include="Constants\Url.cs" />
     <Compile Include="Helpers\FileHelpers.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
