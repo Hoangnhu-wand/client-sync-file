@@ -7,6 +7,8 @@ namespace WandSyncFile.Helpers
     {
         public static IntPtr GetToken(string path)
         {
+            var isFolder05 = path.Contains(Options.SERVER_FILE_05);
+            var isFolder06 = path.Contains(Options.SERVER_FILE_06);
             var isFolder07 = path.Contains(Options.SERVER_FILE_07);
             var isFolder08 = path.Contains(Options.SERVER_FILE_08);
 
@@ -21,6 +23,14 @@ namespace WandSyncFile.Helpers
             else if (isFolder08)
             {
                 token = cls.ImpersonateUser(Options.SERVER_USERNAME_08, Options.SERVER_FILE_08, Options.SERVER_PASSWORD_08);
+            }
+            else if (isFolder05)
+            {
+                token = cls.ImpersonateUser(Options.SERVER_USERNAME_05, Options.SERVER_FILE_05, Options.SERVER_PASSWORD_05);
+            }
+            else if (isFolder06)
+            {
+                token = cls.ImpersonateUser(Options.SERVER_USERNAME_06, Options.SERVER_FILE_06, Options.SERVER_PASSWORD_06);
             }
             else
             {
