@@ -12,6 +12,16 @@ namespace WandSyncFile.Helpers
         public static string FILE_RENAME = "RENAME";
         public static string FILE_CREATE = "CREATE";
 
+        // Server 172.16.0.5
+        public static string SERVER_FILE_05 = @"172.16.0.5";
+        public static string SERVER_USERNAME_05 = @"leader";
+        public static string SERVER_PASSWORD_05 = "wand@ld1";
+
+        // Server 172.16.0.6
+        public static string SERVER_FILE_06 = @"172.16.0.6";
+        public static string SERVER_USERNAME_06 = @"leader";
+        public static string SERVER_PASSWORD_06 = "wand@ld1234";
+
         // Server 172.16.0.7
         public static string SERVER_FILE_07 = @"172.16.0.7";
         public static string SERVER_USERNAME_07 = @"Administrator";
