@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WandSyncFile.Helpers
+namespace WandSyncFile.Constants
 {
     public static class Options
     {

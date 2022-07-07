@@ -467,7 +467,7 @@
     <Compile Include="Helpers\ServerImpersonate.cs" />
     <Compile Include="Helpers\UserRoleHelpers.cs" />
     <Compile Include="Helpers\HttpRequest.cs" />
-    <Compile Include="Helpers\Options.cs" />
+    <Compile Include="Constants\Options.cs" />
     <Compile Include="Helpers\Url.cs" />
     <Compile Include="Helpers\FileHelpers.cs" />
     <Compile Include="Program.cs" />

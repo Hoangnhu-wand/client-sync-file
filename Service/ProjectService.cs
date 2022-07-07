@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using WandSyncFile.Data.Mapping;
 using WandSyncFile.Helpers;
-using WandSyncFile.Helpers;
+using WandSyncFile.Constants;
 
 namespace WandSyncFile.Service
 {
