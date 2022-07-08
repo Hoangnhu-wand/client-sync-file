@@ -18,6 +18,7 @@ using Microsoft.Win32;
 using Newtonsoft.Json;
 using Microsoft.Extensions.DependencyInjection;
 using WandSyncFile.Data.Mapping;
+using WandSyncFile.Constants;
 
 namespace WandSyncFile
 {
@@ -761,7 +762,7 @@ namespace WandSyncFile
                     {
                         var editorDownloadItem = JsonConvert.DeserializeObject<EditorDownloadFileProjectDto>(data);
 
-                        if (editorDownloadItem == null || !FileHelpers.ExitServerPath(editorDownloadItem.ProjectPath))
+                        if (editorDownloadItem == null || !FileHelpers.ExistsPathServer(editorDownloadItem.ProjectPath))
                         {
                             return;
                         }
@@ -891,7 +892,7 @@ namespace WandSyncFile
                     {
                         var projectInfo = JsonConvert.DeserializeObject<DownloadProjectInfo>(localProjectName);
 
-                        if (projectInfo == null || !FileHelpers.ExitServerPath(projectInfo.Path))
+                        if (projectInfo == null || !FileHelpers.ExistsPathServer(projectInfo.Path))
                         {
                             return;
                         }

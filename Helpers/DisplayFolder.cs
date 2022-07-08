@@ -12,7 +12,7 @@ namespace WandSyncFile.Helpers
     {
         public bool CheckFolderSyncCompleted(string fromPath, string toPath)
         {
-            if (!FileHelpers.ExitServerPath(toPath))
+            if (!FileHelpers.ExistsPathServer(toPath))
             {
                 return false;
             }
@@ -36,7 +36,7 @@ namespace WandSyncFile.Helpers
         public bool CheckFolderSync(string fromPath, string toPath, string iconChangeFolder = null)
         {
             iconChangeFolder = iconChangeFolder ?? fromPath;
-            if (!FileHelpers.ExitServerPath(toPath))
+            if (!FileHelpers.ExistsPathServer(toPath))
             {
                 return false;
             }
@@ -63,7 +63,7 @@ namespace WandSyncFile.Helpers
         public bool CheckFolderFixSync(string clientFixpath, string serverFixPath, string iconChangeFolder = null)
         {
             iconChangeFolder = iconChangeFolder ?? clientFixpath;
-            if (!FileHelpers.ExitServerPath(serverFixPath))
+            if (!FileHelpers.ExistsPathServer(serverFixPath))
             {
                 return false;
             }

@@ -15,7 +15,7 @@ namespace WandSyncFile.Helpers
     {
         public static string GetStandardizedName(string name)
         {
-            return name.Replace("#", "%23").Replace("&", "%26");
+            return name.Replace("#", "%23").Replace("&", "%26").Replace("+", "%2B");
         }
     }
 }
