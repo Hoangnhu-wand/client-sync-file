@@ -789,7 +789,7 @@ namespace WandSyncFile
                         var sampleLocalPath = FileHelpers.GetProjectSampleLocalPath(projectName);
                         var sampleServerPath = Path.Combine(projectPath, Options.PROJECT_SAMPLE_NAME);
 
-                        if (Directory.Exists(sampleServerPath))
+                        if (FileHelpers.ExistsServer(sampleServerPath))
                         {
                             var isSyncSample = displayFolder.CheckFolderSync(sampleLocalPath, sampleServerPath);
 
