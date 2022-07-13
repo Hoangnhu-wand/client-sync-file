@@ -1330,5 +1330,23 @@ namespace WandSyncFile.Helpers
                 FolderSetAttributeNormal(folderItem.FullName);
             }
         }
+
+        public static bool ExistsServer(string path)
+        {
+            IntPtr token = UserHelpers.GetToken(path);
+
+            try
+            {
+                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
+                {
+                    return Directory.Exists(path);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return false;
+            }
+        }
     }
 }
