@@ -283,7 +283,7 @@ namespace WandSyncFile
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "FormLogin";
-            this.Text = "Form1";
+            this.Text = "Login Form";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FrmLogin_FormClosing);
             this.headerpanel.ResumeLayout(false);
             this.headerpanel.PerformLayout();
