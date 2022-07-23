@@ -5,6 +5,8 @@ VisualStudioVersion = 17.1.32407.343
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WandSyncFile", "WandSyncFile.csproj", "{EF923AF6-BA35-4251-9167-A900C8B71693}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "WandSyncFileSetup", "Installer\WandSyncFileSetup\WandSyncFileSetup.vdproj", "{59600741-33C6-4697-93A1-ECC339751E8A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,14 @@ Global
 		{EF923AF6-BA35-4251-9167-A900C8B71693}.x64|Any CPU.Build.0 = Test|Any CPU
 		{EF923AF6-BA35-4251-9167-A900C8B71693}.x64|x64.ActiveCfg = Test|x64
 		{EF923AF6-BA35-4251-9167-A900C8B71693}.x64|x64.Build.0 = Test|x64
+		{59600741-33C6-4697-93A1-ECC339751E8A}.Debug|Any CPU.ActiveCfg = Debug
+		{59600741-33C6-4697-93A1-ECC339751E8A}.Debug|x64.ActiveCfg = Debug
+		{59600741-33C6-4697-93A1-ECC339751E8A}.Release|Any CPU.ActiveCfg = Release
+		{59600741-33C6-4697-93A1-ECC339751E8A}.Release|x64.ActiveCfg = Release
+		{59600741-33C6-4697-93A1-ECC339751E8A}.Test|Any CPU.ActiveCfg = Debug
+		{59600741-33C6-4697-93A1-ECC339751E8A}.Test|x64.ActiveCfg = Debug
+		{59600741-33C6-4697-93A1-ECC339751E8A}.x64|Any CPU.ActiveCfg = Debug
+		{59600741-33C6-4697-93A1-ECC339751E8A}.x64|x64.ActiveCfg = Debug
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
