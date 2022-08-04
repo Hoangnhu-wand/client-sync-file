@@ -651,7 +651,8 @@ namespace WandSyncFile
 
                 foreach (var fixItem in allFixByDoneName)
                 {
-                    var clientPath = Path.Combine(localEditorFixPath, Path.GetFileName(fixItem)); // LocalPath\\ProjectName\\fix_1\\Year 12 Formal (Photographer James)--4.jpg
+                    var nextFolderAfterFolderFix = fixItem.Replace(folderFixItem + "\\", "");
+                    var clientPath = Path.Combine(localEditorFixPath, nextFolderAfterFolderFix); // LocalPath\\ProjectName\\fix_1\\Year 12 Formal (Photographer James)--4.jpg
                     FileHelpers.CopyFileFromServer(fixItem, clientPath);
                 }
 
