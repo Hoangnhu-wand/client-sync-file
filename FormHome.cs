@@ -343,9 +343,15 @@ namespace WandSyncFile
             var lastFixFolderName = Path.GetFileName(lastFixFolderLocalPath);
             var lastFixFolderServerPath = Path.Combine(projectPath, lastFixFolderName);
 
-            var isSyncFix = displayFolder.CheckFolderFixSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
+            var folderDoneServer = Path.Combine(projectPath, "Done", editorUserName);
+
+            var isSyncFix = displayFolder.CheckFolderFixSync(lastFixFolderLocalPath, lastFixFolderServerPath,  folderDoneServer, lastFixFolderLocalPath);
             if (isSyncFix)
             {
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "No Change Fix", projectName, 0);
+                }));
                 return;
             }
 
@@ -403,6 +409,10 @@ namespace WandSyncFile
             var isSyncDo = displayFolder.CheckFolderSyncCompleted(projectDoEditorLocalPath, projectDoEditorServerPath);
             if (isSyncDo)
             {
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "No Change Do", projectName, 0);
+                }));
                 return;
             }
 
@@ -486,6 +496,10 @@ namespace WandSyncFile
             var isSyncDone = displayFolder.CheckFolderSyncCompleted(projectDoneEditorLocalPath, projectDoneEditorServerPath);
             if (isSyncDone)
             {
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "No Change Done", projectName, 0);
+                }));
                 return;
             }
 
