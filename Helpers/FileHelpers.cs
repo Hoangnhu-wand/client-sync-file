@@ -1348,5 +1348,18 @@ namespace WandSyncFile.Helpers
                 return false;
             }
         }
+
+        public static int CountImageFolder(string path)
+        {
+            var listImage = GetListFileNameByFolder(path);
+            var countImage = 0;
+
+            if(listImage != null)
+            {
+                countImage = listImage.Count;
+            }
+
+            return countImage;
+        }
     }
 }

@@ -69,7 +69,7 @@ namespace WandSyncFile.CustomControls
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.label3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(216)))), ((int)(((byte)(216)))), ((int)(((byte)(216)))));
-            this.label3.Location = new System.Drawing.Point(260, 10);
+            this.label3.Location = new System.Drawing.Point(330, 10);
             this.label3.Margin = new System.Windows.Forms.Padding(0);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(38, 15);
@@ -118,7 +118,7 @@ namespace WandSyncFile.CustomControls
             this.buttonCustom1.Location = new System.Drawing.Point(143, 5);
             this.buttonCustom1.Margin = new System.Windows.Forms.Padding(0);
             this.buttonCustom1.Name = "buttonCustom1";
-            this.buttonCustom1.Size = new System.Drawing.Size(100, 22);
+            this.buttonCustom1.Size = new System.Drawing.Size(163, 22);
             this.buttonCustom1.TabIndex = 2;
             this.buttonCustom1.Text = "Download";
             this.buttonCustom1.UseVisualStyleBackColor = false;
@@ -139,7 +139,7 @@ namespace WandSyncFile.CustomControls
             this.ForeColor = System.Drawing.Color.Coral;
             this.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
             this.Name = "CustomListView";
-            this.Size = new System.Drawing.Size(505, 37);
+            this.Size = new System.Drawing.Size(507, 37);
             this.Load += new System.EventHandler(this.CustomListView_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
