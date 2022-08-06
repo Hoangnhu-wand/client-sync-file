@@ -362,6 +362,10 @@ namespace WandSyncFile
             var project = projectService.RequestGetProjectByName(projectName);
             if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
             {
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Project No Change", projectName, 0);
+                }));
                 return;
             }
 
@@ -433,6 +437,10 @@ namespace WandSyncFile
 
             if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
             {
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Project No Change", projectName, 0);
+                }));
                 return;
             }
 
@@ -531,6 +539,10 @@ namespace WandSyncFile
             var project = projectService.RequestGetProjectByName(projectName);
             if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
             {
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Project No Change", projectName, 0);
+                }));
                 return;
             }
 
