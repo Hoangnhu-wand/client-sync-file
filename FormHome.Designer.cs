@@ -72,7 +72,7 @@ namespace WandSyncFile
             this.headerpanel.Controls.Add(this.pnlHeader);
             this.headerpanel.Location = new System.Drawing.Point(0, -3);
             this.headerpanel.Name = "headerpanel";
-            this.headerpanel.Size = new System.Drawing.Size(540, 718);
+            this.headerpanel.Size = new System.Drawing.Size(570, 718);
             this.headerpanel.TabIndex = 0;
             // 
             // pnlHeaderBottom
@@ -80,7 +80,7 @@ namespace WandSyncFile
             this.pnlHeaderBottom.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(43)))), ((int)(((byte)(48)))));
             this.pnlHeaderBottom.Location = new System.Drawing.Point(0, 50);
             this.pnlHeaderBottom.Name = "pnlHeaderBottom";
-            this.pnlHeaderBottom.Size = new System.Drawing.Size(540, 1);
+            this.pnlHeaderBottom.Size = new System.Drawing.Size(570, 1);
             this.pnlHeaderBottom.TabIndex = 33;
             // 
             // pictureBox3
@@ -102,7 +102,7 @@ namespace WandSyncFile
             this.panel2.Location = new System.Drawing.Point(0, 643);
             this.panel2.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(540, 1);
+            this.panel2.Size = new System.Drawing.Size(570, 1);
             this.panel2.TabIndex = 31;
             // 
             // ovalPictureBox1
@@ -142,7 +142,7 @@ namespace WandSyncFile
             this.flowLayoutPanel.Location = new System.Drawing.Point(18, 144);
             this.flowLayoutPanel.Margin = new System.Windows.Forms.Padding(0);
             this.flowLayoutPanel.Name = "flowLayoutPanel";
-            this.flowLayoutPanel.Size = new System.Drawing.Size(505, 470);
+            this.flowLayoutPanel.Size = new System.Drawing.Size(540, 470);
             this.flowLayoutPanel.TabIndex = 9;
             this.flowLayoutPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.flowLayoutPanel1_Paint);
             // 
@@ -223,7 +223,7 @@ namespace WandSyncFile
             this.pnlHeader.Location = new System.Drawing.Point(0, 0);
             this.pnlHeader.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
             this.pnlHeader.Name = "pnlHeader";
-            this.pnlHeader.Size = new System.Drawing.Size(540, 51);
+            this.pnlHeader.Size = new System.Drawing.Size(570, 51);
             this.pnlHeader.TabIndex = 30;
             this.pnlHeader.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pnlHeader_MouseDown);
             this.pnlHeader.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pnlHeader_MouseMove);
@@ -243,7 +243,7 @@ namespace WandSyncFile
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(24)))), ((int)(((byte)(24)))));
-            this.ClientSize = new System.Drawing.Size(540, 718);
+            this.ClientSize = new System.Drawing.Size(570, 718);
             this.Controls.Add(this.headerpanel);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));

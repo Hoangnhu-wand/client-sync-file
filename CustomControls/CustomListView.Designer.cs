@@ -36,6 +36,7 @@ namespace WandSyncFile.CustomControls
             this.panel2 = new System.Windows.Forms.Panel();
             this.buttonCustom2 = new WandSyncFile.CustomControls.ButtonCustom();
             this.buttonCustom1 = new WandSyncFile.CustomControls.ButtonCustom();
+            this.lblCount = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // label1
@@ -56,7 +57,7 @@ namespace WandSyncFile.CustomControls
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.label2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(252)))), ((int)(((byte)(252)))), ((int)(((byte)(252)))));
-            this.label2.Location = new System.Drawing.Point(85, 10);
+            this.label2.Location = new System.Drawing.Point(65, 10);
             this.label2.Margin = new System.Windows.Forms.Padding(0);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(38, 15);
@@ -82,12 +83,12 @@ namespace WandSyncFile.CustomControls
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(111)))), ((int)(((byte)(118)))), ((int)(((byte)(126)))));
             this.panel1.Location = new System.Drawing.Point(0, 35);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(505, 1);
+            this.panel1.Size = new System.Drawing.Size(570, 1);
             this.panel1.TabIndex = 6;
             // 
             // panel2
             // 
-            this.panel2.Location = new System.Drawing.Point(453, 10);
+            this.panel2.Location = new System.Drawing.Point(478, 10);
             this.panel2.Margin = new System.Windows.Forms.Padding(0);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(30, 19);
@@ -100,7 +101,7 @@ namespace WandSyncFile.CustomControls
             this.buttonCustom2.FlatAppearance.BorderSize = 0;
             this.buttonCustom2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonCustom2.ForeColor = System.Drawing.Color.White;
-            this.buttonCustom2.Location = new System.Drawing.Point(463, 15);
+            this.buttonCustom2.Location = new System.Drawing.Point(488, 15);
             this.buttonCustom2.Name = "buttonCustom2";
             this.buttonCustom2.Size = new System.Drawing.Size(8, 8);
             this.buttonCustom2.TabIndex = 8;
@@ -118,17 +119,30 @@ namespace WandSyncFile.CustomControls
             this.buttonCustom1.Location = new System.Drawing.Point(143, 5);
             this.buttonCustom1.Margin = new System.Windows.Forms.Padding(0);
             this.buttonCustom1.Name = "buttonCustom1";
-            this.buttonCustom1.Size = new System.Drawing.Size(163, 22);
+            this.buttonCustom1.Size = new System.Drawing.Size(110, 22);
             this.buttonCustom1.TabIndex = 2;
             this.buttonCustom1.Text = "Download";
             this.buttonCustom1.UseVisualStyleBackColor = false;
             this.buttonCustom1.Click += new System.EventHandler(this.buttonCustom1_Click);
+            // 
+            // lblCount
+            // 
+            this.lblCount.AutoSize = true;
+            this.lblCount.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.lblCount.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(216)))), ((int)(((byte)(216)))), ((int)(((byte)(216)))));
+            this.lblCount.Location = new System.Drawing.Point(273, 10);
+            this.lblCount.Margin = new System.Windows.Forms.Padding(0);
+            this.lblCount.Name = "lblCount";
+            this.lblCount.Size = new System.Drawing.Size(38, 15);
+            this.lblCount.TabIndex = 9;
+            this.lblCount.Text = "label4";
             // 
             // CustomListView
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(24)))), ((int)(((byte)(24)))), ((int)(((byte)(24)))));
+            this.Controls.Add(this.lblCount);
             this.Controls.Add(this.buttonCustom2);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.panel1);
@@ -139,7 +153,7 @@ namespace WandSyncFile.CustomControls
             this.ForeColor = System.Drawing.Color.Coral;
             this.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
             this.Name = "CustomListView";
-            this.Size = new System.Drawing.Size(507, 37);
+            this.Size = new System.Drawing.Size(570, 37);
             this.Load += new System.EventHandler(this.CustomListView_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -155,5 +169,6 @@ namespace WandSyncFile.CustomControls
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Panel panel2;
         private ButtonCustom buttonCustom2;
+        private System.Windows.Forms.Label lblCount;
     }
 }
