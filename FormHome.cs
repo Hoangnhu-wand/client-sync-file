@@ -288,6 +288,7 @@ namespace WandSyncFile
             // get all folder in project path
             var projectLocalPath = Properties.Settings.Default.ProjectLocalPath;
             var editorUserName = Properties.Settings.Default.Username;
+    
 
             if (!Directory.Exists(projectLocalPath))
             {
@@ -296,30 +297,38 @@ namespace WandSyncFile
 
             try
             {
-                DirectoryInfo info = new DirectoryInfo(projectLocalPath);
+                DirectoryInfo info = new DirectoryInfo(projectLocalPath);     
                 var directories = info.GetDirectories().OrderBy(p => p.LastWriteTime).ToArray();
-
-                foreach (var projectDir in directories)
-                {
-                    DirectoryInfo projectDirInfo = new DirectoryInfo(projectDir.FullName);
-                    var logPath = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_PATH_FILE_NAME).FirstOrDefault();
-                    var logProjectName = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_FILE_NAME).FirstOrDefault();
-
-                    if (logPath == null)
+                   if(directories.Length > 0)
                     {
-                        continue;
+                        foreach (var projectDir in directories)
+                        {
+                            DirectoryInfo projectDirInfo = new DirectoryInfo(projectDir.FullName);
+                            var logPath = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_PATH_FILE_NAME).FirstOrDefault();
+                            var logProjectName = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_FILE_NAME).FirstOrDefault();
+
+                            if (logPath == null)
+                            {
+                                continue;
+                            }
+
+                            var projectPath = File.ReadLines(logPath.FullName).FirstOrDefault();
+                            var projectName = File.ReadLines(logProjectName.FullName).FirstOrDefault();
+
+                            SyncDo(projectName, projectPath);
+
+                            SyncDone(projectName, projectPath);
+
+                            SyncFix(projectName, projectPath);
+                        }
                     }
-
-                    var projectPath = File.ReadLines(logPath.FullName).FirstOrDefault();
-                    var projectName = File.ReadLines(logProjectName.FullName).FirstOrDefault();
-
-                    SyncDo(projectName, projectPath);
-
-                    SyncDone(projectName, projectPath);
-
-                    SyncFix(projectName, projectPath);
-                }
-
+                    else
+                    {
+                        Invoke((Action)(() =>
+                        {
+                            addItem(DateTime.Now, "No Project!", false);
+                        }));
+                    }
             }
             catch (Exception e)
             {
