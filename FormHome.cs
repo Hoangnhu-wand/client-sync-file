@@ -298,9 +298,7 @@ namespace WandSyncFile
             try
             {
                 DirectoryInfo info = new DirectoryInfo(projectLocalPath);     
-                var directories = info.GetDirectories().OrderBy(p => p.LastWriteTime).ToArray();
-                   if(directories.Length > 0)
-                    {
+                var directories = info.GetDirectories().OrderBy(p => p.LastWriteTime).ToArray();          
                         foreach (var projectDir in directories)
                         {
                             DirectoryInfo projectDirInfo = new DirectoryInfo(projectDir.FullName);
@@ -321,14 +319,6 @@ namespace WandSyncFile
 
                             SyncFix(projectName, projectPath);
                         }
-                    }
-                    else
-                    {
-                        Invoke((Action)(() =>
-                        {
-                            addItem(DateTime.Now, "No Project!", false);
-                        }));
-                    }
             }
             catch (Exception e)
             {
