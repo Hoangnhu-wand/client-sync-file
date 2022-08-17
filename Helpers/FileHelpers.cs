@@ -541,6 +541,7 @@ namespace WandSyncFile.Helpers
                 using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
                 {
                     DownloadFolder(fromPath, toPath, withoutFolder, isRemoveNotExists, isReplaceExists);
+                    RemoveFolder(fromPath, toPath);
                 }
             }
             catch (Exception e)
@@ -1360,6 +1361,38 @@ namespace WandSyncFile.Helpers
             }
 
             return countImage;
+        }
+
+        public static void RemoveFolder(string localPath, string serverpath)
+        {
+
+            try
+            {
+                DirectoryInfo directoryLocal = new DirectoryInfo(localPath);
+                var directoriesLocal = directoryLocal.GetDirectories();
+
+                if (directoriesLocal.Length <= 0)
+                {
+                    return;
+                }
+                foreach (var folderName in directoriesLocal)
+                {
+
+                    var newServerPath = Path.Combine(serverpath, folderName.Name);
+                    if (!Directory.Exists(newServerPath))
+                    {
+                        Directory.Delete(folderName.FullName, true);
+                    }
+
+                    RemoveFolder(folderName.FullName, newServerPath);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+           
+
         }
     }
 }
