@@ -541,7 +541,6 @@ namespace WandSyncFile.Helpers
                 using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
                 {
                     DownloadFolder(fromPath, toPath, withoutFolder, isRemoveNotExists, isReplaceExists);
-                    RemoveFolder(fromPath, toPath);
                 }
             }
             catch (Exception e)

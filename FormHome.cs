@@ -460,7 +460,7 @@ namespace WandSyncFile
 
                 try {
                     FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath, null, true);
-                    
+                    FileHelpers.RemoveFolder(projectDoEditorLocalPath, projectDoEditorServerPath);
                     //đếm số ảnh do sau khi sync
                     var imageDoLocalLast = FileHelpers.CountImageFolder(projectDoEditorLocalPath);
                     var imageDoServerLast = FileHelpers.CountImageFolder(projectDoEditorServerPath);
@@ -486,7 +486,7 @@ namespace WandSyncFile
                         }));
 
                         FileHelpers.DownloadFolder(projectDoEditorLocalPath, editorFolderWorking);
-
+                        FileHelpers.RemoveFolder(editorFolderWorking, projectDoEditorLocalPath);
                         var imageWorkingServerLast = FileHelpers.CountImageFolder(editorFolderWorking);
                         var countDoToWorkingLast = imageDoLocalLast + "/" + imageWorkingServerLast;
                         Invoke((Action)(async () =>
@@ -626,7 +626,7 @@ namespace WandSyncFile
             processingDoProject.Add(projectId);
 
             FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath);
-
+            FileHelpers.RemoveFolder(projectDoEditorLocalPath, projectDoEditorServerPath);
             //Đếm số ảnh Do sau khi tải xuống
             var imageDoLocalLast = FileHelpers.CountImageFolder(projectDoEditorLocalPath);
             var imageDoServerLast = FileHelpers.CountImageFolder(projectDoEditorServerPath);
