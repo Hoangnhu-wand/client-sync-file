@@ -162,11 +162,23 @@ namespace WandSyncFile
                 listItem.Width = flowLayoutPanel.Width;
                 flowLayoutPanel.Controls.Add(listItem);
                 flowLayoutPanel.Controls.SetChildIndex(listItem, 1);
-
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                try {
+                    for (int i = flowLayoutPanel.Controls.Count - 1; i >= 0; --i)
+                    {
+                        var ctl = flowLayoutPanel.Controls[i];
+                        ctl.Dispose();
+                    }
+                    Invoke((Action)(() =>
+                    {
+                        addItem(DateTime.Now, "Clear!", true);
+                    }));
+                }
+                catch(Exception) {
+                    Console.WriteLine(e.Message);
+                }  
             }
         }
 
@@ -193,7 +205,18 @@ namespace WandSyncFile
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                try
+                {
+                    for (int i = flowLayoutPanel.Controls.Count - 1; i >= 0; --i)
+                    {
+                        var ctl = flowLayoutPanel.Controls[i];
+                        ctl.Dispose();
+                    }
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine(e.Message);
+                }
             }
         }
 
