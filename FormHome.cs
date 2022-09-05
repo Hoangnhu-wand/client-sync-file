@@ -19,6 +19,7 @@ using Newtonsoft.Json;
 using Microsoft.Extensions.DependencyInjection;
 using WandSyncFile.Data.Mapping;
 using WandSyncFile.Constants;
+using System.Net.Http;
 
 namespace WandSyncFile
 {
@@ -40,6 +41,8 @@ namespace WandSyncFile
             InitializeComponent();
             setupAutoRun();
 
+           /* HttpClientHelper.PostAsync("http://172.16.0.20:6696/api/v1/guidance", "");
+*/
             displayFolder = new DisplayFolder();
             projectService = new ProjectService();
             cancellationToken = new CancellationToken();
@@ -1081,7 +1084,6 @@ namespace WandSyncFile
                         }
                     });
                 }
-
             });
 
             connection.On<string, string, string>("HRM_PROJECT", async (users, action, projectName) =>
@@ -1153,7 +1155,50 @@ namespace WandSyncFile
                 }
             });
 
+            connection.On<string, string, string, double, double, double>("WAND_ADDON_MESSAGE_FREQUENCY", async (user, action, path, blend, dodge, burn) =>
+            {
+                if (action == "FREQUENCY_ALL_IMAGE")
+                {
+                    Task.Run( async() =>
+                    {
+                        try
+                        {                        
+                            DirectoryInfo directory = new DirectoryInfo(path);
+                            var files = directory.GetFiles()
+                 .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
+                 .OrderBy(p => p.FullName)
+                 .Select(item => item.FullName).ToList();
+
+                            foreach (var item in files)
+                            {
+                                try
+                                {
+                                    var name = Path.GetFileName(item);
+                                    var base64Image = FileHelpers.GetBase64StringForImage(item);
+                                   
+                                    var base64_guidance = HttpClientHelper.callAPIGuidance(Url.GetBase64Guidance, base64Image);
+                                    var base64_dodge_burn = HttpClientHelper.callAPIDodgeAndBurn(Url.GetBase64DodgeAndBurn, base64Image, base64_guidance);
+                                    DodgeAndBurnDto base64_dodge_burn_obj = System.Text.Json.JsonSerializer.Deserialize<DodgeAndBurnDto>(base64_dodge_burn);
+                                    var basse64_layer = HttpClientHelper.exportBase64(Url.GetBase64Frequency, base64Image, base64_dodge_burn_obj.base64_dodge, base64_dodge_burn_obj.base64_burn, dodge, burn, blend);
+                                    FileHelpers.Base64ToImage(basse64_layer, path, name);
+                                }
+                                catch (Exception e)
+                                {
+                                    Console.WriteLine(e.Message);
+                                }
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e.Message);
+                        }
+                    });
+                }
+            });
+
+
         }
+
 
         private void FormHome_Load(object sender, EventArgs e)
         {

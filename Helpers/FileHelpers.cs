@@ -9,6 +9,7 @@ using System.Security.Principal;
 using WandSyncFile.Service;
 using static WandSyncFile.Constants.Values;
 using WandSyncFile.Constants;
+using System.Drawing;
 
 namespace WandSyncFile.Helpers
 {
@@ -1390,8 +1391,25 @@ namespace WandSyncFile.Helpers
             {
                 Console.WriteLine(e.Message);
             }
-           
+        }
 
+        public static string GetBase64StringForImage(string imgPath)
+        {
+            byte[] imageBytes = System.IO.File.ReadAllBytes(imgPath);
+            string base64String = Convert.ToBase64String(imageBytes);
+            return base64String;
+        }
+
+        public static void Base64ToImage(string base64String, string path, string nameImage)
+        {
+            // Convert Base64 String to byte[]
+            string fullpath = Path.Combine(path, "Frequency");
+            if (!Directory.Exists(fullpath))
+            {
+                Directory.CreateDirectory(fullpath);
+            }
+            string filePath = Path.Combine(fullpath, nameImage);
+            File.WriteAllBytes(filePath, Convert.FromBase64String(base64String));
         }
     }
 }

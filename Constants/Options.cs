@@ -53,5 +53,9 @@ namespace WandSyncFile.Constants
         // TimeSpan
         public static int TIME_SPAN_READ_FILE_CHANGE = 10;
         public static int TIME_SPAN_REMOVE_COMPLETED_PROJECT = 10;
+
+        public static readonly List<string> PROJECT_IMAGE_FILE_TYPE_JPG = new List<string> { "JPG", "JPEG" };
+
+        
     }
 }
