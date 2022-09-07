@@ -512,7 +512,7 @@ namespace WandSyncFile
                         }));
 
                         FileHelpers.DownloadFolder(projectDoEditorLocalPath, editorFolderWorking);
-                        FileHelpers.RemoveFolder(editorFolderWorking, projectDoEditorLocalPath);
+                       /* FileHelpers.RemoveFolder(editorFolderWorking, projectDoEditorLocalPath);*/
                         var imageWorkingServerLast = FileHelpers.CountImageFolder(editorFolderWorking);
                         var countDoToWorkingLast = imageDoLocalLast + "/" + imageWorkingServerLast;
                         Invoke((Action)(async () =>
