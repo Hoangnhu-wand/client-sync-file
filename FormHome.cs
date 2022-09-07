@@ -1180,7 +1180,7 @@ namespace WandSyncFile
                                     var base64_dodge_burn = HttpClientHelper.callAPIDodgeAndBurn(Url.GetBase64DodgeAndBurn, base64Image, base64_guidance);
                                     DodgeAndBurnDto base64_dodge_burn_obj = System.Text.Json.JsonSerializer.Deserialize<DodgeAndBurnDto>(base64_dodge_burn);
                                     var basse64_layer = HttpClientHelper.exportBase64(Url.GetBase64Frequency, base64Image, base64_dodge_burn_obj.base64_dodge, base64_dodge_burn_obj.base64_burn, dodge, burn, blend);
-                                    FileHelpers.Base64ToImage(basse64_layer, path, name);
+                                    FileHelpers.Base64ToImage(basse64_layer, path, name, user);
                                 }
                                 catch (Exception e)
                                 {

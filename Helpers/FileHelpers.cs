@@ -1400,16 +1400,23 @@ namespace WandSyncFile.Helpers
             return base64String;
         }
 
-        public static void Base64ToImage(string base64String, string path, string nameImage)
+        public static void Base64ToImage(string base64String, string path, string nameImage, string user)
         {
-            // Convert Base64 String to byte[]
-            string fullpath = Path.Combine(path, "Frequency");
-            if (!Directory.Exists(fullpath))
-            {
-                Directory.CreateDirectory(fullpath);
+            try {
+                // Convert Base64 String to byte[]
+                string fullpath = path.Replace("Working\\" + user, "Frequency");
+                if (!Directory.Exists(fullpath))
+                {
+                    Directory.CreateDirectory(fullpath);
+                }
+                string filePath = Path.Combine(fullpath, nameImage);
+                File.WriteAllBytes(filePath, Convert.FromBase64String(base64String));
             }
-            string filePath = Path.Combine(fullpath, nameImage);
-            File.WriteAllBytes(filePath, Convert.FromBase64String(base64String));
+            catch(Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+           
         }
     }
 }
