@@ -448,6 +448,7 @@
     <Compile Include="Data\Mapping\ProjectMessageQueueDto.cs" />
     <Compile Include="Data\Mapping\Project.cs" />
     <Compile Include="Data\Mapping\FileDto.cs" />
+    <Compile Include="Data\Mapping\DodgeAndBurnDto.cs" />
     <Compile Include="Data\Mapping\UserDto.cs" />
     <Compile Include="FormHome.cs">
       <SubType>Form</SubType>
@@ -461,6 +462,7 @@
     <Compile Include="FormLogin.Designer.cs">
       <DependentUpon>FormLogin.cs</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\HttpClientHelper.cs" />
     <Compile Include="Helpers\DisplayFolder.cs" />
     <Compile Include="Helpers\UserHelpers.cs" />
     <Compile Include="Helpers\StringlHelpers.cs" />
