@@ -1155,7 +1155,7 @@ namespace WandSyncFile
                 }
             });
 
-            connection.On<string, string, string, double, double, double>("WAND_ADDON_MESSAGE_FREQUENCY", async (user, action, path, blend, dodge, burn) =>
+            connection.On<string, string, string, double, double, double, string>("WAND_ADDON_MESSAGE_FREQUENCY", async (user, action, path, blend, dodge, burn, filter) =>
             {
                 if (action == "FREQUENCY_ALL_IMAGE")
                 {
@@ -1168,26 +1168,42 @@ namespace WandSyncFile
                  .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
                  .OrderBy(p => p.FullName)
                  .Select(item => item.FullName).ToList();
+                            if(filter == "all") {
+                                foreach (var item in files)
+                                {
+                                    try
+                                    {
+                                        var name = Path.GetFileName(item);
+                                        var base64Image = FileHelpers.GetBase64StringForImage(item);
 
-                            foreach (var item in files)
-                            {
-                                try
-                                {
-                                    var name = Path.GetFileName(item);
-                                    var base64Image = FileHelpers.GetBase64StringForImage(item);
-                                   
-                                    var base64_guidance = HttpClientHelper.callAPIGuidance(Url.GetBase64Guidance, base64Image);
-                                    var base64_dodge_burn = HttpClientHelper.callAPIDodgeAndBurn(Url.GetBase64DodgeAndBurn, base64Image, base64_guidance);
-                                    DodgeAndBurnDto base64_dodge_burn_obj = System.Text.Json.JsonSerializer.Deserialize<DodgeAndBurnDto>(base64_dodge_burn);
-                                    var basse64_layer = HttpClientHelper.exportBase64(Url.GetBase64Frequency, base64Image, base64_dodge_burn_obj.base64_dodge, base64_dodge_burn_obj.base64_burn, dodge, burn, blend);
-                                    FileHelpers.Base64ToImage(basse64_layer, path, name, user);
+                                        var base64_guidance = HttpClientHelper.callAPIGuidance(Url.GetBase64Guidance, base64Image);
+                                        var base64_dodge_burn = HttpClientHelper.callAPIDodgeAndBurn(Url.GetBase64DodgeAndBurn, base64Image, base64_guidance);
+                                        DodgeAndBurnDto base64_dodge_burn_obj = System.Text.Json.JsonSerializer.Deserialize<DodgeAndBurnDto>(base64_dodge_burn);
+                                        var basse64_layer = HttpClientHelper.exportBase64(Url.GetBase64Frequency, base64Image, base64_dodge_burn_obj.base64_dodge, base64_dodge_burn_obj.base64_burn, dodge, burn, blend);
+                                        FileHelpers.Base64ToImage(basse64_layer, path, name, user);
+                                        var filesnew = directory.GetFiles()
+                .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
+                .OrderBy(p => p.FullName)
+                .Select(p => p.FullName).ToList();
+                                        if (filesnew.Count != files.Count)
+                                        {
+                                            FrequencyNewImage(user, action, path, blend, dodge, burn);
+                                            break;
+                                        }
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Console.WriteLine(e.Message);
+                                    }
                                 }
-                                catch (Exception e)
-                                {
-                                    Console.WriteLine(e.Message);
-                                }
+
                             }
-                        }
+                            else
+                            {
+                                FrequencyNewImage(user, action, path, blend, dodge, burn);
+                            }
+
+                          }
                         catch (Exception e)
                         {
                             Console.WriteLine(e.Message);
@@ -1199,8 +1215,51 @@ namespace WandSyncFile
 
         }
 
+        public void FrequencyNewImage(string user,string action,string path,double blend,double dodge,double burn)
+        {
+            Task.Run(async () =>
+            {
+                try
+                {
+                    DirectoryInfo directory = new DirectoryInfo(path);
+                    var files = directory.GetFiles()
+         .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
+         .OrderBy(p => p.FullName)
+         .Select(item => item.FullName).ToList();
 
-        private void FormHome_Load(object sender, EventArgs e)
+                    foreach (var item in files)
+                    {
+                        try
+                        {
+                            string pathImage = item.Replace("Working\\" + user, "Frequency");
+               
+                            if (!File.Exists(pathImage))
+                            {
+                                var name = Path.GetFileName(item);
+                                var base64Image = FileHelpers.GetBase64StringForImage(item);
+
+                                var base64_guidance = HttpClientHelper.callAPIGuidance(Url.GetBase64Guidance, base64Image);
+                                var base64_dodge_burn = HttpClientHelper.callAPIDodgeAndBurn(Url.GetBase64DodgeAndBurn, base64Image, base64_guidance);
+                                DodgeAndBurnDto base64_dodge_burn_obj = System.Text.Json.JsonSerializer.Deserialize<DodgeAndBurnDto>(base64_dodge_burn);
+                                var basse64_layer = HttpClientHelper.exportBase64(Url.GetBase64Frequency, base64Image, base64_dodge_burn_obj.base64_dodge, base64_dodge_burn_obj.base64_burn, dodge, burn, blend);
+                                FileHelpers.Base64ToImage(basse64_layer, path, name, user);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e.Message);
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            });
+        }
+
+
+            private void FormHome_Load(object sender, EventArgs e)
         {
 
         }
