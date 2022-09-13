@@ -1155,54 +1155,86 @@ namespace WandSyncFile
                 }
             });
 
-            connection.On<string, string, string, double, double, double, string>("WAND_ADDON_MESSAGE_FREQUENCY", async (user, action, path, blend, dodge, burn, filter) =>
+            connection.On<string, string, string,string, double, double, double, string>("WAND_ADDON_MESSAGE_FREQUENCY", async (user, action, path, pathAi, blend, dodge, burn, filter) =>
             {
                 if (action == "FREQUENCY_ALL_IMAGE")
                 {
-                    Task.Run( async() =>
+              
+                    Task.Run(async () =>
                     {
                         try
-                        {                        
-                            DirectoryInfo directory = new DirectoryInfo(path);
-                            var files = directory.GetFiles()
-                 .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
-                 .OrderBy(p => p.FullName)
-                 .Select(item => item.FullName).ToList();
-                            if(filter == "all") {
-                                foreach (var item in files)
+                        {
+                            if (pathAi != null)
+                            {
+                                DirectoryInfo directory = new DirectoryInfo(pathAi);
+                                var files = directory.GetFiles()
+                     .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
+                     .OrderBy(p => p.FullName)
+                     .Select(item => item.FullName).ToList();
+                                if (filter == "all")
                                 {
-                                    try
+                               foreach (var item in files)
                                     {
-                                        var name = Path.GetFileName(item);
-                                        var base64Image = FileHelpers.GetBase64StringForImage(item);
-
-                                        var base64_guidance = HttpClientHelper.callAPIGuidance(Url.GetBase64Guidance, base64Image);
-                                        var base64_dodge_burn = HttpClientHelper.callAPIDodgeAndBurn(Url.GetBase64DodgeAndBurn, base64Image, base64_guidance);
-                                        DodgeAndBurnDto base64_dodge_burn_obj = System.Text.Json.JsonSerializer.Deserialize<DodgeAndBurnDto>(base64_dodge_burn);
-                                        var basse64_layer = HttpClientHelper.exportBase64(Url.GetBase64Frequency, base64Image, base64_dodge_burn_obj.base64_dodge, base64_dodge_burn_obj.base64_burn, dodge, burn, blend);
-                                        FileHelpers.Base64ToImage(basse64_layer, path, name, user);
-                                        var filesnew = directory.GetFiles()
-                .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
-                .OrderBy(p => p.FullName)
-                .Select(p => p.FullName).ToList();
-                                        if (filesnew.Count != files.Count)
+                                        try
                                         {
-                                            FrequencyNewImage(user, action, path, blend, dodge, burn);
-                                            break;
+                                            CreateImageFrequency(item, user, path, dodge, burn, blend);
+                                            var filesnew = directory.GetFiles()
+                    .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
+                    .OrderBy(p => p.FullName)
+                    .Select(p => p.FullName).ToList();
+                                            if (filesnew.Count != files.Count)
+                                            {
+                                                FrequencyNewImage(user, action, path, pathAi, blend, dodge, burn);
+                                                break;
+                                            }
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            Console.WriteLine(e.Message);
                                         }
                                     }
-                                    catch (Exception e)
-                                    {
-                                        Console.WriteLine(e.Message);
-                                    }
+                                    CreateImageFrequencyWorking(user, path, dodge, burn, blend);
                                 }
-
+                                else
+                                {
+                                    FrequencyNewImage(user, action, path, pathAi, blend, dodge, burn);
+                                }
                             }
                             else
                             {
-                                FrequencyNewImage(user, action, path, blend, dodge, burn);
+                                DirectoryInfo directory = new DirectoryInfo(path);
+                                var files = directory.GetFiles()
+                     .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
+                     .OrderBy(p => p.FullName)
+                     .Select(item => item.FullName).ToList();
+                                if (filter == "all")
+                                {
+                                     foreach (var item in files)
+                                    {
+                                        try
+                                        {
+                                            CreateImageFrequency(item, user, path, dodge, burn, blend);
+                                            var filesnew = directory.GetFiles()
+                    .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
+                    .OrderBy(p => p.FullName)
+                    .Select(p => p.FullName).ToList();
+                                            if (filesnew.Count != files.Count)
+                                            {
+                                                FrequencyNewImage(user, action, path, pathAi, blend, dodge, burn);
+                                                break;
+                                            }
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            Console.WriteLine(e.Message);
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    FrequencyNewImage(user, action, path, pathAi, blend, dodge, burn);
+                                }
                             }
-
                           }
                         catch (Exception e)
                         {
@@ -1211,45 +1243,67 @@ namespace WandSyncFile
                     });
                 }
             });
-
-
         }
 
-        public void FrequencyNewImage(string user,string action,string path,double blend,double dodge,double burn)
+        public void FrequencyNewImage(string user,string action,string path,string pathAi,double blend,double dodge,double burn)
         {
-            Task.Run(async () =>
+            Task.Run(() =>
             {
                 try
                 {
-                    DirectoryInfo directory = new DirectoryInfo(path);
-                    var files = directory.GetFiles()
-         .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
-         .OrderBy(p => p.FullName)
-         .Select(item => item.FullName).ToList();
-
-                    foreach (var item in files)
+                    if(pathAi != null)
                     {
-                        try
-                        {
-                            string pathImage = item.Replace("Working\\" + user, "Frequency");
-               
-                            if (!File.Exists(pathImage))
-                            {
-                                var name = Path.GetFileName(item);
-                                var base64Image = FileHelpers.GetBase64StringForImage(item);
+                        DirectoryInfo directory = new DirectoryInfo(pathAi);
+                        var files = directory.GetFiles()
+             .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
+             .OrderBy(p => p.FullName)
+             .Select(item => item.FullName).ToList();
 
-                                var base64_guidance = HttpClientHelper.callAPIGuidance(Url.GetBase64Guidance, base64Image);
-                                var base64_dodge_burn = HttpClientHelper.callAPIDodgeAndBurn(Url.GetBase64DodgeAndBurn, base64Image, base64_guidance);
-                                DodgeAndBurnDto base64_dodge_burn_obj = System.Text.Json.JsonSerializer.Deserialize<DodgeAndBurnDto>(base64_dodge_burn);
-                                var basse64_layer = HttpClientHelper.exportBase64(Url.GetBase64Frequency, base64Image, base64_dodge_burn_obj.base64_dodge, base64_dodge_burn_obj.base64_burn, dodge, burn, blend);
-                                FileHelpers.Base64ToImage(basse64_layer, path, name, user);
+                        foreach (var item in files)
+                        {
+                            try
+                            {
+                                string pathImage = Path.Combine(path.Replace("Working\\" + user, "Frequency"), Path.GetFileName(item));
+
+                                if (!File.Exists(pathImage))
+                                {
+                                    CreateImageFrequency(item, user, path, dodge, burn, blend);
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine(e.Message);
                             }
                         }
-                        catch (Exception e)
+
+                        CreateImageFrequencyWorking(user, path, dodge, burn, blend);
+                    }
+                    else
+                    {
+                        DirectoryInfo directory = new DirectoryInfo(path);
+                        var files = directory.GetFiles()
+             .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
+             .OrderBy(p => p.FullName)
+             .Select(item => item.FullName).ToList();
+
+                        foreach (var item in files)
                         {
-                            Console.WriteLine(e.Message);
+                            try
+                            {
+                                string pathImage = item.Replace("Working\\" + user, "Frequency");
+
+                                if (!File.Exists(pathImage))
+                                {
+                                    CreateImageFrequency(item, user, path, dodge, burn, blend);
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine(e.Message);
+                            }
                         }
                     }
+                 
                 }
                 catch (Exception e)
                 {
@@ -1258,8 +1312,55 @@ namespace WandSyncFile
             });
         }
 
+        public void CreateImageFrequencyWorking( string user, string path, double dodge, double burn, double blend)
+        {
+            try {
+                DirectoryInfo directory = new DirectoryInfo(path);
+                var files = directory.GetFiles()
+     .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
+     .OrderBy(p => p.FullName)
+     .Select(item => item.FullName).ToList();
 
-            private void FormHome_Load(object sender, EventArgs e)
+                foreach (var item in files)
+                {
+                    try
+                    {
+                        string pathImage = item.Replace("Working\\" + user, "Frequency");
+
+                        if (!File.Exists(pathImage))
+                        {
+                            CreateImageFrequency(item, user, path, dodge, burn, blend);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+
+            }
+            
+        }
+
+
+
+        public void CreateImageFrequency(string item, string user, string path, double dodge, double burn, double blend)
+        {
+            var name = Path.GetFileName(item);
+            var base64Image = FileHelpers.GetBase64StringForImage(item);
+
+            var base64_guidance = HttpClientHelper.callAPIGuidance(Url.GetBase64Guidance, base64Image);
+            var base64_dodge_burn = HttpClientHelper.callAPIDodgeAndBurn(Url.GetBase64DodgeAndBurn, base64Image, base64_guidance);
+            DodgeAndBurnDto base64_dodge_burn_obj = System.Text.Json.JsonSerializer.Deserialize<DodgeAndBurnDto>(base64_dodge_burn);
+            var basse64_layer = HttpClientHelper.exportBase64(Url.GetBase64Frequency, base64Image, base64_dodge_burn_obj.base64_dodge, base64_dodge_burn_obj.base64_burn, dodge, burn, blend);
+            FileHelpers.Base64ToImage(basse64_layer, path, name, user);
+        }
+
+
+        private void FormHome_Load(object sender, EventArgs e)
         {
 
         }
