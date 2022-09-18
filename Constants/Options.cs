@@ -4,23 +4,33 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WandSyncFile.Helpers
+namespace WandSyncFile.Constants
 {
     public static class Options
     {
-        public static string SERVER_FILE_105 = @"172.16.0.7";
         public static string FILE_DELETE = "DELETE";
         public static string FILE_RENAME = "RENAME";
         public static string FILE_CREATE = "CREATE";
 
-        public static string SEVER_USERNAME105 = @"Administrator";
-        public static string SERVER_PASSWORD105 = "Wand12345";
-        public static string SERVER_FILE105 = @"\\172.16.0.7";
+        // Server 172.16.0.5
+        public static string SERVER_FILE_05 = @"172.16.0.5";
+        public static string SERVER_USERNAME_05 = @"leader";
+        public static string SERVER_PASSWORD_05 = "wand@ld1";
 
-        // dropbox
-        public static string SERVER_USERNAME101 = @"leader";
-        public static string SERVER_PASSWORD101 = "wand@ld1234";
-        public static string SERVER_FILE101 = @"\\172.16.0.6";
+        // Server 172.16.0.6
+        public static string SERVER_FILE_06 = @"172.16.0.6";
+        public static string SERVER_USERNAME_06 = @"leader";
+        public static string SERVER_PASSWORD_06 = "wand@ld1234";
+
+        // Server 172.16.0.7
+        public static string SERVER_FILE_07 = @"172.16.0.7";
+        public static string SERVER_USERNAME_07 = @"Administrator";
+        public static string SERVER_PASSWORD_07 = "Wand12345";
+
+        // Server 172.16.0.8
+        public static string SERVER_FILE_08 = @"172.16.0.8";
+        public static string SERVER_USERNAME_08 = @"hrm";
+        public static string SERVER_PASSWORD_08 = "wand@hrm1";
 
         public static string PROJECT_PATH_FILE_NAME = "Path";
         public static string PROJECT_FILE_NAME = "Name";

@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using WandSyncFile.Helpers;
 using WandSyncFile.Service;
+using WandSyncFile.Constants;
 
 namespace WandSyncFile
 {
