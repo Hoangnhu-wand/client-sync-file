@@ -1188,9 +1188,16 @@ namespace WandSyncFile
                                 {
                                     foreach (var item in files)
                                     {
-                                        try
-                                        {
+                                        try {
                                             CreateImageFrequency(item, user, path, dodge, burn, blend);
+                                        }
+                                        catch(Exception e)
+                                        {
+
+                                        }
+                                      
+                                        try
+                                        {                                           
                                             var filesnew = directory.GetFiles()
                     .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
                     .OrderBy(p => p.FullName)
@@ -1203,7 +1210,10 @@ namespace WandSyncFile
                                         }
                                         catch (Exception e)
                                         {
-                                            Console.WriteLine(e.Message);
+                                            Invoke((Action)(() =>
+                                            {
+                                                addItem(DateTime.Now, e.Message, null, "", 1);
+                                            }));
                                         }
                                     }
                                     CreateImageFrequencyWorking(user, path, dodge, burn, blend);
@@ -1239,7 +1249,10 @@ namespace WandSyncFile
                                         }
                                         catch (Exception e)
                                         {
-                                            Console.WriteLine(e.Message);
+                                            Invoke((Action)(() =>
+                                            {
+                                                addItem(DateTime.Now, e.Message, null, "", 1);
+                                            }));
                                         }
                                     }
                                 }
@@ -1251,7 +1264,10 @@ namespace WandSyncFile
                         }
                         catch (Exception e)
                         {
-                            Console.WriteLine(e.Message);
+                            Invoke((Action)(() =>
+                            {
+                                addItem(DateTime.Now, e.Message, null, "", 1);
+                            }));
                         }
                     });
                 }
@@ -1285,7 +1301,10 @@ namespace WandSyncFile
                             }
                             catch (Exception e)
                             {
-                                Console.WriteLine(e.Message);
+                                Invoke((Action)(() =>
+                                {
+                                    addItem(DateTime.Now, e.Message, null, "", 1);
+                                }));
                             }
                         }
 
@@ -1312,7 +1331,10 @@ namespace WandSyncFile
                             }
                             catch (Exception e)
                             {
-                                Console.WriteLine(e.Message);
+                                Invoke((Action)(() =>
+                                {
+                                    addItem(DateTime.Now, e.Message, null, "", 1);
+                                }));
                             }
                         }
                     }
@@ -1320,7 +1342,10 @@ namespace WandSyncFile
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.Message);
+                    Invoke((Action)(() =>
+                    {
+                        addItem(DateTime.Now, e.Message, null, "", 1);
+                    }));
                 }
             });
         }
@@ -1348,13 +1373,19 @@ namespace WandSyncFile
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine(e.Message);
+                        Invoke((Action)(() =>
+                        {
+                            addItem(DateTime.Now, e.Message, null, "", 1);
+                        }));
                     }
                 }
             }
             catch (Exception e)
             {
-
+                Invoke((Action)(() =>
+                {
+                    addItem(DateTime.Now, e.Message, null, "", 1);
+                }));
             }
 
         }
@@ -1363,14 +1394,24 @@ namespace WandSyncFile
 
         public void CreateImageFrequency(string item, string user, string path, double dodge, double burn, double blend)
         {
-            var name = Path.GetFileName(item);
-            var base64Image = FileHelpers.GetBase64StringForImage(item);
+            try {
+                var name = Path.GetFileName(item);
+                var base64Image = FileHelpers.GetBase64StringForImage(item);
 
-            var base64_guidance = HttpClientHelper.callAPIGuidance(Url.GetBase64Guidance, base64Image);
-            var base64_dodge_burn = HttpClientHelper.callAPIDodgeAndBurn(Url.GetBase64DodgeAndBurn, base64Image, base64_guidance);
-            DodgeAndBurnDto base64_dodge_burn_obj = System.Text.Json.JsonSerializer.Deserialize<DodgeAndBurnDto>(base64_dodge_burn);
-            var basse64_layer = HttpClientHelper.exportBase64(Url.GetBase64Frequency, base64Image, base64_dodge_burn_obj.base64_dodge, base64_dodge_burn_obj.base64_burn, dodge, burn, blend);
-            FileHelpers.Base64ToImage(basse64_layer, path, name, user);
+                var base64_guidance = HttpClientHelper.callAPIGuidance(Url.GetBase64Guidance, base64Image);
+                var base64_dodge_burn = HttpClientHelper.callAPIDodgeAndBurn(Url.GetBase64DodgeAndBurn, base64Image, base64_guidance);
+                DodgeAndBurnDto base64_dodge_burn_obj = System.Text.Json.JsonSerializer.Deserialize<DodgeAndBurnDto>(base64_dodge_burn);
+                var basse64_layer = HttpClientHelper.exportBase64(Url.GetBase64Frequency, base64Image, base64_dodge_burn_obj.base64_dodge, base64_dodge_burn_obj.base64_burn, dodge, burn, blend);
+                FileHelpers.Base64ToImage(basse64_layer, path, name, user);
+            }
+            catch(Exception e)
+            {
+                Invoke((Action)(() =>
+                {
+                    addItem(DateTime.Now, e.Message, null, "", 1);
+                }));
+            }
+
         }
 
 
