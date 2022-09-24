@@ -1169,7 +1169,7 @@ namespace WandSyncFile
                 if (action == "FREQUENCY_ALL_IMAGE")
                 {
 
-                    Task.Run(async () =>
+                   /* Task.Run(async () =>
                     {
                         try
                         {
@@ -1269,7 +1269,7 @@ namespace WandSyncFile
                                 addItem(DateTime.Now, e.Message, null, "", 1);
                             }));
                         }
-                    });
+                    });*/
                 }
             });
         }
