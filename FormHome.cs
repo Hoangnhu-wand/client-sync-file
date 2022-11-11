@@ -341,11 +341,39 @@ namespace WandSyncFile
                     var projectPath = File.ReadLines(logPath.FullName).FirstOrDefault();
                     var projectName = File.ReadLines(logProjectName.FullName).FirstOrDefault();
 
-                    SyncDo(projectName, projectPath);
+                    try {
+                        SyncDo(projectName, projectPath);
+                    }
+                    catch(Exception err) {
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Error Sync Do_", projectName, err.Message, 2);
+                        }));
+                    }
 
-                    SyncDone(projectName, projectPath);
+                    try
+                    {
+                        SyncDone(projectName, projectPath);
+                    }
+                    catch (Exception err)
+                    {
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Error Sync Done_", projectName, err.Message, 2);
+                        }));
+                    }
 
-                    SyncFix(projectName, projectPath);
+                    try
+                    {
+                        SyncFix(projectName, projectPath);
+                    }
+                    catch (Exception err)
+                    {
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Error Sync Fix_", projectName, err.Message, 2);
+                        }));
+                    }      
                 }
             }
             catch (Exception e)
@@ -359,267 +387,299 @@ namespace WandSyncFile
 
         public void SyncFix(string projectName, string projectPath)
         {
-            var editorUserName = Properties.Settings.Default.Username;
-            var localPath = Properties.Settings.Default.ProjectLocalPath;
+            try {
+                var editorUserName = Properties.Settings.Default.Username;
+                var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            var projectLocalPath = Path.Combine(localPath, projectName);
+                var projectLocalPath = Path.Combine(localPath, projectName);
 
-            var projectDirectoties = Directory.GetDirectories(projectLocalPath).ToList();
-            var lastFixFolderLocalPath = projectDirectoties.Where(item => Path.GetFileName(item).Trim().StartsWith(Options.PROJECT_FIX_PATH_NAME)).OrderByDescending(item => Path.GetFileName(item)).FirstOrDefault();
+                var projectDirectoties = Directory.GetDirectories(projectLocalPath).ToList();
+                var lastFixFolderLocalPath = projectDirectoties.Where(item => Path.GetFileName(item).Trim().StartsWith(Options.PROJECT_FIX_PATH_NAME)).OrderByDescending(item => Path.GetFileName(item)).FirstOrDefault();
 
-            if (lastFixFolderLocalPath == null)
-            {
-                return;
-            }
-
-            var lastFixFolderName = Path.GetFileName(lastFixFolderLocalPath);
-            var lastFixFolderServerPath = Path.Combine(projectPath, lastFixFolderName);
-
-            var folderDoneServer = Path.Combine(projectPath, "Done", editorUserName);
-
-            var isSyncFix = displayFolder.CheckFolderFixSync(lastFixFolderLocalPath, lastFixFolderServerPath, folderDoneServer, lastFixFolderLocalPath);
-            if (isSyncFix)
-            {
-                Invoke((Action)(async () =>
+                if (lastFixFolderLocalPath == null)
                 {
-                    addItem(DateTime.Now, "No Change Fix", null, projectName, 1);
-                }));
-                return;
-            }
-
-            var project = projectService.RequestGetProjectByName(projectName);
-            if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
-            {
-                Invoke((Action)(async () =>
-                {
-                    addItem(DateTime.Now, "Project No Change", null, projectName, 1);
-                }));
-                return;
-            }
-
-            if (!isSyncFix && !processingFixProject.Any(pId => pId == project.Id))
-            {
-                displayFolder.CheckFolderSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
-
-                //đếm số ảnh fix trước khi sync
-                var imageFixLocalFirst = FileHelpers.CountImageFolder(lastFixFolderLocalPath);
-                var imageFixServerFirst = FileHelpers.CountImageFolder(lastFixFolderServerPath);
-                var countFirts = imageFixLocalFirst + "/" + imageFixServerFirst;
-                Invoke((Action)(async () =>
-                {
-                    addItem(DateTime.Now, "Upload Fix", countFirts, projectName, 0);
-                }));
-
-                processingFixProject.Add(project.Id);
-
-                try
-                {
-                    FileHelpers.CopyDirectoryToServer(lastFixFolderLocalPath, lastFixFolderServerPath);
-
-                    //đếm số ảnh fix sau khi sync
-                    var imageFixLocalLast = FileHelpers.CountImageFolder(lastFixFolderLocalPath);
-                    var imageFixServerLast = FileHelpers.CountImageFolder(lastFixFolderServerPath);
-                    var countLast = imageFixLocalLast + "/" + imageFixServerLast;
-                    Invoke((Action)(async () =>
-                    {
-                        addItem(DateTime.Now, "Upload Fix", countLast, projectName, 1);
-                    }));
+                    return;
                 }
-                catch (Exception e)
+
+                var lastFixFolderName = Path.GetFileName(lastFixFolderLocalPath);
+                var lastFixFolderServerPath = Path.Combine(projectPath, lastFixFolderName);
+
+                var folderDoneServer = Path.Combine(projectPath, "Done", editorUserName);
+
+                var isSyncFix = displayFolder.CheckFolderFixSync(lastFixFolderLocalPath, lastFixFolderServerPath, folderDoneServer, lastFixFolderLocalPath);
+                if (isSyncFix)
                 {
                     Invoke((Action)(async () =>
                     {
-                        addItem(DateTime.Now, "Upload Fix", null, projectName, 2);
+                        addItem(DateTime.Now, "No Change Fix", null, projectName, 1);
                     }));
+                    return;
                 }
-                finally
+
+                var project = projectService.RequestGetProjectByName(projectName);
+                if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
+                {
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Project No Change", null, projectName, 1);
+                    }));
+                    return;
+                }
+
+                if (!isSyncFix && !processingFixProject.Any(pId => pId == project.Id))
                 {
                     displayFolder.CheckFolderSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
 
-                    processingFixProject.Remove(project.Id);
+                    //đếm số ảnh fix trước khi sync
+                    var imageFixLocalFirst = FileHelpers.CountImageFolder(lastFixFolderLocalPath);
+                    var imageFixServerFirst = FileHelpers.CountImageFolder(lastFixFolderServerPath);
+                    var countFirts = imageFixLocalFirst + "/" + imageFixServerFirst;
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Upload Fix", countFirts, projectName, 0);
+                    }));
+
+                    processingFixProject.Add(project.Id);
+
+                    try
+                    {
+                        FileHelpers.CopyDirectoryToServer(lastFixFolderLocalPath, lastFixFolderServerPath);
+
+                        //đếm số ảnh fix sau khi sync
+                        var imageFixLocalLast = FileHelpers.CountImageFolder(lastFixFolderLocalPath);
+                        var imageFixServerLast = FileHelpers.CountImageFolder(lastFixFolderServerPath);
+                        var countLast = imageFixLocalLast + "/" + imageFixServerLast;
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Upload Fix", countLast, projectName, 1);
+                        }));
+                    }
+                    catch (Exception e)
+                    {
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Upload Fix", null, projectName, 2);
+                        }));
+                    }
+                    finally
+                    {
+                        displayFolder.CheckFolderSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
+
+                        processingFixProject.Remove(project.Id);
+                    }
                 }
             }
+            catch (Exception err)
+            {
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Error Sync Fix", projectName, err.Message, 2);
+                }));
+            }
+        
         }
 
         public void SyncDo(string projectName, string projectPath)
         {
-            var editorUserName = Properties.Settings.Default.Username;
-            var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            var projectLocalPath = Path.Combine(localPath, projectName);
-            var projectDoLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME);
-            var projectDoEditorLocalPath = Path.Combine(projectDoLocalPath, editorUserName);
+            try {
+                var editorUserName = Properties.Settings.Default.Username;
+                var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            var projectDoServerPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME);
-            var projectDoEditorServerPath = Path.Combine(projectDoServerPath, editorUserName);
+                var projectLocalPath = Path.Combine(localPath, projectName);
+                var projectDoLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME);
+                var projectDoEditorLocalPath = Path.Combine(projectDoLocalPath, editorUserName);
 
-            var isSyncDo = displayFolder.CheckFolderSyncCompleted(projectDoEditorLocalPath, projectDoEditorServerPath);
+                var projectDoServerPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME);
+                var projectDoEditorServerPath = Path.Combine(projectDoServerPath, editorUserName);
 
-            if (isSyncDo)
-            {
-                Invoke((Action)(async () =>
-                {
-                    addItem(DateTime.Now, "No Change Do", null, projectName, 1);
-                }));
-                return;
-            }
+                var isSyncDo = displayFolder.CheckFolderSyncCompleted(projectDoEditorLocalPath, projectDoEditorServerPath);
 
-            var project = projectService.RequestGetProjectByName(projectName);
-
-            if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
-            {
-                Invoke((Action)(async () =>
-                {
-                    addItem(DateTime.Now, "Project No Change", null, projectName, 1);
-                }));
-                return;
-            }
-
-            if (!isSyncDo && !processingDoProject.Any(pId => pId == project.Id))
-            {
-                displayFolder.CheckFolderSync(projectDoEditorLocalPath, projectDoEditorServerPath, projectDoLocalPath);
-
-                var imageDoLocalFirst = FileHelpers.CountImageFolder(projectDoEditorLocalPath);
-                var imageDoServerFirst = FileHelpers.CountImageFolder(projectDoEditorServerPath);
-                var counDotFirst = imageDoLocalFirst + "/" + imageDoServerFirst;
-                Invoke((Action)(async () =>
-                {
-                    addItem(DateTime.Now, "Download Do", counDotFirst, projectName, 0);
-                }));
-
-                processingDoProject.Add(project.Id);
-
-                try
-                {
-                    FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath, null, true);
-                    FileHelpers.RemoveFolder(projectDoEditorLocalPath, projectDoEditorServerPath);
-                    //đếm số ảnh do sau khi sync
-                    var imageDoLocalLast = FileHelpers.CountImageFolder(projectDoEditorLocalPath);
-                    var imageDoServerLast = FileHelpers.CountImageFolder(projectDoEditorServerPath);
-                    var countDoLast = imageDoLocalLast + "/" + imageDoServerLast;
-                    Invoke((Action)(async () =>
-                    {
-                        addItem(DateTime.Now, "Download Do", countDoLast, projectName, 1);
-                    }));
-                    // Copy Do => Working
-                    if (project.StatusId != (int)PROJECT_STATUS.NEEDFIX)
-                    {
-                        var localFolderWorking = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME);
-                        var editorFolderWorking = Path.Combine(localFolderWorking, editorUserName);
-
-                        displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
-
-
-                        var imageWorkingServerFirst = FileHelpers.CountImageFolder(editorFolderWorking);
-                        var countDoToWorkingFirst = imageDoLocalLast + "/" + imageWorkingServerFirst;
-                        Invoke((Action)(async () =>
-                        {
-                            addItem(DateTime.Now, "Do => Working", countDoToWorkingFirst, projectName, 0);
-                        }));
-
-                        FileHelpers.DownloadFolder(projectDoEditorLocalPath, editorFolderWorking);
-                        /* FileHelpers.RemoveFolder(editorFolderWorking, projectDoEditorLocalPath);*/
-                        var imageWorkingServerLast = FileHelpers.CountImageFolder(editorFolderWorking);
-                        var countDoToWorkingLast = imageDoLocalLast + "/" + imageWorkingServerLast;
-                        Invoke((Action)(async () =>
-                        {
-                            addItem(DateTime.Now, "Do => Working", countDoToWorkingLast, projectName, 1);
-                        }));
-
-                        displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
-                    }
-                }
-                catch (Exception e)
+                if (isSyncDo)
                 {
                     Invoke((Action)(async () =>
                     {
-                        addItem(DateTime.Now, "Download Do", null, projectName, 2);
+                        addItem(DateTime.Now, "No Change Do", null, projectName, 1);
                     }));
+                    return;
                 }
-                finally
+
+                var project = projectService.RequestGetProjectByName(projectName);
+
+                if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
+                {
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Project No Change", null, projectName, 1);
+                    }));
+                    return;
+                }
+
+                if (!isSyncDo && !processingDoProject.Any(pId => pId == project.Id))
                 {
                     displayFolder.CheckFolderSync(projectDoEditorLocalPath, projectDoEditorServerPath, projectDoLocalPath);
 
-                    processingDoProject.Remove(project.Id);
+                    var imageDoLocalFirst = FileHelpers.CountImageFolder(projectDoEditorLocalPath);
+                    var imageDoServerFirst = FileHelpers.CountImageFolder(projectDoEditorServerPath);
+                    var counDotFirst = imageDoLocalFirst + "/" + imageDoServerFirst;
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Download Do", counDotFirst, projectName, 0);
+                    }));
+
+                    processingDoProject.Add(project.Id);
+
+                    try
+                    {
+                        FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath, null, true);
+                        FileHelpers.RemoveFolder(projectDoEditorLocalPath, projectDoEditorServerPath);
+                        //đếm số ảnh do sau khi sync
+                        var imageDoLocalLast = FileHelpers.CountImageFolder(projectDoEditorLocalPath);
+                        var imageDoServerLast = FileHelpers.CountImageFolder(projectDoEditorServerPath);
+                        var countDoLast = imageDoLocalLast + "/" + imageDoServerLast;
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Download Do", countDoLast, projectName, 1);
+                        }));
+                        // Copy Do => Working
+                        if (project.StatusId != (int)PROJECT_STATUS.NEEDFIX)
+                        {
+                            var localFolderWorking = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME);
+                            var editorFolderWorking = Path.Combine(localFolderWorking, editorUserName);
+
+                            displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
+
+
+                            var imageWorkingServerFirst = FileHelpers.CountImageFolder(editorFolderWorking);
+                            var countDoToWorkingFirst = imageDoLocalLast + "/" + imageWorkingServerFirst;
+                            Invoke((Action)(async () =>
+                            {
+                                addItem(DateTime.Now, "Do => Working", countDoToWorkingFirst, projectName, 0);
+                            }));
+
+                            FileHelpers.DownloadFolder(projectDoEditorLocalPath, editorFolderWorking);
+                            /* FileHelpers.RemoveFolder(editorFolderWorking, projectDoEditorLocalPath);*/
+                            var imageWorkingServerLast = FileHelpers.CountImageFolder(editorFolderWorking);
+                            var countDoToWorkingLast = imageDoLocalLast + "/" + imageWorkingServerLast;
+                            Invoke((Action)(async () =>
+                            {
+                                addItem(DateTime.Now, "Do => Working", countDoToWorkingLast, projectName, 1);
+                            }));
+
+                            displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Download Do", null, projectName, 2);
+                        }));
+                    }
+                    finally
+                    {
+                        displayFolder.CheckFolderSync(projectDoEditorLocalPath, projectDoEditorServerPath, projectDoLocalPath);
+
+                        processingDoProject.Remove(project.Id);
+                    }
                 }
             }
+            catch(Exception err)
+            {
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Error Sync Do", projectName, err.Message, 2);
+                }));
+            }
+
+        
         }
 
         public void SyncDone(string projectName, string projectPath)
         {
-            var editorUserName = Properties.Settings.Default.Username;
-            var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            var projectLocalPath = Path.Combine(localPath, projectName);
-            var projectDoneLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME);
-            var projectDoneEditorLocalPath = Path.Combine(projectDoneLocalPath, editorUserName);
+            try {
+                var editorUserName = Properties.Settings.Default.Username;
+                var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            var projectDoneServerPath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME);
-            var projectDoneEditorServerPath = Path.Combine(projectDoneServerPath, editorUserName);
+                var projectLocalPath = Path.Combine(localPath, projectName);
+                var projectDoneLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME);
+                var projectDoneEditorLocalPath = Path.Combine(projectDoneLocalPath, editorUserName);
 
-            var isSyncDone = displayFolder.CheckFolderSyncCompleted(projectDoneEditorLocalPath, projectDoneEditorServerPath);
+                var projectDoneServerPath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME);
+                var projectDoneEditorServerPath = Path.Combine(projectDoneServerPath, editorUserName);
 
-            if (isSyncDone)
-            {
-                Invoke((Action)(async () =>
-                {
-                    addItem(DateTime.Now, "No Change Done", null, projectName, 1);
-                }));
-                return;
-            }
+                var isSyncDone = displayFolder.CheckFolderSyncCompleted(projectDoneEditorLocalPath, projectDoneEditorServerPath);
 
-            var project = projectService.RequestGetProjectByName(projectName);
-            if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
-            {
-                Invoke((Action)(async () =>
-                {
-                    addItem(DateTime.Now, "Project No Change", null, projectName, 1);
-                }));
-                return;
-            }
-
-            if (!isSyncDone && !processingDoneProject.Any(pId => pId == project.Id))
-            {
-                displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
-
-                //đếm số ảnh Done trước khi sync
-                var imageDoneLocalFirst = FileHelpers.CountImageFolder(projectDoneEditorLocalPath);
-                var imageDoneServerFirst = FileHelpers.CountImageFolder(projectDoneEditorServerPath);
-                var countDoneFirst = imageDoneLocalFirst + "/" + imageDoneServerFirst;
-                Invoke((Action)(async () =>
-                {
-                    addItem(DateTime.Now, "Upload Done", countDoneFirst, projectName, 0);
-                }));
-
-                processingDoneProject.Add(project.Id);
-
-                try
-                {
-                    FileHelpers.SyncDirectoryDoneToServer(projectDoneEditorLocalPath, projectDoneEditorServerPath);
-
-                    //đếm số ảnh Done sau khi sync
-                    var imageDoneLocalLast = FileHelpers.CountImageFolder(projectDoneEditorLocalPath);
-                    var imageDoneServerLast = FileHelpers.CountImageFolder(projectDoneEditorServerPath);
-                    var countDoneLast = imageDoneLocalLast + "/" + imageDoneServerLast;
-                    Invoke((Action)(async () =>
-                    {
-                        addItem(DateTime.Now, "Upload Done", countDoneLast, projectName, 1);
-                    }));
-                }
-                catch (Exception e)
+                if (isSyncDone)
                 {
                     Invoke((Action)(async () =>
                     {
-                        addItem(DateTime.Now, "Upload Done", null, projectName, 2);
+                        addItem(DateTime.Now, "No Change Done", null, projectName, 1);
                     }));
+                    return;
                 }
-                finally
+
+                var project = projectService.RequestGetProjectByName(projectName);
+                if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
+                {
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Project No Change", null, projectName, 1);
+                    }));
+                    return;
+                }
+
+                if (!isSyncDone && !processingDoneProject.Any(pId => pId == project.Id))
                 {
                     displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
 
-                    processingDoneProject.Remove(project.Id);
+                    //đếm số ảnh Done trước khi sync
+                    var imageDoneLocalFirst = FileHelpers.CountImageFolder(projectDoneEditorLocalPath);
+                    var imageDoneServerFirst = FileHelpers.CountImageFolder(projectDoneEditorServerPath);
+                    var countDoneFirst = imageDoneLocalFirst + "/" + imageDoneServerFirst;
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Upload Done", countDoneFirst, projectName, 0);
+                    }));
+
+                    processingDoneProject.Add(project.Id);
+
+                    try
+                    {
+                        FileHelpers.SyncDirectoryDoneToServer(projectDoneEditorLocalPath, projectDoneEditorServerPath);
+
+                        //đếm số ảnh Done sau khi sync
+                        var imageDoneLocalLast = FileHelpers.CountImageFolder(projectDoneEditorLocalPath);
+                        var imageDoneServerLast = FileHelpers.CountImageFolder(projectDoneEditorServerPath);
+                        var countDoneLast = imageDoneLocalLast + "/" + imageDoneServerLast;
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Upload Done", countDoneLast, projectName, 1);
+                        }));
+                    }
+                    catch (Exception e)
+                    {
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Upload Done", null, projectName, 2);
+                        }));
+                    }
+                    finally
+                    {
+                        displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
+
+                        processingDoneProject.Remove(project.Id);
+                    }
                 }
             }
+            catch (Exception err)
+            {
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Error Sync Done", projectName, err.Message, 2);
+                }));
+            }     
         }
 
         public void CopyDoneAndFixFromServer(string projectName, string projectPath, int projectId)
