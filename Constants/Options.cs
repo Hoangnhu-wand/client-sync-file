@@ -32,6 +32,11 @@ namespace WandSyncFile.Constants
         public static string SERVER_USERNAME_08 = @"hrm";
         public static string SERVER_PASSWORD_08 = "wand@hrm1";
 
+        // Server 172.16.0.9
+        public static string SERVER_FILE_09 = @"172.16.0.9";
+        public static string SERVER_USERNAME_09 = @"hrm";
+        public static string SERVER_PASSWORD_09 = "wand@hrm1";
+
         public static string PROJECT_PATH_FILE_NAME = "Path";
         public static string PROJECT_FILE_NAME = "Name";
         public static string PROJECT_LOG_NAME = "Log";

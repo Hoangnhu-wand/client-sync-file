@@ -8,9 +8,11 @@ namespace WandSyncFile.Constants
 {
     public static class Url
     {
+
         public static string ServerURI = "http://localhost:6688";
         public static string ServerFrequency = "http://172.16.0.20:6696";
         public static string ServerBlender = "http://localhost:6789";
+
 
         public static string Login = $"{ServerURI}/api/auth/login";
         public static string GetAccount = $"{ServerURI}/api/accounts";
