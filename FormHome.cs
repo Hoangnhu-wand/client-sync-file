@@ -373,7 +373,7 @@ namespace WandSyncFile
                         {
                             addItem(DateTime.Now, "Error Sync Fix_", projectName, err.Message, 2);
                         }));
-                    }      
+                    }
                 }
             }
             catch (Exception e)
@@ -953,7 +953,7 @@ namespace WandSyncFile
 
             connection.On<string, string, string>("SERVER_QUEUE_MESSAGE", async (user, action, data) =>
             {
-                if (action == "EDITOR_DOWNLOAD_FILE" && user == userId.ToString() && UserRoleHelpers.IsEditors())
+                if (action == "EDITOR_DOWNLOAD_FILE" && user == userId.ToString() && UserRoleHelpers.IsEditors() && processingDoProject.Count() == 0 && processingDoneProject.Count() == 0 && processingFixProject.Count() == 0)
                 {
                     Task.Run(async () =>
                     {
@@ -1015,7 +1015,7 @@ namespace WandSyncFile
                     });
                 }
 
-                if (action == "EDITOR_CREATE_FOLDER_FIX" && UserRoleHelpers.IsEditors() && user == userId.ToString())
+                if (action == "EDITOR_CREATE_FOLDER_FIX" && UserRoleHelpers.IsEditors() && user == userId.ToString() && processingDoProject.Count() == 0 && processingDoneProject.Count() == 0 && processingFixProject.Count() == 0)
                 {
                     Task.Run(async () =>
                     {
