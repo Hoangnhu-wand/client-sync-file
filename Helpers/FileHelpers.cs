@@ -230,7 +230,7 @@ namespace WandSyncFile.Helpers
             {
                 Console.WriteLine(e.Message);
             }
-            
+
             return 0;
         }
 
@@ -456,7 +456,7 @@ namespace WandSyncFile.Helpers
             }
         }
 
-        public static void DownloadFolder(string fromPath, string toPath, string withoutFolder = null, bool isRemoveNotExists = false, bool isReplaceExists = false)
+        public static void DownloadFolder(string fromPath, string toPath, string withoutFolder = null, bool isRemoveNotExists = false, bool isReplaceExists = false, bool isCopyAllFile = false)
         {
             try
             {
@@ -472,6 +472,38 @@ namespace WandSyncFile.Helpers
                 var toFiles = toFileInfo.Select(item => item.Name).ToList();
 
                 var newFiles = fromFiles.Where(fromFile => !toFiles.Any(toFile => fromFile == toFile)).ToList();
+                string projectPath = null;
+                //chỉ check tải từ server -> local, còn local => server thì đẩy toàn bộ
+                 if (fromPath.IndexOf(Options.SERVER_PATH) > -1  && !isCopyAllFile)
+                 {    
+                //Kiểm tra dự án có thư mục fix không
+                if (fromPath.IndexOf(Options.PROJECT_DO_NAME) > -1)
+                    {
+                        projectPath = fromPath.Substring(0, fromPath.IndexOf(Options.PROJECT_DO_NAME));
+                    }
+
+                    if (fromPath.IndexOf(Options.PROJECT_DONE_NAME) > -1)
+                    {
+                        projectPath = fromPath.Substring(0, fromPath.IndexOf(Options.PROJECT_DONE_NAME));
+                    }
+
+                    if (fromPath.IndexOf(Options.PROJECT_FIX_PATH_NAME) > -1)
+                    {
+                        projectPath = fromPath.Substring(0, fromPath.IndexOf(Options.PROJECT_FIX_PATH_NAME));
+                    }
+
+                    if (projectPath != null)
+                    {
+                        var projectDirectoties = Directory.GetDirectories(projectPath).ToList();
+                        var lastFixFolderLocalPath = projectDirectoties.Where(item => Path.GetFileName(item).Trim().StartsWith(Options.PROJECT_COMPLETED_PATH_NAME)).OrderByDescending(item => Path.GetFileName(item)).FirstOrDefault();
+                        if (lastFixFolderLocalPath != null)
+                        {
+                            newFiles = newFiles.Where(item => item.ToLower().IndexOf(".psd") == -1).ToList();
+                        }
+                    }
+                 }
+
+
 
                 if (isRemoveNotExists)
                 {
@@ -533,7 +565,7 @@ namespace WandSyncFile.Helpers
             }
         }
 
-        public static void DownloadFolderFromServer(string fromPath, string toPath, string withoutFolder = null, bool isRemoveNotExists = false, bool isReplaceExists = false)
+        public static void DownloadFolderFromServer(string fromPath, string toPath, string withoutFolder = null, bool isRemoveNotExists = false, bool isReplaceExists = false, bool isCopyAllFile = false)
         {
             IntPtr token = UserHelpers.GetToken(fromPath);
 
@@ -541,7 +573,7 @@ namespace WandSyncFile.Helpers
             {
                 using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
                 {
-                    DownloadFolder(fromPath, toPath, withoutFolder, isRemoveNotExists, isReplaceExists);
+                    DownloadFolder(fromPath, toPath, withoutFolder, isRemoveNotExists, isReplaceExists, isCopyAllFile);
                 }
             }
             catch (Exception e)
@@ -1235,7 +1267,8 @@ namespace WandSyncFile.Helpers
                 }
 
                 return createPath;
-            } catch(Exception e)
+            }
+            catch (Exception e)
             {
                 var errMessage = DateTime.Now.ToString() + " " + e.Message;
                 WriteLog(errMessage);
@@ -1243,7 +1276,7 @@ namespace WandSyncFile.Helpers
             }
 
             return null;
-            
+
         }
 
         public static string WriteLog(string content)
@@ -1296,7 +1329,7 @@ namespace WandSyncFile.Helpers
 
             return projectPath;
         }
-        
+
         public static string GetProjectNameByLog(string localProjectPath)
         {
             if (!Directory.Exists(localProjectPath))
@@ -1355,7 +1388,7 @@ namespace WandSyncFile.Helpers
             var listImage = GetListFileNameByFolder(path);
             var countImage = 0;
 
-            if(listImage != null)
+            if (listImage != null)
             {
                 countImage = listImage.Count;
             }
@@ -1402,7 +1435,8 @@ namespace WandSyncFile.Helpers
 
         public static void Base64ToImage(string base64String, string path, string nameImage, string user)
         {
-            try {
+            try
+            {
                 // Convert Base64 String to byte[]
                 string fullpath = path.Replace("Working\\" + user, "Frequency");
                 if (!Directory.Exists(fullpath))
@@ -1412,11 +1446,11 @@ namespace WandSyncFile.Helpers
                 string filePath = Path.Combine(fullpath, nameImage);
                 File.WriteAllBytes(filePath, Convert.FromBase64String(base64String));
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.WriteLine(e.Message);
             }
-           
+
         }
     }
 }
