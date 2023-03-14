@@ -1164,7 +1164,7 @@ namespace WandSyncFile
 
             connection.On<string, string, string>("SERVER_QUEUE_MESSAGE", async (user, action, data) =>
             {
-                if (action == "EDITOR_DOWNLOAD_FILE" && user == userId.ToString() && UserRoleHelpers.IsEditors() && processingDoProject.Count() == 0 && processingDoneProject.Count() == 0 && processingFixProject.Count() == 0)
+                if (action == "EDITOR_DOWNLOAD_FILE" && user == userId.ToString() && UserRoleHelpers.IsEditors())
                 {
                     Task.Run(async () =>
                     {
@@ -1226,7 +1226,7 @@ namespace WandSyncFile
                     });
                 }
 
-                if (action == "EDITOR_CREATE_FOLDER_FIX" && UserRoleHelpers.IsEditors() && user == userId.ToString() && processingDoProject.Count() == 0 && processingDoneProject.Count() == 0 && processingFixProject.Count() == 0)
+                if (action == "EDITOR_CREATE_FOLDER_FIX" && UserRoleHelpers.IsEditors() && user == userId.ToString())
                 {
                     Task.Run(async () =>
                     {
@@ -1249,7 +1249,7 @@ namespace WandSyncFile
 
                         FileHelpers.AddFileLogProjectPath(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath);
 
-                        CopyDoneAndFixFromServer(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath, editorDownloadItem.ProjectId, false);
+                        CopyDoneAndFixFromServer(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath, editorDownloadItem.ProjectId, true);
 
                         await connection.SendAsync("ReceiverMessageAsync", "CLIENT_FILE", editorDownloadItem.MessageId, "REMOVE_PROJECT_QUEUE_MESSAGE", null);
                     });
