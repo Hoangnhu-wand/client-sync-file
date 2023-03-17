@@ -196,14 +196,9 @@ namespace WandSyncFile.Helpers
 
         public static bool ExistsPathServer(string path)
         {
-            IntPtr token = UserHelpers.GetToken(path);
-
             try
             {
-                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
-                {
                     return Directory.Exists(path);
-                }
             }
             catch (Exception e)
             {
@@ -215,16 +210,11 @@ namespace WandSyncFile.Helpers
 
         public static long DirSizeServer(string path)
         {
-            IntPtr token = UserHelpers.GetToken(path);
-
             try
             {
-                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
-                {
                     var size = DirSize(path);
 
                     return size;
-                }
             }
             catch (Exception e)
             {
@@ -238,16 +228,11 @@ namespace WandSyncFile.Helpers
         {
             if (files.Count() == 0) return 0;
 
-            IntPtr token = UserHelpers.GetToken(files.FirstOrDefault());
-
             try
             {
-                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
-                {
                     var size = FilesSize(files);
 
                     return size;
-                }
             }
             catch (Exception e)
             {
@@ -567,14 +552,9 @@ namespace WandSyncFile.Helpers
 
         public static void DownloadFolderFromServer(string fromPath, string toPath, string withoutFolder = null, bool isRemoveNotExists = false, bool isReplaceExists = false, bool isCopyAllFile = false)
         {
-            IntPtr token = UserHelpers.GetToken(fromPath);
-
             try
             {
-                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
-                {
                     DownloadFolder(fromPath, toPath, withoutFolder, isRemoveNotExists, isReplaceExists, isCopyAllFile);
-                }
             }
             catch (Exception e)
             {
@@ -584,14 +564,9 @@ namespace WandSyncFile.Helpers
 
         public static List<string> ServerGetListFileNameByFolder(string path)
         {
-            IntPtr token = UserHelpers.GetToken(path);
-
             try
             {
-                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
-                {
                     return GetListFileNameByFolder(path);
-                }
             }
             catch (Exception e)
             {
@@ -624,14 +599,10 @@ namespace WandSyncFile.Helpers
 
         public static List<string> ServerGetListFixPathByDoneName(List<string> listDoneName, string fixPath)
         {
-            IntPtr token = UserHelpers.GetToken(fixPath);
 
             try
             {
-                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
-                {
                     return GetListFixPathByDoneName(listDoneName, fixPath);
-                }
             }
             catch (Exception e)
             {
@@ -800,14 +771,10 @@ namespace WandSyncFile.Helpers
 
         public static void CopyDirectoryToServer(string fromPath, string toPath)
         {
-            IntPtr token = UserHelpers.GetToken(toPath);
 
             try
             {
-                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
-                {
                     CopyDirectory(fromPath, toPath);
-                }
             }
             catch (Exception e)
             {
@@ -818,14 +785,9 @@ namespace WandSyncFile.Helpers
 
         public static void SyncDirectoryToServer(string fromPath, string toPath)
         {
-            IntPtr token = UserHelpers.GetToken(toPath);
-
             try
             {
-                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
-                {
                     SyncDirectory(fromPath, toPath);
-                }
             }
             catch (Exception e)
             {
@@ -835,14 +797,9 @@ namespace WandSyncFile.Helpers
 
         public static void SyncDirectoryDoneToServer(string fromPath, string toPath)
         {
-            IntPtr token = UserHelpers.GetToken(toPath);
-
             try
             {
-                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
-                {
                     SyncDirectoryDone(fromPath, toPath);
-                }
             }
             catch (Exception e)
             {
@@ -1096,14 +1053,9 @@ namespace WandSyncFile.Helpers
 
         public static void CopyFileFromServer(string serverPath, string localPath)
         {
-            IntPtr token = UserHelpers.GetToken(serverPath);
-
             try
-            {
-                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
-                {
+            {           
                     CopyFile(serverPath, localPath);
-                }
             }
             catch (Exception e)
             {
@@ -1113,18 +1065,13 @@ namespace WandSyncFile.Helpers
 
         public static bool DeleteFileFromServer(string path)
         {
-            IntPtr token = UserHelpers.GetToken(path);
-
             try
             {
-                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
-                {
                     if (File.Exists(path))
                     {
                         File.Delete(path);
                     }
                     return true;
-                }
             }
             catch (Exception e)
             {
@@ -1135,18 +1082,13 @@ namespace WandSyncFile.Helpers
 
         public static bool DeleteFolderFromServer(string path)
         {
-            IntPtr token = UserHelpers.GetToken(path);
-
             try
             {
-                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
-                {
                     if (Directory.Exists(path))
                     {
                         Directory.Delete(path, true);
                     }
                     return true;
-                }
             }
             catch (Exception e)
             {
@@ -1169,18 +1111,13 @@ namespace WandSyncFile.Helpers
 
         public static bool ProjectServerHasFix(string projectPath)
         {
-            IntPtr token = UserHelpers.GetToken(projectPath);
-
             try
             {
-                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
-                {
                     var projectDirectoties = Directory.GetDirectories(projectPath).Select(item => item.ToLower()).ToList();
                     var folderFixName = Options.PROJECT_FIX_PATH_NAME.ToLower();
                     var fixFolders = projectDirectoties.Any(item => Path.GetFileName(item).Trim().StartsWith(folderFixName));
 
                     return fixFolders;
-                }
             }
             catch (Exception e)
             {
@@ -1192,19 +1129,13 @@ namespace WandSyncFile.Helpers
 
         public static List<string> GetListServerFolderFix(string projectPath)
         {
-            IntPtr token = UserHelpers.GetToken(projectPath);
-
             try
             {
-                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
-                {
                     var projectDirectoties = Directory.GetDirectories(projectPath).ToList();
                     var folderFixName = Options.PROJECT_FIX_PATH_NAME;
                     var fixFolders = projectDirectoties.Where(item => Path.GetFileName(item).Trim().ToLower().StartsWith(folderFixName.ToLower())).Select(item => Path.GetFullPath(item)).ToList();
 
-                    return fixFolders;
-                }
-            }
+                    return fixFolders;            }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
@@ -1215,19 +1146,17 @@ namespace WandSyncFile.Helpers
 
         public static string ServerGetFolderName(string path)
         {
-            IntPtr token = UserHelpers.GetToken(path);
 
             try
             {
-                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
-                {
+           
                     if (!Directory.Exists(path))
                     {
                         return null;
                     }
 
                     return Path.GetFileName(path);
-                }
+            
             }
             catch (Exception e)
             {
@@ -1367,14 +1296,12 @@ namespace WandSyncFile.Helpers
 
         public static bool ExistsServer(string path)
         {
-            IntPtr token = UserHelpers.GetToken(path);
-
+ 
             try
             {
-                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
-                {
+               
                     return Directory.Exists(path);
-                }
+              
             }
             catch (Exception e)
             {

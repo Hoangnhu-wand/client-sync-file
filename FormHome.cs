@@ -20,6 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 using WandSyncFile.Data.Mapping;
 using WandSyncFile.Constants;
 using System.Net.Http;
+using System.Security.Principal;
 
 namespace WandSyncFile
 {
@@ -38,20 +39,24 @@ namespace WandSyncFile
 
         public FormHome()
         {
-            InitializeComponent();
-            setupAutoRun();
+            IntPtr token = UserHelpers.GetToken(Options.SERVER_FILE_15);
+            using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
+            {
+                InitializeComponent();
+                setupAutoRun();
 
-            /* HttpClientHelper.PostAsync("http://172.16.0.20:6696/api/v1/guidance", "");
- */
-            displayFolder = new DisplayFolder();
-            projectService = new ProjectService();
-            cancellationToken = new CancellationToken();
-            cancellationTokenRemoveProject = new CancellationToken();
+                /* HttpClientHelper.PostAsync("http://172.16.0.20:6696/api/v1/guidance", "");
+     */
+                displayFolder = new DisplayFolder();
+                projectService = new ProjectService();
+                cancellationToken = new CancellationToken();
+                cancellationTokenRemoveProject = new CancellationToken();
 
-            HandleHubConnection();
-            DisplayAccountProfile();
-            ReadFileChange(cancellationToken);
-            RemoveCompletedProject(cancellationTokenRemoveProject);
+                HandleHubConnection();
+                DisplayAccountProfile();
+                ReadFileChange(cancellationToken);
+                RemoveCompletedProject(cancellationTokenRemoveProject);
+            }
         }
 
         public static bool Logged()
