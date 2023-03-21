@@ -21,6 +21,7 @@ using WandSyncFile.Data.Mapping;
 using WandSyncFile.Constants;
 using System.Net.Http;
 using System.Security.Principal;
+using System.Diagnostics;
 
 namespace WandSyncFile
 {
@@ -40,22 +41,31 @@ namespace WandSyncFile
         public FormHome()
         {
             IntPtr token = UserHelpers.GetToken(Options.SERVER_FILE_15);
+            IntPtr token08 = UserHelpers.GetToken(Options.SERVER_FILE_08);
+            IntPtr token09 = UserHelpers.GetToken(Options.SERVER_FILE_09);
             using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
             {
-                InitializeComponent();
-                setupAutoRun();
+                using (WindowsImpersonationContext impersonatedUser08 = WindowsIdentity.Impersonate(token08))
+                {
+                    using (WindowsImpersonationContext impersonatedUser09 = WindowsIdentity.Impersonate(token09))
+                    {
 
-                /* HttpClientHelper.PostAsync("http://172.16.0.20:6696/api/v1/guidance", "");
-     */
-                displayFolder = new DisplayFolder();
-                projectService = new ProjectService();
-                cancellationToken = new CancellationToken();
-                cancellationTokenRemoveProject = new CancellationToken();
+                        InitializeComponent();
+                        setupAutoRun();
 
-                HandleHubConnection();
-                DisplayAccountProfile();
-                ReadFileChange(cancellationToken);
-                RemoveCompletedProject(cancellationTokenRemoveProject);
+                        /* HttpClientHelper.PostAsync("http://172.16.0.20:6696/api/v1/guidance", "");
+             */
+                        displayFolder = new DisplayFolder();
+                        projectService = new ProjectService();
+                        cancellationToken = new CancellationToken();
+                        cancellationTokenRemoveProject = new CancellationToken();
+
+                        HandleHubConnection();
+                        DisplayAccountProfile();
+                        ReadFileChange(cancellationToken);
+                        RemoveCompletedProject(cancellationTokenRemoveProject);
+                    }
+                }
             }
         }
 
@@ -170,6 +180,27 @@ namespace WandSyncFile
                 listItem.Width = flowLayoutPanel.Width;
                 flowLayoutPanel.Controls.Add(listItem);
                 flowLayoutPanel.Controls.SetChildIndex(listItem, 1);
+
+                if (flowLayoutPanel.Controls.Count > 200)
+                {
+                    try
+                    {
+                        for (int i = flowLayoutPanel.Controls.Count - 1; i >= 0; --i)
+                        {
+                            var ctl = flowLayoutPanel.Controls[i];
+                            ctl.Dispose();
+                        }
+                        Invoke((Action)(() =>
+                        {
+                            addItem(DateTime.Now, "Clear!", true);
+                        }));
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                }
+
             }
             catch (Exception e)
             {

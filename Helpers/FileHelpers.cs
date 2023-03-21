@@ -10,6 +10,7 @@ using WandSyncFile.Service;
 using static WandSyncFile.Constants.Values;
 using WandSyncFile.Constants;
 using System.Drawing;
+using System.Threading;
 
 namespace WandSyncFile.Helpers
 {
@@ -651,7 +652,7 @@ namespace WandSyncFile.Helpers
         public static void CopyFile(string fromPath, string toPath, int eachReadLength = 1024 * 1024)
         {
             try
-            {
+            {             
                 FileAttributes attributes = File.GetAttributes(fromPath);
 
                 if (attributes.HasFlag(FileAttributes.Hidden) || (File.Exists(fromPath) && File.Exists(toPath) && DateTime.Compare(File.GetLastWriteTime(fromPath), File.GetLastWriteTime(toPath)) <= 0))
@@ -812,8 +813,13 @@ namespace WandSyncFile.Helpers
             // sync done from client to server
             DownloadFolder(fromPath, toPath, null, false, true);
 
+            Thread.Sleep(2000);
+         
             // sync done from server to client
             DownloadFolder(toPath, fromPath, null, false, true);
+
+            Thread.Sleep(2000);
+
         }
 
         public static void SyncDirectory(string fromPath, string toPath, string notMoveFolder = null)
