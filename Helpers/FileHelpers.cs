@@ -460,7 +460,7 @@ namespace WandSyncFile.Helpers
                 var newFiles = fromFiles.Where(fromFile => !toFiles.Any(toFile => fromFile == toFile)).ToList();
                 string projectPath = null;
                 //chỉ check tải từ server -> local, còn local => server thì đẩy toàn bộ
-                 if (fromPath.IndexOf(Options.SERVER_PATH) > -1  && !isCopyAllFile)
+               /*  if (fromPath.IndexOf(Options.SERVER_PATH) > -1  && !isCopyAllFile)
                  {    
                 //Kiểm tra dự án có thư mục fix không
                 if (fromPath.IndexOf(Options.PROJECT_DO_NAME) > -1)
@@ -487,7 +487,7 @@ namespace WandSyncFile.Helpers
                             newFiles = newFiles.Where(item => item.ToLower().IndexOf(".psd") == -1).ToList();
                         }
                     }
-                 }
+                 }*/
 
 
 
@@ -672,10 +672,12 @@ namespace WandSyncFile.Helpers
                     Directory.CreateDirectory(directoryName);
                 }
 
+
                 File.Copy(fromPath, toPath, true);
 
                 var getListWrite = File.GetLastWriteTime(fromPath);
                 File.SetLastWriteTime(toPath, getListWrite);
+              
             }
             catch (Exception e)
             {
