@@ -16,6 +16,7 @@ namespace WandSyncFile.CustomControls
         private string createTime;
         private string projectName;
         private string action;
+        private string count;
         private string status;
         private Color buttonColor = Color.FromArgb(174, 255, 210);
         private Color statusColor = Color.FromArgb(174, 255, 210);
@@ -96,6 +97,16 @@ namespace WandSyncFile.CustomControls
             {
                 action = value;
                 buttonCustom1.Text = value;
+            }
+        }
+
+        public string Count
+        {
+            get { return count; }
+            set
+            {
+                count = value;
+                lblCount.Text = value;
             }
         }
 

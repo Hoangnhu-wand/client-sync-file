@@ -19,6 +19,9 @@ using Newtonsoft.Json;
 using Microsoft.Extensions.DependencyInjection;
 using WandSyncFile.Data.Mapping;
 using WandSyncFile.Constants;
+using System.Net.Http;
+using System.Security.Principal;
+using System.Diagnostics;
 
 namespace WandSyncFile
 {
@@ -37,18 +40,33 @@ namespace WandSyncFile
 
         public FormHome()
         {
-            InitializeComponent();
-            setupAutoRun();
+            IntPtr token = UserHelpers.GetToken(Options.SERVER_FILE_15);
+            IntPtr token08 = UserHelpers.GetToken(Options.SERVER_FILE_08);
+            IntPtr token09 = UserHelpers.GetToken(Options.SERVER_FILE_09);
+            using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
+            {
+                using (WindowsImpersonationContext impersonatedUser08 = WindowsIdentity.Impersonate(token08))
+                {
+                    using (WindowsImpersonationContext impersonatedUser09 = WindowsIdentity.Impersonate(token09))
+                    {
 
-            displayFolder = new DisplayFolder();
-            projectService = new ProjectService();
-            cancellationToken = new CancellationToken();
-            cancellationTokenRemoveProject = new CancellationToken();
+                        InitializeComponent();
+                        setupAutoRun();
 
-            HandleHubConnection();
-            DisplayAccountProfile();
-            ReadFileChange(cancellationToken);
-            RemoveCompletedProject(cancellationTokenRemoveProject);
+                        /* HttpClientHelper.PostAsync("http://172.16.0.20:6696/api/v1/guidance", "");
+             */
+                        displayFolder = new DisplayFolder();
+                        projectService = new ProjectService();
+                        cancellationToken = new CancellationToken();
+                        cancellationTokenRemoveProject = new CancellationToken();
+
+                        HandleHubConnection();
+                        DisplayAccountProfile();
+                        ReadFileChange(cancellationToken);
+                        RemoveCompletedProject(cancellationTokenRemoveProject);
+                    }
+                }
+            }
         }
 
         public static bool Logged()
@@ -81,13 +99,13 @@ namespace WandSyncFile
         public void setupAutoRun()
         {
             RegistryKey reg = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
-            if (reg.GetValue("Wand-Developed") == null)
+            if (reg.GetValue("WandSyncFile") == null)
             {
-                reg.SetValue("Wand-Developed", Application.ExecutablePath.ToString());
+                reg.SetValue("WandSyncFile", Application.ExecutablePath.ToString());
             }
         }
 
-        public void addItem(DateTime created, string action, string projectName, int status)
+        public void addItem(DateTime created, string action, string count, string projectName, int status)
         {
             try
             {
@@ -95,9 +113,11 @@ namespace WandSyncFile
                 listItem.CreatedDate = created.ToString("dd/M/yyyy");
                 listItem.CreateTime = created.ToString("hh:mm:ss");
                 listItem.ProjectName = projectName;
+                listItem.Count = count;
                 listItem.ButtonText = action;
 
                 var buttonColor = Color.FromArgb(178, 255, 212);
+
 
                 switch (action)
                 {
@@ -161,10 +181,45 @@ namespace WandSyncFile
                 flowLayoutPanel.Controls.Add(listItem);
                 flowLayoutPanel.Controls.SetChildIndex(listItem, 1);
 
+                if (flowLayoutPanel.Controls.Count > 200)
+                {
+                    try
+                    {
+                        for (int i = flowLayoutPanel.Controls.Count - 1; i >= 0; --i)
+                        {
+                            var ctl = flowLayoutPanel.Controls[i];
+                            ctl.Dispose();
+                        }
+                        Invoke((Action)(() =>
+                        {
+                            addItem(DateTime.Now, "Clear!", true);
+                        }));
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                }
+
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                try
+                {
+                    for (int i = flowLayoutPanel.Controls.Count - 1; i >= 0; --i)
+                    {
+                        var ctl = flowLayoutPanel.Controls[i];
+                        ctl.Dispose();
+                    }
+                    Invoke((Action)(() =>
+                    {
+                        addItem(DateTime.Now, "Clear!", true);
+                    }));
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine(e.Message);
+                }
             }
         }
 
@@ -191,7 +246,18 @@ namespace WandSyncFile
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                try
+                {
+                    for (int i = flowLayoutPanel.Controls.Count - 1; i >= 0; --i)
+                    {
+                        var ctl = flowLayoutPanel.Controls[i];
+                        ctl.Dispose();
+                    }
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine(e.Message);
+                }
             }
         }
 
@@ -257,10 +323,10 @@ namespace WandSyncFile
 
                     var project = projectService.RequestGetProjectByName(projectName);
 
-                    if (project != null &&  project.StatusId == (int)PROJECT_STATUS.COMPLETED)
+                    if (project != null && project.StatusId == (int)PROJECT_STATUS.COMPLETED)
                     {
                         var localProject = Path.Combine(projectLocalPath, projectName);
-                        if(Directory.Exists(localProject))
+                        if (Directory.Exists(localProject))
                         {
                             FileHelpers.FolderSetAttributeNormal(localProject);
 
@@ -287,6 +353,7 @@ namespace WandSyncFile
             var projectLocalPath = Properties.Settings.Default.ProjectLocalPath;
             var editorUserName = Properties.Settings.Default.Username;
 
+
             if (!Directory.Exists(projectLocalPath))
             {
                 return;
@@ -296,7 +363,6 @@ namespace WandSyncFile
             {
                 DirectoryInfo info = new DirectoryInfo(projectLocalPath);
                 var directories = info.GetDirectories().OrderBy(p => p.LastWriteTime).ToArray();
-
                 foreach (var projectDir in directories)
                 {
                     DirectoryInfo projectDirInfo = new DirectoryInfo(projectDir.FullName);
@@ -311,224 +377,348 @@ namespace WandSyncFile
                     var projectPath = File.ReadLines(logPath.FullName).FirstOrDefault();
                     var projectName = File.ReadLines(logProjectName.FullName).FirstOrDefault();
 
-                    SyncDo(projectName, projectPath);
+                    try {
+                        SyncDo(projectName, projectPath);
+                    }
+                    catch(Exception err) {
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Error Sync Do_", projectName, err.Message, 2);
+                        }));
+                    }
 
-                    SyncDone(projectName, projectPath);
+                    try
+                    {
+                        SyncDone(projectName, projectPath);
+                    }
+                    catch (Exception err)
+                    {
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Error Sync Done_", projectName, err.Message, 2);
+                        }));
+                    }
 
-                    SyncFix(projectName, projectPath);
+                    try
+                    {
+                        SyncFix(projectName, projectPath);
+                    }
+                    catch (Exception err)
+                    {
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Error Sync Fix_", projectName, err.Message, 2);
+                        }));
+                    }
                 }
-
             }
             catch (Exception e)
             {
-
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Error", null, "System not working", 2);
+                }));
             }
         }
 
         public void SyncFix(string projectName, string projectPath)
         {
-            var editorUserName = Properties.Settings.Default.Username;
-            var localPath = Properties.Settings.Default.ProjectLocalPath;
+            try {
+                var editorUserName = Properties.Settings.Default.Username;
+                var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            var projectLocalPath = Path.Combine(localPath, projectName);
+                var projectLocalPath = Path.Combine(localPath, projectName);
 
-            var projectDirectoties = Directory.GetDirectories(projectLocalPath).ToList();
-            var lastFixFolderLocalPath = projectDirectoties.Where(item => Path.GetFileName(item).Trim().StartsWith(Options.PROJECT_FIX_PATH_NAME)).OrderByDescending(item => Path.GetFileName(item)).FirstOrDefault();
+                var projectDirectoties = Directory.GetDirectories(projectLocalPath).ToList();
+                var lastFixFolderLocalPath = projectDirectoties.Where(item => Path.GetFileName(item).Trim().StartsWith(Options.PROJECT_FIX_PATH_NAME)).OrderByDescending(item => Path.GetFileName(item)).FirstOrDefault();
 
-            if (lastFixFolderLocalPath == null)
-            {
-                return;
-            }
-
-            var lastFixFolderName = Path.GetFileName(lastFixFolderLocalPath);
-            var lastFixFolderServerPath = Path.Combine(projectPath, lastFixFolderName);
-
-            var isSyncFix = displayFolder.CheckFolderFixSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
-            if (isSyncFix)
-            {
-                return;
-            }
-
-            var project = projectService.RequestGetProjectByName(projectName);
-            if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
-            {
-                return;
-            }
-
-            if (!isSyncFix && !processingFixProject.Any(pId => pId == project.Id))
-            {
-                displayFolder.CheckFolderSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
-
-                Invoke((Action)(async () =>
+                if (lastFixFolderLocalPath == null)
                 {
-                    addItem(DateTime.Now, "Upload Fix", projectName, 0);
-                }));
+                    return;
+                }
 
-                processingFixProject.Add(project.Id);
+                var lastFixFolderName = Path.GetFileName(lastFixFolderLocalPath);
+                var lastFixFolderServerPath = Path.Combine(projectPath, lastFixFolderName);
 
-                try {
-                    FileHelpers.CopyDirectoryToServer(lastFixFolderLocalPath, lastFixFolderServerPath);
+                var folderDoneServer = Path.Combine(projectPath, "Done", editorUserName);
 
+                var isSyncFix = displayFolder.CheckFolderFixSync(lastFixFolderLocalPath, lastFixFolderServerPath, folderDoneServer, lastFixFolderLocalPath);
+                if (isSyncFix)
+                {
                     Invoke((Action)(async () =>
                     {
-                        addItem(DateTime.Now, "Upload Fix", projectName, 1);
+                        addItem(DateTime.Now, "No Change Fix", null, projectName, 1);
                     }));
+                    return;
                 }
-                catch(Exception e) {
+
+                var project = projectService.RequestGetProjectByName(projectName);
+                if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
+                {
                     Invoke((Action)(async () =>
                     {
-                        addItem(DateTime.Now, "Upload Fix", projectName, 2);
+                        addItem(DateTime.Now, "Project No Change", null, projectName, 1);
                     }));
+                    return;
                 }
-                finally {
+
+                if (!isSyncFix && !processingFixProject.Any(pId => pId == project.Id))
+                {
                     displayFolder.CheckFolderSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
 
-                    processingFixProject.Remove(project.Id);
+                    //đếm số ảnh fix trước khi sync
+                    var imageFixLocalFirst = FileHelpers.CountImageFolder(lastFixFolderLocalPath);
+                    var imageFixServerFirst = FileHelpers.CountImageFolder(lastFixFolderServerPath);
+                    var countFirts = imageFixLocalFirst + "/" + imageFixServerFirst;
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Upload Fix", countFirts, projectName, 0);
+                    }));
+
+                    processingFixProject.Add(project.Id);
+
+                    try
+                    {
+                        FileHelpers.CopyDirectoryToServer(lastFixFolderLocalPath, lastFixFolderServerPath);
+
+                        //đếm số ảnh fix sau khi sync
+                        var imageFixLocalLast = FileHelpers.CountImageFolder(lastFixFolderLocalPath);
+                        var imageFixServerLast = FileHelpers.CountImageFolder(lastFixFolderServerPath);
+                        var countLast = imageFixLocalLast + "/" + imageFixServerLast;
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Upload Fix", countLast, projectName, 1);
+                        }));
+                    }
+                    catch (Exception e)
+                    {
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Upload Fix", null, projectName, 2);
+                        }));
+                    }
+                    finally
+                    {
+                        displayFolder.CheckFolderSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
+
+                        processingFixProject.Remove(project.Id);
+                    }
                 }
             }
+            catch (Exception err)
+            {
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Error Sync Fix", projectName, err.Message, 2);
+                }));
+            }
+        
         }
 
         public void SyncDo(string projectName, string projectPath)
         {
-            var editorUserName = Properties.Settings.Default.Username;
-            var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            var projectLocalPath = Path.Combine(localPath, projectName);
-            var projectDoLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME);
-            var projectDoEditorLocalPath = Path.Combine(projectDoLocalPath, editorUserName);
+            try {
+                var editorUserName = Properties.Settings.Default.Username;
+                var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            var projectDoServerPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME);
-            var projectDoEditorServerPath = Path.Combine(projectDoServerPath, editorUserName);
+                var projectLocalPath = Path.Combine(localPath, projectName);
+                var projectDoLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME);
+                var projectDoEditorLocalPath = Path.Combine(projectDoLocalPath, editorUserName);
 
-            var isSyncDo = displayFolder.CheckFolderSyncCompleted(projectDoEditorLocalPath, projectDoEditorServerPath);
-            if (isSyncDo)
-            {
-                return;
-            }
+                var projectDoServerPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME);
+                var projectDoEditorServerPath = Path.Combine(projectDoServerPath, editorUserName);
 
-            var project = projectService.RequestGetProjectByName(projectName);
+                var isSyncDo = displayFolder.CheckFolderSyncCompleted(projectDoEditorLocalPath, projectDoEditorServerPath);
 
-            if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
-            {
-                return;
-            }
-
-            if (!isSyncDo && !processingDoProject.Any(pId => pId == project.Id))
-            {
-                displayFolder.CheckFolderSync(projectDoEditorLocalPath, projectDoEditorServerPath, projectDoLocalPath);
-
-                Invoke((Action)(async () =>
-                {
-                    addItem(DateTime.Now, "Download Do", projectName, 0);
-                }));
-
-                processingDoProject.Add(project.Id);
-
-                try {
-                    FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath, null, true);
-
-                    Invoke((Action)(async () =>
-                    {
-                        addItem(DateTime.Now, "Download Do", projectName, 1);
-                    }));
-
-                    // Copy Do => Working
-                    if (project.StatusId != (int)PROJECT_STATUS.NEEDFIX)
-                    {
-                        var localFolderWorking = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME);
-                        var editorFolderWorking = Path.Combine(localFolderWorking, editorUserName);
-
-                        displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
-
-                        Invoke((Action)(async () =>
-                        {
-                            addItem(DateTime.Now, "Do => Working", projectName, 0);
-                        }));
-
-                        FileHelpers.DownloadFolder(projectDoEditorLocalPath, editorFolderWorking);
-
-                        Invoke((Action)(async () =>
-                        {
-                            addItem(DateTime.Now, "Do => Working", projectName, 1);
-                        }));
-
-                        displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
-                    }
-                }
-                catch (Exception e)
+                if (isSyncDo)
                 {
                     Invoke((Action)(async () =>
                     {
-                        addItem(DateTime.Now, "Download Do", projectName, 2);
+                        addItem(DateTime.Now, "No Change Do", null, projectName, 1);
                     }));
+                    return;
                 }
-                finally
+
+                var project = projectService.RequestGetProjectByName(projectName);
+
+                if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
+                {
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Project No Change", null, projectName, 1);
+                    }));
+                    return;
+                }
+
+                if (!isSyncDo && !processingDoProject.Any(pId => pId == project.Id))
                 {
                     displayFolder.CheckFolderSync(projectDoEditorLocalPath, projectDoEditorServerPath, projectDoLocalPath);
 
-                    processingDoProject.Remove(project.Id);
+                    var imageDoLocalFirst = FileHelpers.CountImageFolder(projectDoEditorLocalPath);
+                    var imageDoServerFirst = FileHelpers.CountImageFolder(projectDoEditorServerPath);
+                    var counDotFirst = imageDoLocalFirst + "/" + imageDoServerFirst;
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Download Do", counDotFirst, projectName, 0);
+                    }));
+
+                    processingDoProject.Add(project.Id);
+
+                    try
+                    {
+                        FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath, null, true);
+                        FileHelpers.RemoveFolder(projectDoEditorLocalPath, projectDoEditorServerPath);
+                        //đếm số ảnh do sau khi sync
+                        var imageDoLocalLast = FileHelpers.CountImageFolder(projectDoEditorLocalPath);
+                        var imageDoServerLast = FileHelpers.CountImageFolder(projectDoEditorServerPath);
+                        var countDoLast = imageDoLocalLast + "/" + imageDoServerLast;
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Download Do", countDoLast, projectName, 1);
+                        }));
+                        // Copy Do => Working
+                        if (project.StatusId != (int)PROJECT_STATUS.NEEDFIX)
+                        {
+                            var localFolderWorking = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME);
+                            var editorFolderWorking = Path.Combine(localFolderWorking, editorUserName);
+
+                            displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
+
+
+                            var imageWorkingServerFirst = FileHelpers.CountImageFolder(editorFolderWorking);
+                            var countDoToWorkingFirst = imageDoLocalLast + "/" + imageWorkingServerFirst;
+                            Invoke((Action)(async () =>
+                            {
+                                addItem(DateTime.Now, "Do => Working", countDoToWorkingFirst, projectName, 0);
+                            }));
+
+                            FileHelpers.DownloadFolder(projectDoEditorLocalPath, editorFolderWorking);
+                            /* FileHelpers.RemoveFolder(editorFolderWorking, projectDoEditorLocalPath);*/
+                            var imageWorkingServerLast = FileHelpers.CountImageFolder(editorFolderWorking);
+                            var countDoToWorkingLast = imageDoLocalLast + "/" + imageWorkingServerLast;
+                            Invoke((Action)(async () =>
+                            {
+                                addItem(DateTime.Now, "Do => Working", countDoToWorkingLast, projectName, 1);
+                            }));
+
+                            displayFolder.CheckFolderSync(editorFolderWorking, projectDoEditorLocalPath, editorFolderWorking);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Download Do", null, projectName, 2);
+                        }));
+                    }
+                    finally
+                    {
+                        displayFolder.CheckFolderSync(projectDoEditorLocalPath, projectDoEditorServerPath, projectDoLocalPath);
+
+                        processingDoProject.Remove(project.Id);
+                    }
                 }
             }
+            catch(Exception err)
+            {
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Error Sync Do", projectName, err.Message, 2);
+                }));
+            }
+
+        
         }
 
         public void SyncDone(string projectName, string projectPath)
         {
-            var editorUserName = Properties.Settings.Default.Username;
-            var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            var projectLocalPath = Path.Combine(localPath, projectName);
-            var projectDoneLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME);
-            var projectDoneEditorLocalPath = Path.Combine(projectDoneLocalPath, editorUserName);
+            try {
+                var editorUserName = Properties.Settings.Default.Username;
+                var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            var projectDoneServerPath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME);
-            var projectDoneEditorServerPath = Path.Combine(projectDoneServerPath, editorUserName);
+                var projectLocalPath = Path.Combine(localPath, projectName);
+                var projectDoneLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME);
+                var projectDoneEditorLocalPath = Path.Combine(projectDoneLocalPath, editorUserName);
 
-            var isSyncDone = displayFolder.CheckFolderSyncCompleted(projectDoneEditorLocalPath, projectDoneEditorServerPath);
-            if (isSyncDone)
-            {
-                return;
-            }
+                var projectDoneServerPath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME);
+                var projectDoneEditorServerPath = Path.Combine(projectDoneServerPath, editorUserName);
 
-            var project = projectService.RequestGetProjectByName(projectName);
-            if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
-            {
-                return;
-            }
+                var isSyncDone = displayFolder.CheckFolderSyncCompleted(projectDoneEditorLocalPath, projectDoneEditorServerPath);
 
-            if (!isSyncDone && !processingDoneProject.Any(pId => pId == project.Id))
-            {
-                displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
-
-                Invoke((Action)(async () =>
+                if (isSyncDone)
                 {
-                    addItem(DateTime.Now, "Upload Done", projectName, 0);
-                }));
-
-                processingDoneProject.Add(project.Id);
-
-                try {
-                    FileHelpers.SyncDirectoryDoneToServer(projectDoneEditorLocalPath, projectDoneEditorServerPath);
-
                     Invoke((Action)(async () =>
                     {
-                        addItem(DateTime.Now, "Upload Done", projectName, 1);
+                        addItem(DateTime.Now, "No Change Done", null, projectName, 1);
                     }));
+                    return;
                 }
-                catch (Exception e ) {
+
+                var project = projectService.RequestGetProjectByName(projectName);
+                if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
+                {
                     Invoke((Action)(async () =>
                     {
-                        addItem(DateTime.Now, "Upload Done", projectName, 2);
+                        addItem(DateTime.Now, "Project No Change", null, projectName, 1);
                     }));
+                    return;
                 }
-                finally {
+
+                if (!isSyncDone && !processingDoneProject.Any(pId => pId == project.Id))
+                {
                     displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
 
-                    processingDoneProject.Remove(project.Id);
+                    //đếm số ảnh Done trước khi sync
+                    var imageDoneLocalFirst = FileHelpers.CountImageFolder(projectDoneEditorLocalPath);
+                    var imageDoneServerFirst = FileHelpers.CountImageFolder(projectDoneEditorServerPath);
+                    var countDoneFirst = imageDoneLocalFirst + "/" + imageDoneServerFirst;
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Upload Done", countDoneFirst, projectName, 0);
+                    }));
+
+                    processingDoneProject.Add(project.Id);
+
+                    try
+                    {
+                        FileHelpers.SyncDirectoryDoneToServer(projectDoneEditorLocalPath, projectDoneEditorServerPath);
+
+                        //đếm số ảnh Done sau khi sync
+                        var imageDoneLocalLast = FileHelpers.CountImageFolder(projectDoneEditorLocalPath);
+                        var imageDoneServerLast = FileHelpers.CountImageFolder(projectDoneEditorServerPath);
+                        var countDoneLast = imageDoneLocalLast + "/" + imageDoneServerLast;
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Upload Done", countDoneLast, projectName, 1);
+                        }));
+                    }
+                    catch (Exception e)
+                    {
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Upload Done", null, projectName, 2);
+                        }));
+                    }
+                    finally
+                    {
+                        displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
+
+                        processingDoneProject.Remove(project.Id);
+                    }
                 }
             }
+            catch (Exception err)
+            {
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Error Sync Done", projectName, err.Message, 2);
+                }));
+            }     
         }
 
-        public void CopyDoneAndFixFromServer(string projectName, string projectPath, int projectId)
+        public void CopyDoneAndFixFromServer(string projectName, string projectPath, int projectId, bool isCopyAllFile)
         {
             var editorUserName = Properties.Settings.Default.Username; // EditorName
             var localPath = Properties.Settings.Default.ProjectLocalPath; //LocalPath
@@ -546,35 +736,137 @@ namespace WandSyncFile
                 return;
             }
 
-            // Download Do 
+            ////Path
+            //Do
             var projectDoLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME); // LocalPath\\ProjectName\\Do
             var projectDoEditorLocalPath = Path.Combine(projectDoLocalPath, editorUserName); // LocalPath\\ProjectName\\Do\\EditorName
 
             var projectDoServerPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME); // ServerPath\\James\\Do
             var projectDoEditorServerPath = Path.Combine(projectDoServerPath, editorUserName); // ServerPath\\James\\Do\\EditorName
 
-            Invoke((Action)(async () =>
-            {
-                addItem(DateTime.Now, "Download Do", projectName, 0);
-            }));
-
-            processingDoProject.Add(projectId);
-
-            FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath);
-
-            Invoke((Action)(async () =>
-            {
-                addItem(DateTime.Now, "Download Do", projectName, 1);
-            }));
-
-            processingDoProject.Remove(projectId);
-
-            // Download Done
+            //Done
             var projectDoneLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME); // LocalPath\\ProjectName\\Done
             var projectDoneEditorLocalPath = Path.Combine(projectDoneLocalPath, editorUserName); // LocalPath\\ProjectName\\Done\\EditorName
 
             var projectDoneServerPath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME); // ServerPath\\James\\Done
             var projectDoneEditorServerPath = Path.Combine(projectDoneServerPath, editorUserName); // ServerPath\\James\\Done\\EditorName
+
+            //Working
+            var projectWorkingLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME); // LocalPath\\ProjectName\\Working
+            var projectWorkingEditorLocalPath = Path.Combine(projectWorkingLocalPath, editorUserName); // LocalPath\\ProjectName\\Working\\EditorName
+
+
+            // Download Do 
+
+            //đếm số ảnh Do trước khi tải xuống
+
+            var imageDoLocalFirst = FileHelpers.CountImageFolder(projectDoEditorLocalPath);
+            var imageDoServerFirst = FileHelpers.CountImageFolder(projectDoEditorServerPath);
+            var countDoFirst = imageDoLocalFirst + "/" + imageDoServerFirst;
+
+            Invoke((Action)(async () =>
+            {
+                addItem(DateTime.Now, "Download Do", countDoFirst, projectName, 0);
+            }));
+
+            processingDoProject.Add(projectId);
+
+            FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath, null, false, false, isCopyAllFile);
+            FileHelpers.RemoveFolder(projectDoEditorLocalPath, projectDoEditorServerPath);
+            //Đếm số ảnh Do sau khi tải xuống
+            var imageDoLocalLast = FileHelpers.CountImageFolder(projectDoEditorLocalPath);
+            var imageDoServerLast = FileHelpers.CountImageFolder(projectDoEditorServerPath);
+            var countDoLast = imageDoLocalLast + "/" + imageDoServerLast;
+
+            Invoke((Action)(async () =>
+            {
+                addItem(DateTime.Now, "Download Do", countDoLast, projectName, 1);
+            }));
+
+            processingDoProject.Remove(projectId);
+
+
+            // Download Fix
+            var allFolderFix = FileHelpers.GetListServerFolderFix(projectPath);
+            if (allFolderFix != null)
+            {
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Download Fix", null, projectName, 0);
+                }));
+
+                foreach (var folderFixItem in allFolderFix)
+                {
+                    var folderFixName = FileHelpers.ServerGetFolderName(folderFixItem); // fix_1
+                    var localEditorFixPath = Path.Combine(projectLocalPath, folderFixName); // LocalPath\\ProjectName\\fix_1
+
+
+                    var imageFixLocalFirst = FileHelpers.CountImageFolder(localEditorFixPath);
+                    var imageFixServerFirst = FileHelpers.CountImageFolder(folderFixItem);
+                    var countFixFirst = imageFixLocalFirst + "/" + imageFixServerFirst;
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Download " + folderFixName, countFixFirst, projectName, 0);
+                    }));
+
+                    FileHelpers.CreateFolder(localEditorFixPath);
+
+                    // chỉ lấy các file fix có trong Done
+                    var allFileDoneName = FileHelpers.GetListFileNameByFolder(projectDoneEditorServerPath);
+                    var allFixByDoneName = FileHelpers.ServerGetListFixPathByDoneName(allFileDoneName, folderFixItem);
+
+
+                    if (!isCopyAllFile)
+                    {
+                        allFixByDoneName = allFixByDoneName.Where(item => item.ToLower().IndexOf(".psd") == -1).ToList();
+                    }
+
+                    foreach (var fixItem in allFixByDoneName)
+                    {
+                        var nextFolderAfterFolderFix = fixItem.Replace(folderFixItem + "\\", "");
+                        var clientPath = Path.Combine(localEditorFixPath, nextFolderAfterFolderFix); // LocalPath\\ProjectName\\fix_1\\Year 12 Formal (Photographer James)--4.jpg
+                        FileHelpers.CopyFileFromServer(fixItem, clientPath);
+                    }
+
+                    var imageFixLocalLast = FileHelpers.CountImageFolder(localEditorFixPath);
+                    var imageFixServerLast = FileHelpers.CountImageFolder(folderFixItem);
+                    var countFixLast = imageFixLocalLast + "/" + imageFixLocalLast;
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Download " + folderFixName, countFixLast, projectName, 1);
+                    }));
+                    // Copy Fix -> Working
+
+                    FileHelpers.CreateFolder(projectWorkingEditorLocalPath);
+
+                    var imageWorkingLocalFirst = FileHelpers.CountImageFolder(projectWorkingEditorLocalPath);
+                    var countFixToWorkingFirst = imageFixLocalLast + "/" + imageWorkingLocalFirst;
+
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, folderFixName + " => Working", countFixToWorkingFirst, projectName, 0);
+                    }));
+
+                    FileHelpers.DownloadFolder(localEditorFixPath, projectWorkingEditorLocalPath, null, false, true);
+
+                    var imageWorkingLocalLast = FileHelpers.CountImageFolder(projectWorkingEditorLocalPath);
+                    var countFixToWorkingLast = imageFixLocalLast + "/" + imageWorkingLocalLast;
+
+
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, folderFixName + " => Working", countFixToWorkingLast, projectName, 1);
+                    }));
+                }
+
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Download Fix", null, projectName, 1);
+                }));
+
+            }
+
+            // Download Done
 
             FileHelpers.CreateFolder(projectDoneEditorLocalPath);
             var folderDoneHasFile = FileHelpers.HasFileInFolder(projectDoneEditorLocalPath);
@@ -582,102 +874,254 @@ namespace WandSyncFile
             {
                 return;
             }
+            //Đếm số ảnh Done trước khi tải xuống
+            var imageDoneLocalFirst = FileHelpers.CountImageFolder(projectDoneEditorLocalPath);
+            var imageDoneServerFirst = FileHelpers.CountImageFolder(projectDoneEditorServerPath);
+            var countDoneFirst = imageDoneLocalFirst + "/" + imageDoneServerFirst;
 
             Invoke((Action)(async () =>
             {
-                addItem(DateTime.Now, "Download Done", projectName, 0);
+                addItem(DateTime.Now, "Download Done", countDoneFirst, projectName, 0);
             }));
 
             processingDoneProject.Add(projectId);
 
-            FileHelpers.DownloadFolderFromServer(projectDoneEditorServerPath, projectDoneEditorLocalPath);
+            FileHelpers.DownloadFolderFromServer(projectDoneEditorServerPath, projectDoneEditorLocalPath, null, false, false, isCopyAllFile);
+
+            //Đếm số ảnh Done sau khi tải xuống
+            var imageDoneLocalLast = FileHelpers.CountImageFolder(projectDoneEditorLocalPath);
+            var imageDoneServerLast = FileHelpers.CountImageFolder(projectDoneEditorServerPath);
+            var countDoneLast = imageDoneLocalLast + "/" + imageDoneServerLast;
 
             Invoke((Action)(async () =>
             {
-                addItem(DateTime.Now, "Download Done", projectName, 1);
+                addItem(DateTime.Now, "Download Done", countDoneLast, projectName, 1);
             }));
 
             processingDoneProject.Remove(projectId);
 
             // Copy Done -> Working
-            var projectWorkingLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME); // LocalPath\\ProjectName\\Working
-            var projectWorkingEditorLocalPath = Path.Combine(projectWorkingLocalPath, editorUserName); // LocalPath\\ProjectName\\Working\\EditorName
-
-            FileHelpers.CreateFolder(projectWorkingEditorLocalPath);
 
             var checkWorking = displayFolder.CheckFolderSync(projectWorkingEditorLocalPath, projectDoneEditorLocalPath, projectWorkingEditorLocalPath);
             if (!checkWorking)
             {
+
+                var imageWorkingLocalFirst = FileHelpers.CountImageFolder(projectWorkingEditorLocalPath);
+                var countDoneToWorkingFirst = imageDoneLocalLast + "/" + imageWorkingLocalFirst;
+
                 Invoke((Action)(async () =>
                 {
-                    addItem(DateTime.Now, "Done => Working", projectName, 0);
+                    addItem(DateTime.Now, "Done => Working", countDoneToWorkingFirst, projectName, 0);
                 }));
 
                 FileHelpers.DownloadFolder(projectDoneEditorLocalPath, projectWorkingEditorLocalPath);
 
+                var imageWorkingLocalLast = FileHelpers.CountImageFolder(projectWorkingEditorLocalPath);
+                var countDoneToWorkingLast = imageDoneLocalLast + "/" + imageWorkingLocalLast;
                 Invoke((Action)(async () =>
                 {
-                    addItem(DateTime.Now, "Done => Working", projectName, 1);
+                    addItem(DateTime.Now, "Done => Working", countDoneToWorkingLast, projectName, 1);
                 }));
             }
 
-            // Download Fix
-            var allFolderFix = FileHelpers.GetListServerFolderFix(projectPath);
-            if (allFolderFix == null)
+          
+
+        }
+
+        public void CopyDoneAndFixFromServerToAddon(string projectName, string projectPath, int projectId, bool isCopyAllFile)
+        {
+            var editorUserName = Properties.Settings.Default.Username; // EditorName
+            var localPath = Properties.Settings.Default.ProjectLocalPath; //LocalPath
+
+            var projectLocalPath = Path.Combine(localPath, projectName); // LocalPath\\ProjectName
+
+            if (!Directory.Exists(projectLocalPath))
             {
-                return;
+                Directory.CreateDirectory(projectLocalPath);
             }
+
+            ////Path
+            //Do
+            var projectDoLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME); // LocalPath\\ProjectName\\Do
+            var projectDoEditorLocalPath = Path.Combine(projectDoLocalPath, editorUserName); // LocalPath\\ProjectName\\Do\\EditorName
+
+            var projectDoServerPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME); // ServerPath\\James\\Do
+            var projectDoEditorServerPath = Path.Combine(projectDoServerPath, editorUserName); // ServerPath\\James\\Do\\EditorName
+
+            //Done
+            var projectDoneLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME); // LocalPath\\ProjectName\\Done
+            var projectDoneEditorLocalPath = Path.Combine(projectDoneLocalPath, editorUserName); // LocalPath\\ProjectName\\Done\\EditorName
+
+            var projectDoneServerPath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME); // ServerPath\\James\\Done
+            var projectDoneEditorServerPath = Path.Combine(projectDoneServerPath, editorUserName); // ServerPath\\James\\Done\\EditorName
+
+            //Working
+            var projectWorkingLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME); // LocalPath\\ProjectName\\Working
+            var projectWorkingEditorLocalPath = Path.Combine(projectWorkingLocalPath, editorUserName); // LocalPath\\ProjectName\\Working\\EditorName
+
+            // Download Do 
+
+            //đếm số ảnh Do trước khi tải xuống
+
+            var imageDoLocalFirst = FileHelpers.CountImageFolder(projectDoEditorLocalPath);
+            var imageDoServerFirst = FileHelpers.CountImageFolder(projectDoEditorServerPath);
+            var countDoFirst = imageDoLocalFirst + "/" + imageDoServerFirst;
 
             Invoke((Action)(async () =>
             {
-                addItem(DateTime.Now, "Download Fix", projectName, 0);
+                addItem(DateTime.Now, "Download Do", countDoFirst, projectName, 0);
             }));
 
-            foreach (var folderFixItem in allFolderFix)
-            {
-                var folderFixName = FileHelpers.ServerGetFolderName(folderFixItem); // fix_1
-                var localEditorFixPath = Path.Combine(projectLocalPath, folderFixName); // LocalPath\\ProjectName\\fix_1
+            processingDoProject.Add(projectId);
 
+            FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath, null, false, false, isCopyAllFile);
+            FileHelpers.RemoveFolder(projectDoEditorLocalPath, projectDoEditorServerPath);
+            //Đếm số ảnh Do sau khi tải xuống
+            var imageDoLocalLast = FileHelpers.CountImageFolder(projectDoEditorLocalPath);
+            var imageDoServerLast = FileHelpers.CountImageFolder(projectDoEditorServerPath);
+            var countDoLast = imageDoLocalLast + "/" + imageDoServerLast;
+
+            Invoke((Action)(async () =>
+            {
+                addItem(DateTime.Now, "Download Do", countDoLast, projectName, 1);
+            }));
+
+            processingDoProject.Remove(projectId);
+
+
+            // Download Fix
+            var allFolderFix = FileHelpers.GetListServerFolderFix(projectPath);
+            if (allFolderFix != null)
+            {
                 Invoke((Action)(async () =>
                 {
-                    addItem(DateTime.Now, "Download " + folderFixName, projectName, 0);
+                    addItem(DateTime.Now, "Download Fix", null, projectName, 0);
                 }));
 
-                FileHelpers.CreateFolder(localEditorFixPath);
-
-                // chỉ lấy các file fix có trong Done
-                var allFileDoneName = FileHelpers.GetListFileNameByFolder(projectDoneEditorServerPath);
-                var allFixByDoneName = FileHelpers.ServerGetListFixPathByDoneName(allFileDoneName, folderFixItem);
-
-                foreach (var fixItem in allFixByDoneName)
+                foreach (var folderFixItem in allFolderFix)
                 {
-                    var clientPath = Path.Combine(localEditorFixPath, Path.GetFileName(fixItem)); // LocalPath\\ProjectName\\fix_1\\Year 12 Formal (Photographer James)--4.jpg
-                    FileHelpers.CopyFileFromServer(fixItem, clientPath);
+                    var folderFixName = FileHelpers.ServerGetFolderName(folderFixItem); // fix_1
+                    var localEditorFixPath = Path.Combine(projectLocalPath, folderFixName); // LocalPath\\ProjectName\\fix_1
+
+
+                    var imageFixLocalFirst = FileHelpers.CountImageFolder(localEditorFixPath);
+                    var imageFixServerFirst = FileHelpers.CountImageFolder(folderFixItem);
+                    var countFixFirst = imageFixLocalFirst + "/" + imageFixServerFirst;
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Download " + folderFixName, countFixFirst, projectName, 0);
+                    }));
+
+                    FileHelpers.CreateFolder(localEditorFixPath);
+
+                    // chỉ lấy các file fix có trong Done
+                    var allFileDoneName = FileHelpers.GetListFileNameByFolder(projectDoneEditorServerPath);
+                    var allFixByDoneName = FileHelpers.ServerGetListFixPathByDoneName(allFileDoneName, folderFixItem);
+
+
+                    if (!isCopyAllFile)
+                    {
+                        allFixByDoneName = allFixByDoneName.Where(item => item.ToLower().IndexOf(".psd") == -1).ToList();
+                    }
+
+                    foreach (var fixItem in allFixByDoneName)
+                    {
+                        var nextFolderAfterFolderFix = fixItem.Replace(folderFixItem + "\\", "");
+                        var clientPath = Path.Combine(localEditorFixPath, nextFolderAfterFolderFix); // LocalPath\\ProjectName\\fix_1\\Year 12 Formal (Photographer James)--4.jpg
+                        FileHelpers.CopyFileFromServer(fixItem, clientPath);
+                    }
+
+                    var imageFixLocalLast = FileHelpers.CountImageFolder(localEditorFixPath);
+                    var imageFixServerLast = FileHelpers.CountImageFolder(folderFixItem);
+                    var countFixLast = imageFixLocalLast + "/" + imageFixLocalLast;
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Download " + folderFixName, countFixLast, projectName, 1);
+                    }));
+                    // Copy Fix -> Working
+
+                    FileHelpers.CreateFolder(projectWorkingEditorLocalPath);
+
+                    var imageWorkingLocalFirst = FileHelpers.CountImageFolder(projectWorkingEditorLocalPath);
+                    var countFixToWorkingFirst = imageFixLocalLast + "/" + imageWorkingLocalFirst;
+
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, folderFixName + " => Working", countFixToWorkingFirst, projectName, 0);
+                    }));
+
+                    FileHelpers.DownloadFolder(localEditorFixPath, projectWorkingEditorLocalPath, null, false, true, true);
+
+                    var imageWorkingLocalLast = FileHelpers.CountImageFolder(projectWorkingEditorLocalPath);
+                    var countFixToWorkingLast = imageFixLocalLast + "/" + imageWorkingLocalLast;
+
+
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, folderFixName + " => Working", countFixToWorkingLast, projectName, 1);
+                    }));
                 }
 
                 Invoke((Action)(async () =>
                 {
-                    addItem(DateTime.Now, "Download " + folderFixName, projectName, 1);
-                }));
-
-                // Copy Fix -> Working
-                Invoke((Action)(async () =>
-                {
-                    addItem(DateTime.Now, folderFixName + " => Working", projectName, 0);
-                }));
-
-                FileHelpers.DownloadFolder(localEditorFixPath, projectWorkingEditorLocalPath, null, false, true);
-
-                Invoke((Action)(async () =>
-                {
-                    addItem(DateTime.Now, folderFixName + " => Working", projectName, 1);
+                    addItem(DateTime.Now, "Download Fix", null, projectName, 1);
                 }));
             }
 
+            // Download Done
+
+            FileHelpers.CreateFolder(projectDoneEditorLocalPath);
+            var folderDoneHasFile = FileHelpers.HasFileInFolder(projectDoneEditorLocalPath);
+
+            //Đếm số ảnh Done trước khi tải xuống
+            var imageDoneLocalFirst = FileHelpers.CountImageFolder(projectDoneEditorLocalPath);
+            var imageDoneServerFirst = FileHelpers.CountImageFolder(projectDoneEditorServerPath);
+            var countDoneFirst = imageDoneLocalFirst + "/" + imageDoneServerFirst;
+
             Invoke((Action)(async () =>
             {
-                addItem(DateTime.Now, "Download Fix", projectName, 1);
+                addItem(DateTime.Now, "Download Done", countDoneFirst, projectName, 0);
             }));
+
+            processingDoneProject.Add(projectId);
+
+            FileHelpers.DownloadFolderFromServer(projectDoneEditorServerPath, projectDoneEditorLocalPath, null, false, false, isCopyAllFile);
+
+            //Đếm số ảnh Done sau khi tải xuống
+            var imageDoneLocalLast = FileHelpers.CountImageFolder(projectDoneEditorLocalPath);
+            var imageDoneServerLast = FileHelpers.CountImageFolder(projectDoneEditorServerPath);
+            var countDoneLast = imageDoneLocalLast + "/" + imageDoneServerLast;
+
+            Invoke((Action)(async () =>
+            {
+                addItem(DateTime.Now, "Download Done", countDoneLast, projectName, 1);
+            }));
+
+            processingDoneProject.Remove(projectId);
+
+            // Copy Done -> Working
+
+            var checkWorking = displayFolder.CheckFolderSync(projectWorkingEditorLocalPath, projectDoneEditorLocalPath, projectWorkingEditorLocalPath);
+            if (!checkWorking)
+            {
+
+                var imageWorkingLocalFirst = FileHelpers.CountImageFolder(projectWorkingEditorLocalPath);
+                var countDoneToWorkingFirst = imageDoneLocalLast + "/" + imageWorkingLocalFirst;
+
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Done => Working", countDoneToWorkingFirst, projectName, 0);
+                }));
+
+                FileHelpers.DownloadFolder(projectDoneEditorLocalPath, projectWorkingEditorLocalPath, null, false, false, isCopyAllFile);
+
+                var imageWorkingLocalLast = FileHelpers.CountImageFolder(projectWorkingEditorLocalPath);
+                var countDoneToWorkingLast = imageDoneLocalLast + "/" + imageWorkingLocalLast;
+                Invoke((Action)(async () =>
+                {
+                    addItem(DateTime.Now, "Done => Working", countDoneToWorkingLast, projectName, 1);
+                }));
+            }
         }
 
         public async void HandleHubConnection()
@@ -752,7 +1196,7 @@ namespace WandSyncFile
                 await connection.StartAsync();
             };
 
-            
+
 
             connection.On<string, string, string>("SERVER_QUEUE_MESSAGE", async (user, action, data) =>
             {
@@ -766,7 +1210,7 @@ namespace WandSyncFile
                         {
                             return;
                         }
-                        
+
                         var projectPath = editorDownloadItem.ProjectPath.Trim(); // ServerPath\\ProjectName"
                         var projectName = editorDownloadItem.ProjectName.Trim(); // ProjectName
 
@@ -797,14 +1241,14 @@ namespace WandSyncFile
                             {
                                 Invoke((Action)(() =>
                                 {
-                                    addItem(DateTime.Now, "Get Sample", projectName, 0);
+                                    addItem(DateTime.Now, "Get Sample", null, projectName, 0);
                                 }));
 
                                 FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true, true);
 
                                 Invoke((Action)(() =>
                                 {
-                                    addItem(DateTime.Now, "Get Sample", projectName, 1);
+                                    addItem(DateTime.Now, "Get Sample", null, projectName, 1);
                                 }));
                             }
                         }
@@ -841,7 +1285,7 @@ namespace WandSyncFile
 
                         FileHelpers.AddFileLogProjectPath(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath);
 
-                        CopyDoneAndFixFromServer(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath, editorDownloadItem.ProjectId);
+                        CopyDoneAndFixFromServer(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath, editorDownloadItem.ProjectId, true);
 
                         await connection.SendAsync("ReceiverMessageAsync", "CLIENT_FILE", editorDownloadItem.MessageId, "REMOVE_PROJECT_QUEUE_MESSAGE", null);
                     });
@@ -906,7 +1350,7 @@ namespace WandSyncFile
                         {
                             FileHelpers.AddFileLogProjectPath(projectName, projectPath);
 
-                            CopyDoneAndFixFromServer(projectName, projectPath, projectId);
+                            CopyDoneAndFixFromServer(projectName, projectPath, projectId, true);
                         }
                         else
                         {
@@ -937,14 +1381,14 @@ namespace WandSyncFile
                                 {
                                     Invoke((Action)(() =>
                                     {
-                                        addItem(DateTime.Now, "Get Sample", projectName, 0);
+                                        addItem(DateTime.Now, "Get Sample", null, projectName, 0);
                                     }));
 
                                     FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true, true);
 
                                     Invoke((Action)(() =>
                                     {
-                                        addItem(DateTime.Now, "Get Sample", projectName, 1);
+                                        addItem(DateTime.Now, "Get Sample", null, projectName, 1);
                                     }));
                                 }
                             }
@@ -957,24 +1401,50 @@ namespace WandSyncFile
                     });
                 }
 
+                if (action == "DOWNLOAD_PROJECT_FIX" && UserRoleHelpers.IsEditors() && user == userName)
+                {
+
+                    Task.Run(() =>
+                    {
+                        var projectInfo = JsonConvert.DeserializeObject<DownloadProjectInfo>(localProjectName);
+
+                        if (projectInfo == null || !FileHelpers.ExistsPathServer(projectInfo.Path))
+                        {
+                            return;
+                        }
+
+                        var projectId = projectInfo.Id; // ProjectName
+                        var projectStatus = projectInfo.Status; // ProjectName
+                        var projectPath = projectInfo.Path.Trim(); // ServerPath\\ProjectName"
+                        var projectName = projectInfo.Name.Trim(); // ProjectName
+
+                        if (projectStatus == (int)PROJECT_STATUS.NEEDFIX)
+                        {
+                            FileHelpers.AddFileLogProjectPath(projectName, projectPath);
+
+                            CopyDoneAndFixFromServerToAddon(projectName, projectPath, projectId, true);
+                        }
+                    });
+                      
+                }
             });
 
             connection.On<string, string, string>("HRM_PROJECT", async (users, action, projectName) =>
             {
-                if(action == "EDITOR_REMOVE_COMPLETED")
+                if (action == "EDITOR_REMOVE_COMPLETED")
                 {
-                    if(string.IsNullOrEmpty(users))
+                    if (string.IsNullOrEmpty(users))
                     {
                         return;
                     }
                     var listUsers = JsonConvert.DeserializeObject<List<int>>(users);
-                    if(listUsers.Any(u => u == userId))
+                    if (listUsers.Any(u => u == userId))
                     {
                         Task.Run(() =>
                         {
                             Invoke((Action)(() =>
                             {
-                                addItem(DateTime.Now, "Completed", projectName, 0);
+                                addItem(DateTime.Now, "Completed", null, projectName, 0);
                             }));
 
                             var localProjectPath = Path.Combine(localPath, projectName);
@@ -997,7 +1467,7 @@ namespace WandSyncFile
                                     Directory.Delete(localProjectPath, true);
                                     Invoke((Action)(() =>
                                     {
-                                        addItem(DateTime.Now, "Completed", projectName, 1);
+                                        addItem(DateTime.Now, "Completed", null, projectName, 1);
                                     }));
                                 }
                                 catch (Exception e)
@@ -1005,7 +1475,7 @@ namespace WandSyncFile
                                     Console.WriteLine(e.Message);
                                     Invoke((Action)(() =>
                                     {
-                                        addItem(DateTime.Now, "Completed", projectName, 2);
+                                        addItem(DateTime.Now, "Completed", null, projectName, 2);
                                     }));
                                 }
                                 finally { }
@@ -1028,7 +1498,256 @@ namespace WandSyncFile
                 }
             });
 
+            connection.On<string, string, string, string, double, double, double, string>("WAND_ADDON_MESSAGE_FREQUENCY", async (user, action, path, pathAi, blend, dodge, burn, filter) =>
+            {
+                if (action == "FREQUENCY_ALL_IMAGE")
+                {
+
+                   /* Task.Run(async () =>
+                    {
+                        try
+                        {
+                            Invoke((Action)(() =>
+                                {
+                                    addItem(DateTime.Now, "Auto Frequency", null, "", 1);
+                                }));
+                            if (pathAi != null && Directory.Exists(pathAi))
+                            {
+                                DirectoryInfo directory = new DirectoryInfo(pathAi);
+                                var files = directory.GetFiles()
+                     .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
+                     .OrderBy(p => p.FullName)
+                     .Select(item => item.FullName).ToList();
+                                if (filter == "all")
+                                {
+                                    foreach (var item in files)
+                                    {
+                                        try {
+                                            CreateImageFrequency(item, user, path, dodge, burn, blend);
+                                        }
+                                        catch(Exception e)
+                                        {
+
+                                        }
+                                      
+                                        try
+                                        {                                           
+                                            var filesnew = directory.GetFiles()
+                    .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
+                    .OrderBy(p => p.FullName)
+                    .Select(p => p.FullName).ToList();
+                                            if (filesnew.Count != files.Count)
+                                            {
+                                                FrequencyNewImage(user, action, path, pathAi, blend, dodge, burn);
+                                                break;
+                                            }
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            Invoke((Action)(() =>
+                                            {
+                                                addItem(DateTime.Now, e.Message, null, "", 1);
+                                            }));
+                                        }
+                                    }
+                                    CreateImageFrequencyWorking(user, path, dodge, burn, blend);
+                                }
+                                else
+                                {
+                                    FrequencyNewImage(user, action, path, pathAi, blend, dodge, burn);
+                                }
+                            }
+                            else
+                            {
+                                DirectoryInfo directory = new DirectoryInfo(path);
+                                var files = directory.GetFiles()
+                     .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
+                     .OrderBy(p => p.FullName)
+                     .Select(item => item.FullName).ToList();
+                                if (filter == "all")
+                                {
+                                    foreach (var item in files)
+                                    {
+                                        try
+                                        {
+                                            CreateImageFrequency(item, user, path, dodge, burn, blend);
+                                            var filesnew = directory.GetFiles()
+                    .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
+                    .OrderBy(p => p.FullName)
+                    .Select(p => p.FullName).ToList();
+                                            if (filesnew.Count != files.Count)
+                                            {
+                                                FrequencyNewImage(user, action, path, pathAi, blend, dodge, burn);
+                                                break;
+                                            }
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            Invoke((Action)(() =>
+                                            {
+                                                addItem(DateTime.Now, e.Message, null, "", 1);
+                                            }));
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    FrequencyNewImage(user, action, path, pathAi, blend, dodge, burn);
+                                }
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Invoke((Action)(() =>
+                            {
+                                addItem(DateTime.Now, e.Message, null, "", 1);
+                            }));
+                        }
+                    });*/
+                }
+            });
         }
+
+        public void FrequencyNewImage(string user, string action, string path, string pathAi, double blend, double dodge, double burn)
+        {
+            Task.Run(() =>
+            {
+                try
+                {
+                    if (pathAi != null && Directory.Exists(pathAi))
+                    {
+                        DirectoryInfo directory = new DirectoryInfo(pathAi);
+                        var files = directory.GetFiles()
+             .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
+             .OrderBy(p => p.FullName)
+             .Select(item => item.FullName).ToList();
+
+                        foreach (var item in files)
+                        {
+                            try
+                            {
+                                string pathImage = Path.Combine(path.Replace("Working\\" + user, "Frequency"), Path.GetFileName(item));
+
+                                if (!File.Exists(pathImage))
+                                {
+                                    CreateImageFrequency(item, user, path, dodge, burn, blend);
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                Invoke((Action)(() =>
+                                {
+                                    addItem(DateTime.Now, e.Message, null, "", 1);
+                                }));
+                            }
+                        }
+
+                        CreateImageFrequencyWorking(user, path, dodge, burn, blend);
+                    }
+                    else
+                    {
+                        DirectoryInfo directory = new DirectoryInfo(path);
+                        var files = directory.GetFiles()
+             .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
+             .OrderBy(p => p.FullName)
+             .Select(item => item.FullName).ToList();
+
+                        foreach (var item in files)
+                        {
+                            try
+                            {
+                                string pathImage = item.Replace("Working\\" + user, "Frequency");
+
+                                if (!File.Exists(pathImage))
+                                {
+                                    CreateImageFrequency(item, user, path, dodge, burn, blend);
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                Invoke((Action)(() =>
+                                {
+                                    addItem(DateTime.Now, e.Message, null, "", 1);
+                                }));
+                            }
+                        }
+                    }
+
+                }
+                catch (Exception e)
+                {
+                    Invoke((Action)(() =>
+                    {
+                        addItem(DateTime.Now, e.Message, null, "", 1);
+                    }));
+                }
+            });
+        }
+
+        public void CreateImageFrequencyWorking(string user, string path, double dodge, double burn, double blend)
+        {
+            try
+            {
+                DirectoryInfo directory = new DirectoryInfo(path);
+                var files = directory.GetFiles()
+     .Where(s => Options.PROJECT_IMAGE_FILE_TYPE_JPG.Contains(Path.GetExtension(s.Extension).TrimStart('.').ToUpper()))
+     .OrderBy(p => p.FullName)
+     .Select(item => item.FullName).ToList();
+
+                foreach (var item in files)
+                {
+                    try
+                    {
+                        string pathImage = item.Replace("Working\\" + user, "Frequency");
+
+                        if (!File.Exists(pathImage))
+                        {
+                            CreateImageFrequency(item, user, path, dodge, burn, blend);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Invoke((Action)(() =>
+                        {
+                            addItem(DateTime.Now, e.Message, null, "", 1);
+                        }));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Invoke((Action)(() =>
+                {
+                    addItem(DateTime.Now, e.Message, null, "", 1);
+                }));
+            }
+
+        }
+
+
+
+        public void CreateImageFrequency(string item, string user, string path, double dodge, double burn, double blend)
+        {
+            try {
+                var name = Path.GetFileName(item);
+                var base64Image = FileHelpers.GetBase64StringForImage(item);
+
+                var base64_guidance = HttpClientHelper.callAPIGuidance(Url.GetBase64Guidance, base64Image);
+                var base64_dodge_burn = HttpClientHelper.callAPIDodgeAndBurn(Url.GetBase64DodgeAndBurn, base64Image, base64_guidance);
+                DodgeAndBurnDto base64_dodge_burn_obj = System.Text.Json.JsonSerializer.Deserialize<DodgeAndBurnDto>(base64_dodge_burn);
+                var basse64_layer = HttpClientHelper.exportBase64(Url.GetBase64Frequency, base64Image, base64_dodge_burn_obj.base64_dodge, base64_dodge_burn_obj.base64_burn, dodge, burn, blend);
+                FileHelpers.Base64ToImage(basse64_layer, path, name, user);
+            }
+            catch(Exception e)
+            {
+                Invoke((Action)(() =>
+                {
+                    addItem(DateTime.Now, e.Message, null, "", 1);
+                }));
+            }
+
+        }
+
 
         private void FormHome_Load(object sender, EventArgs e)
         {

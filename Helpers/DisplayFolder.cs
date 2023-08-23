@@ -60,7 +60,7 @@ namespace WandSyncFile.Helpers
             return false;
         }
 
-        public bool CheckFolderFixSync(string clientFixpath, string serverFixPath, string iconChangeFolder = null)
+        public bool CheckFolderFixSync(string clientFixpath, string serverFixPath,string pathDone, string iconChangeFolder = null)
         {
             iconChangeFolder = iconChangeFolder ?? clientFixpath;
             if (!FileHelpers.ExistsPathServer(serverFixPath))
@@ -73,19 +73,12 @@ namespace WandSyncFile.Helpers
                 return false;
             }
             var clientFolderSize = FileHelpers.DirSize(clientFixpath);
-            var listFileFixClient = FileHelpers.LocalGetListFile(clientFixpath);
+           
 
-            var listFilePath = new List<string>();
-
-            foreach (var localPath in listFileFixClient)
-            {
-                var clientFileArr = localPath.Split(new string[] { clientFixpath }, StringSplitOptions.None);
-                listFilePath.Add(clientFileArr.Last());
-            }
-
-            var listServerFixPathFile = listFilePath.Select(item => string.Concat(serverFixPath, item)).ToList();
-
+            var allFileDoneName = FileHelpers.GetListFileNameByFolder(pathDone);
+            var listServerFixPathFile = FileHelpers.ServerGetListFixPathByDoneName(allFileDoneName, serverFixPath);
             var serverFolderSize = FileHelpers.FilesSizeServer(listServerFixPathFile);
+      
 
             if (clientFolderSize == serverFolderSize)
             {

@@ -36,9 +36,9 @@ namespace WandSyncFile
         public void setupAutoRun()
         {
             RegistryKey reg = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
-            if (reg.GetValue("Wand-Developed") == null)
+            if (reg.GetValue("WandSyncFile") == null)
             {
-                reg.SetValue("Wand-Developed", Application.ExecutablePath.ToString());
+                reg.SetValue("WandSyncFile", Application.ExecutablePath.ToString());
             }
         }
         protected override void OnPaint(PaintEventArgs e)

@@ -37,6 +37,10 @@ namespace WandSyncFile.Constants
         public static string SERVER_USERNAME_09 = @"hrm";
         public static string SERVER_PASSWORD_09 = "wand@hrm1";
 
+        public static string SERVER_FILE_15 = @"172.16.0.15";
+        public static string SERVER_USERNAME_15 = @"hrm";
+        public static string SERVER_PASSWORD_15 = "wand@hrm1";
+
         public static string PROJECT_PATH_FILE_NAME = "Path";
         public static string PROJECT_FILE_NAME = "Name";
         public static string PROJECT_LOG_NAME = "Log";
@@ -46,6 +50,7 @@ namespace WandSyncFile.Constants
         public static string PROJECT_SAMPLE_NAME = "Sample";
         public static string PROJECT_DONE_NAME = "Done";
         public static string PROJECT_FIX_PATH_NAME = "Fix_";
+        public static string PROJECT_COMPLETED_PATH_NAME = "Completed";
 
         public static string ROLE_SALES = "Salers";
         public static string ROLE_CUSTOMER_SUPPORT = "Customer Support";
@@ -54,9 +59,17 @@ namespace WandSyncFile.Constants
         public static string ROLE_SUBLEADER = "Sub-leader";
         public static string ROLE_ADMIN = "Administrators";
         public static string ROLE_EDITOR = "Editors";
+        
 
         // TimeSpan
         public static int TIME_SPAN_READ_FILE_CHANGE = 180;
         public static int TIME_SPAN_REMOVE_COMPLETED_PROJECT = 7200;
+
+        public static readonly List<string> PROJECT_IMAGE_FILE_TYPE_JPG = new List<string> { "JPG", "JPEG" };
+
+        public static string SERVER_PATH = "172.16.";
+
+
+
     }
 }
