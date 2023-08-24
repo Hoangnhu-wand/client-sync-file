@@ -25,6 +25,7 @@ namespace WandSyncFile.Constants
         public static string UpdateProjectPath = ServerURI + "/api/projects/{id}/update-path";
 
         public static string GetProject = $"{ServerURI}/api/projects/by-name";
+        public static string GetProjectBySync = $"{ServerURI}/api/add-on/sync-file/projects";
 
         public static string GetBase64Guidance = $"{ServerFrequency}/api/v1/guidance";
         public static string GetBase64DodgeAndBurn = $"{ServerFrequency}/api/v1/dodge-and-burn";

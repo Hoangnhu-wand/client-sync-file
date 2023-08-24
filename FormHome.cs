@@ -49,12 +49,8 @@ namespace WandSyncFile
                 {
                     using (WindowsImpersonationContext impersonatedUser09 = WindowsIdentity.Impersonate(token09))
                     {
-
                         InitializeComponent();
                         setupAutoRun();
-
-                        /* HttpClientHelper.PostAsync("http://172.16.0.20:6696/api/v1/guidance", "");
-             */
                         displayFolder = new DisplayFolder();
                         projectService = new ProjectService();
                         cancellationToken = new CancellationToken();
@@ -312,6 +308,7 @@ namespace WandSyncFile
                     DirectoryInfo projectDirInfo = new DirectoryInfo(projectDir.FullName);
                     var logPath = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_PATH_FILE_NAME).FirstOrDefault();
                     var logProjectName = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_FILE_NAME).FirstOrDefault();
+                    var logId = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_FILE_ID).FirstOrDefault();
 
                     if (logPath == null)
                     {
@@ -320,8 +317,18 @@ namespace WandSyncFile
 
                     var projectPath = File.ReadLines(logPath.FullName).FirstOrDefault();
                     var projectName = File.ReadLines(logProjectName.FullName).FirstOrDefault();
+                    var project = new ProjectResult();
 
-                    var project = projectService.RequestGetProjectByName(projectName);
+                    if (logId == null)
+                    {
+                        project = projectService.RequestGetProjectByName(projectName);
+                    }
+                    else
+                    {
+                        int projectId = Convert.ToInt32(File.ReadLines(logId.FullName).FirstOrDefault());
+                        project = projectService.RequestGetProjectById(projectId);
+                    }
+
 
                     if (project != null && project.StatusId == (int)PROJECT_STATUS.COMPLETED)
                     {
@@ -452,7 +459,20 @@ namespace WandSyncFile
                     return;
                 }
 
-                var project = projectService.RequestGetProjectByName(projectName);
+                DirectoryInfo projectDirInfo = new DirectoryInfo(projectLocalPath);
+                var logId = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_FILE_ID).FirstOrDefault();
+
+                var project = new ProjectResult();
+
+                if (logId == null)
+                {
+                    project = projectService.RequestGetProjectByName(projectName);
+                }
+                else
+                {
+                    int projectId = Convert.ToInt32(File.ReadLines(logId.FullName).FirstOrDefault());
+                    project = projectService.RequestGetProjectById(projectId);
+                }
                 if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
                 {
                     Invoke((Action)(async () =>
@@ -540,7 +560,20 @@ namespace WandSyncFile
                     return;
                 }
 
-                var project = projectService.RequestGetProjectByName(projectName);
+                DirectoryInfo projectDirInfo = new DirectoryInfo(projectLocalPath);
+                var logId = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_FILE_ID).FirstOrDefault();
+
+                var project = new ProjectResult();
+
+                if (logId == null)
+                {
+                    project = projectService.RequestGetProjectByName(projectName);
+                }
+                else
+                {
+                    int projectId = Convert.ToInt32(File.ReadLines(logId.FullName).FirstOrDefault());
+                    project = projectService.RequestGetProjectById(projectId);
+                }
 
                 if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
                 {
@@ -656,7 +689,20 @@ namespace WandSyncFile
                     return;
                 }
 
-                var project = projectService.RequestGetProjectByName(projectName);
+                 DirectoryInfo projectDirInfo = new DirectoryInfo(projectLocalPath);
+                var logId = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_FILE_ID).FirstOrDefault();
+
+                var project = new ProjectResult();
+
+                if (logId == null)
+                {
+                    project = projectService.RequestGetProjectByName(projectName);
+                }
+                else
+                {
+                    int projectId = Convert.ToInt32(File.ReadLines(logId.FullName).FirstOrDefault());
+                    project = projectService.RequestGetProjectById(projectId);
+                }
                 if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
                 {
                     Invoke((Action)(async () =>
@@ -1221,7 +1267,7 @@ namespace WandSyncFile
                         FileHelpers.CreateFolder(projectDoLocalPath);
                         FileHelpers.CreateFolder(projectDoEditorLocalPath);
 
-                        FileHelpers.AddFileLogProjectPath(projectName, projectPath);
+                        FileHelpers.AddFileLogProjectPath(projectName, projectPath, editorDownloadItem.ProjectId.ToString());
 
                         // Tạo thư mục Done
                         var projectDoneEditorLocalPath = FileHelpers.GetProjectDoneEditorLocalPath(projectName);
@@ -1283,7 +1329,7 @@ namespace WandSyncFile
                         var localFolderFix = FileHelpers.GetProjectLocalPath(editorDownloadItem.ProjectName) + serverFileArr.Last(); //LocalPath\\ProjectName\\Fix_3
                         FileHelpers.CreateFolder(localFolderFix);
 
-                        FileHelpers.AddFileLogProjectPath(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath);
+                        FileHelpers.AddFileLogProjectPath(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath, editorDownloadItem.ProjectId.ToString());
 
                         CopyDoneAndFixFromServer(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath, editorDownloadItem.ProjectId, true);
 
@@ -1348,7 +1394,7 @@ namespace WandSyncFile
 
                         if (projectStatus == (int)PROJECT_STATUS.NEEDFIX)
                         {
-                            FileHelpers.AddFileLogProjectPath(projectName, projectPath);
+                            FileHelpers.AddFileLogProjectPath(projectName, projectPath, projectId.ToString());
 
                             CopyDoneAndFixFromServer(projectName, projectPath, projectId, true);
                         }
@@ -1361,7 +1407,7 @@ namespace WandSyncFile
                             FileHelpers.CreateFolder(projectDoLocalPath);
                             FileHelpers.CreateFolder(projectDoEditorLocalPath);
 
-                            FileHelpers.AddFileLogProjectPath(projectName, projectPath);
+                            FileHelpers.AddFileLogProjectPath(projectName, projectPath, projectId.ToString());
 
                             // Tạo thư mục Done
                             var projectDoneEditorLocalPath = FileHelpers.GetProjectDoneEditorLocalPath(projectName);
@@ -1420,7 +1466,7 @@ namespace WandSyncFile
 
                         if (projectStatus == (int)PROJECT_STATUS.NEEDFIX)
                         {
-                            FileHelpers.AddFileLogProjectPath(projectName, projectPath);
+                            FileHelpers.AddFileLogProjectPath(projectName, projectPath, projectId.ToString());
 
                             CopyDoneAndFixFromServerToAddon(projectName, projectPath, projectId, true);
                         }
@@ -1453,7 +1499,20 @@ namespace WandSyncFile
                                 return;
                             }
 
-                            var project = projectService.RequestGetProjectByName(projectName);
+                            DirectoryInfo projectDirInfo = new DirectoryInfo(localProjectPath);
+                            var logId = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_FILE_ID).FirstOrDefault();
+
+                            var project = new ProjectResult();
+
+                            if (logId == null)
+                            {
+                                project = projectService.RequestGetProjectByName(projectName);
+                            }
+                            else
+                            {
+                                int projectId = Convert.ToInt32(File.ReadLines(logId.FullName).FirstOrDefault());
+                                project = projectService.RequestGetProjectById(projectId);
+                            }
 
                             if (project != null && project.StatusId == (int)PROJECT_STATUS.COMPLETED)
                             {

@@ -1174,7 +1174,7 @@ namespace WandSyncFile.Helpers
             return null;
         }
 
-        public static string AddFileLogProjectPath(string projectName, string projectPath)
+        public static string AddFileLogProjectPath(string projectName, string projectPath, string id)
         {
             try
             {
@@ -1201,6 +1201,19 @@ namespace WandSyncFile.Helpers
                         File.SetAttributes(createPathName, FileAttributes.Hidden);
                     }
                     File.AppendAllText(createPathName, projectName);
+                }
+
+                if(id != null && id.ToString() != "0")
+                {
+                    var createPathId = Path.Combine(localProjectPath, Options.PROJECT_FILE_ID);
+                    if (!File.Exists(createPathId))
+                    {
+                        using (var file = File.Create(createPathId))
+                        {
+                            File.SetAttributes(createPathId, FileAttributes.Hidden);
+                        }
+                        File.AppendAllText(createPathId, id);
+                    }
                 }
 
                 return createPath;

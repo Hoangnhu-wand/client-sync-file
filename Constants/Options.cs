@@ -43,6 +43,7 @@ namespace WandSyncFile.Constants
 
         public static string PROJECT_PATH_FILE_NAME = "Path";
         public static string PROJECT_FILE_NAME = "Name";
+        public static string PROJECT_FILE_ID = "Id";
         public static string PROJECT_LOG_NAME = "Log";
 
         public static string PROJECT_DO_NAME = "Do";
