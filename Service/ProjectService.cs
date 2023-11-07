@@ -108,5 +108,19 @@ namespace WandSyncFile.Service
                 throw new Exception(e.Message, e);
             }
         }
+        public AddonProjectResult RequestGetProjectById(int id)
+        {
+            try
+            {
+                var url = Url.GetProjectById + "/" + id;
+                var data = HttpRequest.GetAsync(url);
+                var project = JsonConvert.DeserializeObject<AddonProjectRequestDto>(data);
+                return project.Result;
+
+            } catch(Exception e)
+            {
+              return new AddonProjectResult();
+            }
+        }
     }
 }
