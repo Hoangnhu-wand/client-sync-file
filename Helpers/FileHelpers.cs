@@ -1591,7 +1591,14 @@ namespace WandSyncFile.Helpers
                     Directory.CreateDirectory(directoryName);
                 }
 
-                await Task.Run(() => File.Copy(fromPath, toPath, true));
+                try {
+                    await Task.Run(() => File.Copy(fromPath, toPath, true));
+                }
+                catch(Exception err)
+                {
+                    
+                }
+              
 
                 var getListWrite = File.GetLastWriteTime(fromPath);
                 File.SetLastWriteTime(toPath, getListWrite);
