@@ -15,6 +15,8 @@ using WandSyncFile.Data.Mapping;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Management;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ProgressBar;
+using System.Windows.Forms.VisualStyles;
 
 namespace WandSyncFile.Helpers
 {
@@ -1601,5 +1603,53 @@ namespace WandSyncFile.Helpers
                  WriteLog(errMessage);
             }
         }
-     }
+
+        public static async Task<CountImageByProjectDto> CountImageByFolder(string path,int status,  string folderName)
+        {
+            var countImage = new CountImageByProjectDto();
+            countImage.Status = status;
+            countImage.Folder = folderName;
+
+            var file = await CountImageByType(path);
+
+            var contentImage = new List<CountImageContentDto>();
+
+            var fileByType = file.GroupBy(item => Path.GetExtension(item).ToLower()).ToList();
+
+            foreach (var item in fileByType)
+            {
+                var content = new CountImageContentDto();
+                content.Type = item.Key;
+                content.Number = item.Count();
+                contentImage.Add(content);
+            }
+
+            countImage.Content = contentImage;
+
+            return countImage;
+        }
+
+        public static async Task<List<string>> CountImageByType(string path)
+        {
+            var file = new List<string>();
+            try { 
+                 file = Directory.GetFiles(path).Where(item => !File.GetAttributes(item).HasFlag(FileAttributes.Hidden)).ToList();
+
+                var directory = Directory.GetDirectories(path);
+
+                foreach (var dir in directory)
+                {
+                    var name = new DirectoryInfo(dir).Name;
+                    var newPath = Path.Combine(path, name);
+                    var newFile = await CountImageByType(newPath);
+                    file.AddRange(newFile);
+                }
+            }
+            catch (Exception e) { }
+           
+            return file;
+        }
+
+
+    }
 }

@@ -1656,6 +1656,66 @@ namespace WandSyncFile
                     });
 
                 }
+         
+                if(action == "COUNT_IMAGE_BY_PROJECT")
+                {
+
+                    try {
+                        Task.Run(async () =>
+                        {
+                            var projectInfo = JsonConvert.DeserializeObject<CountImageByProjectInfo>(localProjectName);
+
+                            if (projectInfo != null)
+                            {
+
+                                var countImage = new List<CountImageByProjectDto>();
+                                var projectLocalPath = Path.Combine(localPath, projectInfo.ProjectName);
+
+                                var projectDirectoties = Directory.GetDirectories(projectLocalPath);
+                                var lastFixFolderLocalPath = projectDirectoties.Where(item => Path.GetFileName(item).Trim().StartsWith(Options.PROJECT_FIX_PATH_NAME)).OrderByDescending(item => Path.GetFileName(item)).FirstOrDefault();
+
+                                var pathDoLocal = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME, projectInfo.UserName);
+                                var pathDoServer = Path.Combine(projectInfo.ProjectPath, Options.PROJECT_DO_NAME, projectInfo.UserName);
+
+                                var countDoLocal = await FileHelpers.CountImageByFolder(pathDoLocal, 0, Options.PROJECT_DO_NAME);
+                                var countDoServer = await FileHelpers.CountImageByFolder(pathDoServer, 1, Options.PROJECT_DO_NAME);
+
+                                countImage.Add(countDoLocal);
+                                countImage.Add(countDoServer);
+
+                                if (lastFixFolderLocalPath != null)
+                                {
+                                    var folderName = Path.GetFileName(lastFixFolderLocalPath);
+                                    var pathFixLocal = Path.Combine(projectLocalPath, folderName);
+                                    var pathFixServer = Path.Combine(projectInfo.ProjectPath, folderName);
+
+                                    var countFixLocal = await FileHelpers.CountImageByFolder(pathFixLocal, 0, folderName);
+                                    var countFixServer = await FileHelpers.CountImageByFolder(pathFixServer, 1, folderName);
+
+                                    countImage.Add(countFixLocal);
+                                    countImage.Add(countFixServer);
+
+                                }
+                                else
+                                {
+                                    var pathDoneLocal = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME, projectInfo.UserName);
+                                    var pathDoneServer = Path.Combine(projectInfo.ProjectPath, Options.PROJECT_DONE_NAME, projectInfo.UserName);
+
+                                    var countDoneLocal = await FileHelpers.CountImageByFolder(pathDoneLocal, 0, Options.PROJECT_DONE_NAME);
+                                    var countDoneServer = await FileHelpers.CountImageByFolder(pathDoneServer, 1, Options.PROJECT_DONE_NAME);
+
+                                    countImage.Add(countDoneLocal);
+                                    countImage.Add(countDoneServer);
+                                }
+                            }
+                        }); 
+                    }
+                    catch(Exception e)
+                    {
+
+                    }
+                    
+                }
             });
 
             connection.On<string, string, string>("HRM_PROJECT", async (users, action, projectName) =>

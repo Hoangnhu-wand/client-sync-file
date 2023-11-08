@@ -443,6 +443,8 @@
     </Compile>
     <Compile Include="Data\Mapping\AccountDto.cs" />
     <Compile Include="Data\Mapping\AddonProjectRequestDto.cs" />
+    <Compile Include="Data\Mapping\CountImageByProjectDto.cs" />
+    <Compile Include="Data\Mapping\CountImageByProjectInfo.cs" />
     <Compile Include="Data\Mapping\UpdateProjectPathDto.cs" />
     <Compile Include="Data\Mapping\DownloadProjectInfo.cs" />
     <Compile Include="Data\Mapping\EditorDownloadFileProjectDto.cs" />
