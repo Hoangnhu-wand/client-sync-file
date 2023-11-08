@@ -1281,7 +1281,7 @@ namespace WandSyncFile
                         {
                             return;
                         }
-                      
+
 
                         var projectPath = editorDownloadItem.ProjectPath.Trim(); // ServerPath\\ProjectName"
                         var projectName = editorDownloadItem.ProjectName.Trim(); // ProjectName
@@ -1315,7 +1315,7 @@ namespace WandSyncFile
 
                         //Kiếm tra kết nối VPN
                         //Có kết nối => Chỉ tải 1 dự án /1 lần
-                        
+
                         processingDownLoad.Add(editorDownloadItem.ProjectId);
                         Invoke((Action)(async () =>
                         {
@@ -1483,7 +1483,7 @@ namespace WandSyncFile
 
                             var localProjectPath = Path.Combine(Properties.Settings.Default.ProjectLocalPath, projectName);
 
-                            if(Directory.Exists(localProjectPath))
+                            if (Directory.Exists(localProjectPath))
                             {
                                 var createPath = Path.Combine(localProjectPath, Options.PROJECT_PATH_FILE_NAME);
 
@@ -1503,11 +1503,11 @@ namespace WandSyncFile
                         });
                     }
                     catch (Exception ex) {
-                    
+
                     }
-                   
+
                 }
-        });
+            });
 
             connection.On<string, string, string>("WAND_ADDON_MESSAGE", (user, action, localProjectName) =>
             {
@@ -1549,7 +1549,6 @@ namespace WandSyncFile
 
                 if (action == "DOWNLOAD_PROJECT" && UserRoleHelpers.IsEditors() && user == userName)
                 {
-
                     Task.Run(async () =>
                     {
                         var projectInfo = JsonConvert.DeserializeObject<DownloadProjectInfo>(localProjectName);
@@ -1668,9 +1667,7 @@ namespace WandSyncFile
                                 addItem(DateTime.Now, "Error download", projectName, e.Message, 2);
                             }));
                         }
-
-                    }
-                    );
+                    }); 
                 }
 
                 if (action == "DOWNLOAD_PROJECT_FIX" && UserRoleHelpers.IsEditors() && user == userName)

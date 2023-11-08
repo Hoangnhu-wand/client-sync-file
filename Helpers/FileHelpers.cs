@@ -1554,7 +1554,7 @@ namespace WandSyncFile.Helpers
         {
             try {
                 name = Path.GetFileNameWithoutExtension(name);
-                var files = Directory.GetFiles(formFolder).Where(item => !File.GetAttributes(item).HasFlag(FileAttributes.Hidden) && Path.GetFileNameWithoutExtension(item).Contains(name)).Select(item => Path.GetFileName(item)).ToList();
+                var files = Directory.GetFiles(formFolder).Where(item => !File.GetAttributes(item).HasFlag(FileAttributes.Hidden) && Path.GetFileNameWithoutExtension(item).Equals(name)).Select(item => Path.GetFileName(item)).ToList();
 
                 foreach (var image in files)
                 {
