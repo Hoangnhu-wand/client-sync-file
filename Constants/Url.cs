@@ -21,6 +21,7 @@ namespace WandSyncFile.Constants
         public static string GetDirectories = $"{ServerURI}/api/files/send-directories";
         public static string SyncFileStatus = ServerURI + "/api/projects/{id}/sync-file-status";
         public static string DowloadFileStatus = ServerURI + "/api/projects/{id}/download-file-status";
+        public static string TrackingImage = ServerURI + "/api/add-on/hub-tracking-image";
 
         public static string UpdateProjectPath = ServerURI + "/api/projects/{id}/update-path";
 

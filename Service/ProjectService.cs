@@ -5,6 +5,7 @@ using System.Linq;
 using WandSyncFile.Data.Mapping;
 using WandSyncFile.Helpers;
 using WandSyncFile.Constants;
+using System.Collections.Generic;
 
 namespace WandSyncFile.Service
 {
@@ -120,6 +121,24 @@ namespace WandSyncFile.Service
             } catch(Exception e)
             {
               return new AddonProjectResult();
+            }
+        }
+        
+        public bool RequestTrackingImage(int userId,int projectId ,List<CountImageByProjectDto> TrackingImage)
+        {
+            try
+            { 
+                    HttpRequest.PutAsync(Url.TrackingImage, new
+                    {
+                        TrackingImage = TrackingImage,
+                        UserId = userId,
+                        ProjectId = projectId,
+                    });
+                return true;
+
+            } catch(Exception e)
+            {
+              return false;
             }
         }
     }

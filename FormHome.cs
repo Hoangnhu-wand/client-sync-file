@@ -1781,9 +1781,8 @@ namespace WandSyncFile
 
                 }
          
-                if(action == "COUNT_IMAGE_BY_PROJECT")
+                if(action == "COUNT_IMAGE_BY_PROJECT" && UserRoleHelpers.IsEditors() && user == userName)
                 {
-
                     try {
                         Task.Run(async () =>
                         {
@@ -1831,12 +1830,15 @@ namespace WandSyncFile
                                     countImage.Add(countDoneLocal);
                                     countImage.Add(countDoneServer);
                                 }
+
+                                 projectService.RequestTrackingImage(projectInfo.UserId,projectInfo.ProjectId, countImage);
+                            
                             }
                         }); 
                     }
                     catch(Exception e)
                     {
-
+                        Console.Write(e.Message);
                     }
                     
                 }
