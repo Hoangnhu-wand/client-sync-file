@@ -17,6 +17,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using System.Management;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.ProgressBar;
 using System.Windows.Forms.VisualStyles;
+using System.Net.NetworkInformation;
 
 namespace WandSyncFile.Helpers
 {
@@ -1375,13 +1376,12 @@ namespace WandSyncFile.Helpers
         {
             try
             {
-                ManagementObjectSearcher searcher = new ManagementObjectSearcher("root\\CIMV2", "SELECT * FROM Win32_NetworkAdapterConfiguration WHERE ServiceName LIKE 'PPTP%' OR ServiceName LIKE 'L2TP%'");
-                ManagementObjectCollection queryCollection = searcher.Get();
 
-                foreach (ManagementObject m in queryCollection)
+                NetworkInterface[] networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
+
+                foreach (NetworkInterface nic in networkInterfaces)
                 {
-                    bool? isConnected = (bool?)m["IPEnabled"];
-                    if (isConnected.HasValue && isConnected.Value)
+                    if (nic.OperationalStatus == OperationalStatus.Up && nic.NetworkInterfaceType == NetworkInterfaceType.Ppp)
                     {
                         return true;
                     }
@@ -1591,15 +1591,8 @@ namespace WandSyncFile.Helpers
                     Directory.CreateDirectory(directoryName);
                 }
 
-                try {
-                    await Task.Run(() => File.Copy(fromPath, toPath, true));
-                }
-                catch(Exception err)
-                {
-                    
-                }
-              
-
+                 await Task.Run(() => File.Copy(fromPath, toPath, true));
+                
                 var getListWrite = File.GetLastWriteTime(fromPath);
                 File.SetLastWriteTime(toPath, getListWrite);
 
