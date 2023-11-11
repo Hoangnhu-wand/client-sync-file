@@ -459,9 +459,6 @@ namespace WandSyncFile
                     return;
                 }
 
-
-               
-
                 var project = projectService.RequestGetProjectByName(projectName);
                 if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
                 {
@@ -713,8 +710,6 @@ namespace WandSyncFile
                     return;
                 }
 
-              
-
                 var project = projectService.RequestGetProjectByName(projectName);
                 if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
                 {
@@ -737,11 +732,10 @@ namespace WandSyncFile
 
                 if (isConnected && processingDownLoad.Any())
                 {
-                    Invoke((Action)(() =>
+                    Invoke((Action)(async () =>
                     {
                         addItem(DateTime.Now, "Warning", null, "Đang có dự án được tải", 2);
                     }));
-
 
                     return;
                 }
@@ -1296,6 +1290,16 @@ namespace WandSyncFile
                         var projectName = editorDownloadItem.ProjectName.Trim(); // ProjectName
                         var projectId = editorDownloadItem.ProjectId; // ProjectName
 
+                        if (processingDownLoad.Any(id => id == editorDownloadItem.ProjectId))
+                        {
+                            Invoke((Action)(async () =>
+                            {
+                                addItem(DateTime.Now, "Downloading", null, projectName, 0);
+                            }));
+
+                            return;
+                        }
+
                         bool isConnected = FileHelpers.IsVpnConnected();
 
                         if (isConnected && processingDownLoad.Any())
@@ -1305,16 +1309,6 @@ namespace WandSyncFile
                                 addItem(DateTime.Now, "Warning", null, "Đang có dự án được tải", 2);
                             }));
 
-
-                            return;
-                        }
-
-                        if (processingDownLoad.Any(id => id == editorDownloadItem.ProjectId))
-                        {
-                            Invoke((Action)(async () =>
-                            {
-                                addItem(DateTime.Now, "Downloading", null, projectName, 0);
-                            }));
 
                             return;
                         }
@@ -1399,6 +1393,16 @@ namespace WandSyncFile
                             return;
                         }
 
+                        if (processingDownLoad.Any(id => id == editorDownloadItem.ProjectId))
+                        {
+                            Invoke((Action)(async () =>
+                            {
+                                addItem(DateTime.Now, "Downloading", null, editorDownloadItem.ProjectName, 0);
+                            }));
+
+                            return;
+                        }
+
                         bool isConnected = FileHelpers.IsVpnConnected();
 
                         if (isConnected && processingDownLoad.Any())
@@ -1408,16 +1412,6 @@ namespace WandSyncFile
                                 addItem(DateTime.Now, "Warning", null, "Đang có dự án được tải", 2);
                             }));
 
-
-                            return;
-                        }
-
-                        if (processingDownLoad.Any(id => id == editorDownloadItem.ProjectId))
-                        {
-                            Invoke((Action)(async () =>
-                            {
-                                addItem(DateTime.Now, "Downloading", null, editorDownloadItem.ProjectName, 0);
-                            }));
 
                             return;
                         }
@@ -1584,10 +1578,20 @@ namespace WandSyncFile
 
                             var imagesPriority = new List<string>();
 
+                            if (processingDownLoad.Any(id => id == projectId))
+                            {
+                                Invoke((Action)(async () =>
+                                {
+                                    addItem(DateTime.Now, "Downloading", null, projectName, 0);
+                                }));
+
+                                return;
+                            }
+
                             //Kiếm tra kết nối VPN
                             //Có kết nối => Chỉ tải 1 dự án /1 lần
                             bool isConnected = FileHelpers.IsVpnConnected();
-
+                            
                             if (isConnected && processingDownLoad.Any())
                             {
                                 Invoke((Action)(() =>
@@ -1598,15 +1602,7 @@ namespace WandSyncFile
                                 return;
                             }
 
-                            if (processingDownLoad.Any(id => id == projectId))
-                            {
-                                Invoke((Action)(async () =>
-                                {
-                                    addItem(DateTime.Now, "Downloading", null, projectName, 0);
-                                }));
-
-                                return;
-                            }
+                           
                             processingDownLoad.Add(projectId);
                             Invoke((Action)(async () =>
                             {
@@ -1700,6 +1696,17 @@ namespace WandSyncFile
 
                         try
                         {
+
+
+                            if (processingDownLoad.Any(id => id == projectId))
+                            {
+                                Invoke((Action)(async () =>
+                                {
+                                    addItem(DateTime.Now, "Downloading", null, projectName, 0);
+                                }));
+
+                                return;
+                            }
                             //Có kết nối => Chỉ tải 1 dự án /1 lần
                             bool isConnected = FileHelpers.IsVpnConnected();
 
@@ -1714,15 +1721,6 @@ namespace WandSyncFile
                                 return;
                             }
 
-                            if (processingDownLoad.Any(id => id == projectId))
-                            {
-                                Invoke((Action)(async () =>
-                                {
-                                    addItem(DateTime.Now, "Downloading", null, projectName, 0);
-                                }));
-
-                                return;
-                            }
                             processingDownLoad.Add(projectId);
 
                             Invoke((Action)(async () =>
