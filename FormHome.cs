@@ -361,6 +361,7 @@ namespace WandSyncFile
 
             try
             {
+                bool isConnected = FileHelpers.IsVpnConnected();
                 DirectoryInfo info = new DirectoryInfo(projectLocalPath);
                 var directories = info.GetDirectories().OrderBy(p => p.LastWriteTime).ToArray();
                 foreach (var projectDir in directories)
@@ -391,7 +392,12 @@ namespace WandSyncFile
 
                     try
                     {
-                        SyncDone(projectName, projectPath);
+                    
+                        if (!isConnected)
+                        {
+                            SyncDone(projectName, projectPath);
+                        }
+                       
                     }
                     catch (Exception err)
                     {
@@ -403,7 +409,11 @@ namespace WandSyncFile
 
                     try
                     {
-                        SyncFix(projectName, projectPath);
+                      
+                        if (!isConnected)
+                        {
+                            SyncFix(projectName, projectPath);
+                        }
                     }
                     catch (Exception err)
                     {
@@ -1571,9 +1581,9 @@ namespace WandSyncFile
                         var projectStatus = projectInfo.Status;
                         var projectPath = projectInfo.Path.Trim();
                         var projectName = projectInfo.Name.Trim();
+                        var downloadAll = projectInfo.DownloadAll;
                         try
                         {
-
                             var localProjectPath = Path.Combine(localPath, projectInfo.Name);
 
                             var imagesPriority = new List<string>();
@@ -1628,8 +1638,14 @@ namespace WandSyncFile
                             }
                             FileHelpers.AddFileLogProjectPath(projectName, projectPath);
                             await FileHelpers.CopyImagePriority(imagesPriority, projectPath, localProjectPath, userName);
-                            var listImagesNotPriority = FileHelpers.ListImageNotPriority(projectPath, userName, imagesPriority);
-                            await FileHelpers.CopyImagePriority(listImagesNotPriority, projectPath, localProjectPath, userName);
+
+                            if (downloadAll || !isConnected)
+                            {
+                                var listImagesNotPriority = FileHelpers.ListImageNotPriority(projectPath, userName, imagesPriority);
+                                await FileHelpers.CopyImagePriority(listImagesNotPriority, projectPath, localProjectPath, userName);
+
+                            }
+
 
                             var sampleLocalPath = FileHelpers.GetProjectSampleLocalPath(projectName);
                             var sampleServerPath = Path.Combine(projectPath, Options.PROJECT_SAMPLE_NAME);
@@ -1656,9 +1672,12 @@ namespace WandSyncFile
 
                             processingDownLoad.Remove(projectId);
 
-                            await Task.Run(() => SyncDo(projectName, projectPath));
-                            await Task.Run(() => SyncFix(projectName, projectPath));
-                            await Task.Run(() => SyncDone(projectName, projectPath));
+                            if (downloadAll || !isConnected)
+                            {
+                                await Task.Run(() => SyncDo(projectName, projectPath));
+                                await Task.Run(() => SyncFix(projectName, projectPath));
+                                await Task.Run(() => SyncDone(projectName, projectPath));
+                            }
 
                             Invoke((Action)(async () =>
                             {
@@ -1693,7 +1712,7 @@ namespace WandSyncFile
                         var projectStatus = projectInfo.Status; // ProjectName
                         var projectPath = projectInfo.Path.Trim(); // ServerPath\\ProjectName"
                         var projectName = projectInfo.Name.Trim(); // ProjectName
-
+                        var downloadAll = projectInfo.DownloadAll;
                         try
                         {
 
@@ -1738,8 +1757,12 @@ namespace WandSyncFile
                                     var imagesPriority = new List<string>();
                                     imagesPriority = project.ListImages;
                                     await FileHelpers.CopyImagePriority(imagesPriority, projectPath, localProjectPath, userName);
-                                    var listImagesNotPriority = FileHelpers.ListImageNotPriority(projectPath, userName, imagesPriority);
-                                    await FileHelpers.CopyImagePriority(listImagesNotPriority, projectPath, localProjectPath, userName);
+
+                                    if (downloadAll || !isConnected)
+                                    {
+                                        var listImagesNotPriority = FileHelpers.ListImageNotPriority(projectPath, userName, imagesPriority);
+                                        await FileHelpers.CopyImagePriority(listImagesNotPriority, projectPath, localProjectPath, userName);
+                                    }
 
                                     var sampleLocalPath = FileHelpers.GetProjectSampleLocalPath(projectName);
                                     var sampleServerPath = Path.Combine(projectPath, Options.PROJECT_SAMPLE_NAME);
@@ -1767,11 +1790,12 @@ namespace WandSyncFile
                             }
 
                             processingDownLoad.Remove(projectId);
-
-                            await Task.Run(() => SyncDo(projectName, projectPath));
-                            await Task.Run(() => SyncFix(projectName, projectPath));
-                            await Task.Run(() => SyncDone(projectName, projectPath));
-                          
+                            if (downloadAll || !isConnected)
+                            {
+                                await Task.Run(() => SyncDo(projectName, projectPath));
+                                await Task.Run(() => SyncFix(projectName, projectPath));
+                                await Task.Run(() => SyncDone(projectName, projectPath));
+                            }
 
                             Invoke((Action)(async () =>
                             {
@@ -1851,6 +1875,21 @@ namespace WandSyncFile
                         Console.Write(e.Message);
                     }
                     
+                }
+
+                if (action == "GET_VPN_CONNECTED" && UserRoleHelpers.IsEditors() && user == userName)
+                {
+                    Task.Run(() =>
+                    {
+                        try {
+                            var tracking = JsonConvert.DeserializeObject<VPNConnectedDto>(localProjectName);
+                            bool isConnected = FileHelpers.IsVpnConnected();
+                            tracking.Status = isConnected;
+
+                            projectService.RequestIsVPNConnected(tracking.UserId, tracking.UserName, tracking.Status);
+                        }
+                        catch(Exception e) { }
+                    });
                 }
             });
 

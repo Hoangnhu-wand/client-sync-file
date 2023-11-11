@@ -141,5 +141,23 @@ namespace WandSyncFile.Service
               return false;
             }
         }
+
+        public bool RequestIsVPNConnected(int userId,string userName, bool status)
+        {
+            try
+            { 
+                    HttpRequest.PutAsync(Url.IsVPNConnected, new
+                    {
+                        UserName = userName,
+                        UserId = userId,
+                        Status = status,
+                    });
+                return true;
+
+            } catch(Exception e)
+            {
+              return false;
+            }
+        }
     }
 }
