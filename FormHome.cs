@@ -42,6 +42,7 @@ namespace WandSyncFile
             IntPtr token08 = UserHelpers.GetToken(Options.SERVER_FILE_08);
             IntPtr token09 = UserHelpers.GetToken(Options.SERVER_FILE_09);
             IntPtr token16 = UserHelpers.GetToken(Options.SERVER_FILE_16);
+            bool isConnected = FileHelpers.IsVpnConnected();
             using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(token))
             {
                 using (WindowsImpersonationContext impersonatedUser08 = WindowsIdentity.Impersonate(token08))
@@ -60,7 +61,10 @@ namespace WandSyncFile
 
                             HandleHubConnection();
                             DisplayAccountProfile();
-                            ReadFileChange(cancellationToken);
+                            if (!isConnected)
+                            {
+                                ReadFileChange(cancellationToken);
+                            }
                             RemoveCompletedProject(cancellationTokenRemoveProject);
                         }
 
@@ -361,7 +365,6 @@ namespace WandSyncFile
 
             try
             {
-                bool isConnected = FileHelpers.IsVpnConnected();
                 DirectoryInfo info = new DirectoryInfo(projectLocalPath);
                 var directories = info.GetDirectories().OrderBy(p => p.LastWriteTime).ToArray();
                 foreach (var projectDir in directories)
@@ -392,12 +395,7 @@ namespace WandSyncFile
 
                     try
                     {
-                    
-                        if (!isConnected)
-                        {
-                            SyncDone(projectName, projectPath);
-                        }
-                       
+                            SyncDone(projectName, projectPath);              
                     }
                     catch (Exception err)
                     {
@@ -409,11 +407,7 @@ namespace WandSyncFile
 
                     try
                     {
-                      
-                        if (!isConnected)
-                        {
                             SyncFix(projectName, projectPath);
-                        }
                     }
                     catch (Exception err)
                     {
@@ -459,7 +453,7 @@ namespace WandSyncFile
 
 
 
-                var isSyncFix = displayFolder.CheckFolderFixSync(lastFixFolderLocalPath, lastFixFolderServerPath, folderDoneServer, lastFixFolderLocalPath);
+             /*   var isSyncFix = displayFolder.CheckFolderFixSync(lastFixFolderLocalPath, lastFixFolderServerPath, folderDoneServer, lastFixFolderLocalPath);
                 if (isSyncFix)
                 {
                     Invoke((Action)(async () =>
@@ -467,7 +461,7 @@ namespace WandSyncFile
                         addItem(DateTime.Now, "No Change Fix", null, projectName, 1);
                     }));
                     return;
-                }
+                }*/
 
                 var project = projectService.RequestGetProjectByName(projectName);
                 if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
@@ -495,13 +489,13 @@ namespace WandSyncFile
                 {
                     Invoke((Action)(() =>
                     {
-                        addItem(DateTime.Now, "Warning", null, "Đang có dự án được tải", 2);
+                        addItem(DateTime.Now, "Download Fix", null, "Đang có dự án được tải", 2);
                     }));
 
                     return;
                 }
 
-                if (!isSyncFix && !processingDownLoad.Any(pId => pId == project.Id))
+                if (!processingDownLoad.Any(pId => pId == project.Id))
                 {
                     displayFolder.CheckFolderSync(lastFixFolderLocalPath, lastFixFolderServerPath, lastFixFolderLocalPath);
 
@@ -586,7 +580,7 @@ namespace WandSyncFile
                 {
                     Invoke((Action)(() =>
                     {
-                        addItem(DateTime.Now, "Warning", null, "Đang có dự án được tải", 2);
+                        addItem(DateTime.Now, "Download Do", null, "Đang có dự án được tải", 2);
                     }));
 
 
@@ -744,7 +738,7 @@ namespace WandSyncFile
                 {
                     Invoke((Action)(async () =>
                     {
-                        addItem(DateTime.Now, "Warning", null, "Đang có dự án được tải", 2);
+                        addItem(DateTime.Now, "Download Done", null, "Đang có dự án được tải", 2);
                     }));
 
                     return;
@@ -802,408 +796,110 @@ namespace WandSyncFile
             }
         }
 
-        public void CopyDoneAndFixFromServer(string projectName, string projectPath, int projectId, bool isCopyAllFile)
+        public void SyncDoneVPN(string projectName, string projectPath)
         {
-            var editorUserName = Properties.Settings.Default.Username; // EditorName
-            var localPath = Properties.Settings.Default.ProjectLocalPath; //LocalPath
 
-            var projectLocalPath = Path.Combine(localPath, projectName); // LocalPath\\ProjectName
-
-            if (!Directory.Exists(projectLocalPath))
+            try
             {
-                Directory.CreateDirectory(projectLocalPath);
-            }
+                var editorUserName = Properties.Settings.Default.Username;
+                var localPath = Properties.Settings.Default.ProjectLocalPath;
 
-            var isFolderProjectLocalPathHasFile = FileHelpers.HasFileInFolder(projectLocalPath);
-            if (isFolderProjectLocalPathHasFile)
-            {
-                return;
-            }
+                var projectLocalPath = Path.Combine(localPath, projectName);
+                var projectDoneLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME);
+                var projectDoneEditorLocalPath = Path.Combine(projectDoneLocalPath, editorUserName);
 
-            ////Path
-            //Do
-            var projectDoLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME); // LocalPath\\ProjectName\\Do
-            var projectDoEditorLocalPath = Path.Combine(projectDoLocalPath, editorUserName); // LocalPath\\ProjectName\\Do\\EditorName
+                var projectDoneServerPath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME);
+                var projectDoneEditorServerPath = Path.Combine(projectDoneServerPath, editorUserName);
 
-            var projectDoServerPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME); // ServerPath\\James\\Do
-            var projectDoEditorServerPath = Path.Combine(projectDoServerPath, editorUserName); // ServerPath\\James\\Do\\EditorName
+                var isSyncDone = displayFolder.CheckFolderSyncCompleted(projectDoneEditorLocalPath, projectDoneEditorServerPath);
 
-            //Done
-            var projectDoneLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME); // LocalPath\\ProjectName\\Done
-            var projectDoneEditorLocalPath = Path.Combine(projectDoneLocalPath, editorUserName); // LocalPath\\ProjectName\\Done\\EditorName
-
-            var projectDoneServerPath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME); // ServerPath\\James\\Done
-            var projectDoneEditorServerPath = Path.Combine(projectDoneServerPath, editorUserName); // ServerPath\\James\\Done\\EditorName
-
-            //Working
-            var projectWorkingLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME); // LocalPath\\ProjectName\\Working
-            var projectWorkingEditorLocalPath = Path.Combine(projectWorkingLocalPath, editorUserName); // LocalPath\\ProjectName\\Working\\EditorName
-
-
-            // Download Do 
-
-            //đếm số ảnh Do trước khi tải xuống
-
-            var imageDoLocalFirst = FileHelpers.CountImageFolder(projectDoEditorLocalPath);
-            var imageDoServerFirst = FileHelpers.CountImageFolder(projectDoEditorServerPath);
-            var countDoFirst = imageDoLocalFirst + "/" + imageDoServerFirst;
-
-            Invoke((Action)(async () =>
-            {
-                addItem(DateTime.Now, "Download Do", countDoFirst, projectName, 0);
-            }));
-
-            processingDownLoad.Add(projectId);
-
-            FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath, null, false, false, isCopyAllFile);
-            FileHelpers.RemoveFolder(projectDoEditorLocalPath, projectDoEditorServerPath);
-            //Đếm số ảnh Do sau khi tải xuống
-            var imageDoLocalLast = FileHelpers.CountImageFolder(projectDoEditorLocalPath);
-            var imageDoServerLast = FileHelpers.CountImageFolder(projectDoEditorServerPath);
-            var countDoLast = imageDoLocalLast + "/" + imageDoServerLast;
-
-            Invoke((Action)(async () =>
-            {
-                addItem(DateTime.Now, "Download Do", countDoLast, projectName, 1);
-            }));
-
-            processingDownLoad.Remove(projectId);
-
-
-            // Download Fix
-            var allFolderFix = FileHelpers.GetListServerFolderFix(projectPath);
-            if (allFolderFix != null)
-            {
-                Invoke((Action)(async () =>
+                if (isSyncDone)
                 {
-                    addItem(DateTime.Now, "Download Fix", null, projectName, 0);
-                }));
-
-                foreach (var folderFixItem in allFolderFix)
-                {
-                    var folderFixName = FileHelpers.ServerGetFolderName(folderFixItem); // fix_1
-                    var localEditorFixPath = Path.Combine(projectLocalPath, folderFixName); // LocalPath\\ProjectName\\fix_1
-
-
-                    var imageFixLocalFirst = FileHelpers.CountImageFolder(localEditorFixPath);
-                    var imageFixServerFirst = FileHelpers.CountImageFolder(folderFixItem);
-                    var countFixFirst = imageFixLocalFirst + "/" + imageFixServerFirst;
                     Invoke((Action)(async () =>
                     {
-                        addItem(DateTime.Now, "Download " + folderFixName, countFixFirst, projectName, 0);
+                        addItem(DateTime.Now, "No Change Done", null, projectName, 1);
                     }));
-
-                    FileHelpers.CreateFolder(localEditorFixPath);
-
-                    // chỉ lấy các file fix có trong Done
-                    var allFileDoneName = FileHelpers.GetListFileNameByFolder(projectDoneEditorServerPath);
-                    var allFixByDoneName = FileHelpers.ServerGetListFixPathByDoneName(allFileDoneName, folderFixItem);
-
-
-                    if (!isCopyAllFile)
-                    {
-                        allFixByDoneName = allFixByDoneName.Where(item => item.ToLower().IndexOf(".psd") == -1).ToList();
-                    }
-
-                    foreach (var fixItem in allFixByDoneName)
-                    {
-                        var nextFolderAfterFolderFix = fixItem.Replace(folderFixItem + "\\", "");
-                        var clientPath = Path.Combine(localEditorFixPath, nextFolderAfterFolderFix); // LocalPath\\ProjectName\\fix_1\\Year 12 Formal (Photographer James)--4.jpg
-                        FileHelpers.CopyFileFromServer(fixItem, clientPath);
-                    }
-
-                    var imageFixLocalLast = FileHelpers.CountImageFolder(localEditorFixPath);
-                    var imageFixServerLast = FileHelpers.CountImageFolder(folderFixItem);
-                    var countFixLast = imageFixLocalLast + "/" + imageFixLocalLast;
-                    Invoke((Action)(async () =>
-                    {
-                        addItem(DateTime.Now, "Download " + folderFixName, countFixLast, projectName, 1);
-                    }));
-                    // Copy Fix -> Working
-
-                    FileHelpers.CreateFolder(projectWorkingEditorLocalPath);
-
-                    var imageWorkingLocalFirst = FileHelpers.CountImageFolder(projectWorkingEditorLocalPath);
-                    var countFixToWorkingFirst = imageFixLocalLast + "/" + imageWorkingLocalFirst;
-
-                    Invoke((Action)(async () =>
-                    {
-                        addItem(DateTime.Now, folderFixName + " => Working", countFixToWorkingFirst, projectName, 0);
-                    }));
-
-                    FileHelpers.DownloadFolder(localEditorFixPath, projectWorkingEditorLocalPath, null, false, true);
-
-                    var imageWorkingLocalLast = FileHelpers.CountImageFolder(projectWorkingEditorLocalPath);
-                    var countFixToWorkingLast = imageFixLocalLast + "/" + imageWorkingLocalLast;
-
-
-                    Invoke((Action)(async () =>
-                    {
-                        addItem(DateTime.Now, folderFixName + " => Working", countFixToWorkingLast, projectName, 1);
-                    }));
+                    return;
                 }
 
-                Invoke((Action)(async () =>
+                var project = projectService.RequestGetProjectByName(projectName);
+                if (project == null || (project != null && (project.StatusId == (int)PROJECT_STATUS.CHECKED || project.StatusId == (int)PROJECT_STATUS.COMPLETED)))
                 {
-                    addItem(DateTime.Now, "Download Fix", null, projectName, 1);
-                }));
-
-            }
-
-            // Download Done
-
-            FileHelpers.CreateFolder(projectDoneEditorLocalPath);
-            var folderDoneHasFile = FileHelpers.HasFileInFolder(projectDoneEditorLocalPath);
-            if (folderDoneHasFile)
-            {
-                return;
-            }
-            //Đếm số ảnh Done trước khi tải xuống
-            var imageDoneLocalFirst = FileHelpers.CountImageFolder(projectDoneEditorLocalPath);
-            var imageDoneServerFirst = FileHelpers.CountImageFolder(projectDoneEditorServerPath);
-            var countDoneFirst = imageDoneLocalFirst + "/" + imageDoneServerFirst;
-
-            Invoke((Action)(async () =>
-            {
-                addItem(DateTime.Now, "Download Done", countDoneFirst, projectName, 0);
-            }));
-
-            processingDownLoad.Add(projectId);
-
-            FileHelpers.DownloadFolderFromServer(projectDoneEditorServerPath, projectDoneEditorLocalPath, null, false, false, isCopyAllFile);
-
-            //Đếm số ảnh Done sau khi tải xuống
-            var imageDoneLocalLast = FileHelpers.CountImageFolder(projectDoneEditorLocalPath);
-            var imageDoneServerLast = FileHelpers.CountImageFolder(projectDoneEditorServerPath);
-            var countDoneLast = imageDoneLocalLast + "/" + imageDoneServerLast;
-
-            Invoke((Action)(async () =>
-            {
-                addItem(DateTime.Now, "Download Done", countDoneLast, projectName, 1);
-            }));
-
-            processingDownLoad.Remove(projectId);
-
-            // Copy Done -> Working
-
-            var checkWorking = displayFolder.CheckFolderSync(projectWorkingEditorLocalPath, projectDoneEditorLocalPath, projectWorkingEditorLocalPath);
-            if (!checkWorking)
-            {
-
-                var imageWorkingLocalFirst = FileHelpers.CountImageFolder(projectWorkingEditorLocalPath);
-                var countDoneToWorkingFirst = imageDoneLocalLast + "/" + imageWorkingLocalFirst;
-
-                Invoke((Action)(async () =>
-                {
-                    addItem(DateTime.Now, "Done => Working", countDoneToWorkingFirst, projectName, 0);
-                }));
-
-                FileHelpers.DownloadFolder(projectDoneEditorLocalPath, projectWorkingEditorLocalPath);
-
-                var imageWorkingLocalLast = FileHelpers.CountImageFolder(projectWorkingEditorLocalPath);
-                var countDoneToWorkingLast = imageDoneLocalLast + "/" + imageWorkingLocalLast;
-                Invoke((Action)(async () =>
-                {
-                    addItem(DateTime.Now, "Done => Working", countDoneToWorkingLast, projectName, 1);
-                }));
-            }
-
-
-
-        }
-
-        public void CopyDoneAndFixFromServerToAddon(string projectName, string projectPath, int projectId, bool isCopyAllFile)
-        {
-            var editorUserName = Properties.Settings.Default.Username; // EditorName
-            var localPath = Properties.Settings.Default.ProjectLocalPath; //LocalPath
-
-            var projectLocalPath = Path.Combine(localPath, projectName); // LocalPath\\ProjectName
-
-            if (!Directory.Exists(projectLocalPath))
-            {
-                Directory.CreateDirectory(projectLocalPath);
-            }
-
-            ////Path
-            //Do
-            var projectDoLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME); // LocalPath\\ProjectName\\Do
-            var projectDoEditorLocalPath = Path.Combine(projectDoLocalPath, editorUserName); // LocalPath\\ProjectName\\Do\\EditorName
-
-            var projectDoServerPath = Path.Combine(projectPath, Options.PROJECT_DO_NAME); // ServerPath\\James\\Do
-            var projectDoEditorServerPath = Path.Combine(projectDoServerPath, editorUserName); // ServerPath\\James\\Do\\EditorName
-
-            //Done
-            var projectDoneLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DONE_NAME); // LocalPath\\ProjectName\\Done
-            var projectDoneEditorLocalPath = Path.Combine(projectDoneLocalPath, editorUserName); // LocalPath\\ProjectName\\Done\\EditorName
-
-            var projectDoneServerPath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME); // ServerPath\\James\\Done
-            var projectDoneEditorServerPath = Path.Combine(projectDoneServerPath, editorUserName); // ServerPath\\James\\Done\\EditorName
-
-            //Working
-            var projectWorkingLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME); // LocalPath\\ProjectName\\Working
-            var projectWorkingEditorLocalPath = Path.Combine(projectWorkingLocalPath, editorUserName); // LocalPath\\ProjectName\\Working\\EditorName
-
-            // Download Do 
-
-            //đếm số ảnh Do trước khi tải xuống
-
-            var imageDoLocalFirst = FileHelpers.CountImageFolder(projectDoEditorLocalPath);
-            var imageDoServerFirst = FileHelpers.CountImageFolder(projectDoEditorServerPath);
-            var countDoFirst = imageDoLocalFirst + "/" + imageDoServerFirst;
-
-            Invoke((Action)(async () =>
-            {
-                addItem(DateTime.Now, "Download Do", countDoFirst, projectName, 0);
-            }));
-
-            processingDownLoad.Add(projectId);
-
-            FileHelpers.DownloadFolderFromServer(projectDoEditorServerPath, projectDoEditorLocalPath, null, false, false, isCopyAllFile);
-            FileHelpers.RemoveFolder(projectDoEditorLocalPath, projectDoEditorServerPath);
-            //Đếm số ảnh Do sau khi tải xuống
-            var imageDoLocalLast = FileHelpers.CountImageFolder(projectDoEditorLocalPath);
-            var imageDoServerLast = FileHelpers.CountImageFolder(projectDoEditorServerPath);
-            var countDoLast = imageDoLocalLast + "/" + imageDoServerLast;
-
-            Invoke((Action)(async () =>
-            {
-                addItem(DateTime.Now, "Download Do", countDoLast, projectName, 1);
-            }));
-
-            processingDownLoad.Remove(projectId);
-
-
-            // Download Fix
-            var allFolderFix = FileHelpers.GetListServerFolderFix(projectPath);
-            if (allFolderFix != null)
-            {
-                Invoke((Action)(async () =>
-                {
-                    addItem(DateTime.Now, "Download Fix", null, projectName, 0);
-                }));
-
-                foreach (var folderFixItem in allFolderFix)
-                {
-                    var folderFixName = FileHelpers.ServerGetFolderName(folderFixItem); // fix_1
-                    var localEditorFixPath = Path.Combine(projectLocalPath, folderFixName); // LocalPath\\ProjectName\\fix_1
-
-
-                    var imageFixLocalFirst = FileHelpers.CountImageFolder(localEditorFixPath);
-                    var imageFixServerFirst = FileHelpers.CountImageFolder(folderFixItem);
-                    var countFixFirst = imageFixLocalFirst + "/" + imageFixServerFirst;
                     Invoke((Action)(async () =>
                     {
-                        addItem(DateTime.Now, "Download " + folderFixName, countFixFirst, projectName, 0);
+                        addItem(DateTime.Now, "Project No Change", null, projectName, 1);
                     }));
-
-                    FileHelpers.CreateFolder(localEditorFixPath);
-
-                    // chỉ lấy các file fix có trong Done
-                    var allFileDoneName = FileHelpers.GetListFileNameByFolder(projectDoneEditorServerPath);
-                    var allFixByDoneName = FileHelpers.ServerGetListFixPathByDoneName(allFileDoneName, folderFixItem);
-
-
-                    if (!isCopyAllFile)
-                    {
-                        allFixByDoneName = allFixByDoneName.Where(item => item.ToLower().IndexOf(".psd") == -1).ToList();
-                    }
-
-                    foreach (var fixItem in allFixByDoneName)
-                    {
-                        var nextFolderAfterFolderFix = fixItem.Replace(folderFixItem + "\\", "");
-                        var clientPath = Path.Combine(localEditorFixPath, nextFolderAfterFolderFix); // LocalPath\\ProjectName\\fix_1\\Year 12 Formal (Photographer James)--4.jpg
-                        FileHelpers.CopyFileFromServer(fixItem, clientPath);
-                    }
-
-                    var imageFixLocalLast = FileHelpers.CountImageFolder(localEditorFixPath);
-                    var imageFixServerLast = FileHelpers.CountImageFolder(folderFixItem);
-                    var countFixLast = imageFixLocalLast + "/" + imageFixLocalLast;
+                    return;
+                }
+                if (processingDownLoad.Any(pId => pId == project.Id))
+                {
                     Invoke((Action)(async () =>
                     {
-                        addItem(DateTime.Now, "Download " + folderFixName, countFixLast, projectName, 1);
+                        addItem(DateTime.Now, "Downloading", null, projectName, 1);
                     }));
-                    // Copy Fix -> Working
-
-                    FileHelpers.CreateFolder(projectWorkingEditorLocalPath);
-
-                    var imageWorkingLocalFirst = FileHelpers.CountImageFolder(projectWorkingEditorLocalPath);
-                    var countFixToWorkingFirst = imageFixLocalLast + "/" + imageWorkingLocalFirst;
-
-                    Invoke((Action)(async () =>
-                    {
-                        addItem(DateTime.Now, folderFixName + " => Working", countFixToWorkingFirst, projectName, 0);
-                    }));
-
-                    FileHelpers.DownloadFolder(localEditorFixPath, projectWorkingEditorLocalPath, null, false, true, true);
-
-                    var imageWorkingLocalLast = FileHelpers.CountImageFolder(projectWorkingEditorLocalPath);
-                    var countFixToWorkingLast = imageFixLocalLast + "/" + imageWorkingLocalLast;
-
-
-                    Invoke((Action)(async () =>
-                    {
-                        addItem(DateTime.Now, folderFixName + " => Working", countFixToWorkingLast, projectName, 1);
-                    }));
+                    return;
                 }
 
-                Invoke((Action)(async () =>
+                bool isConnected = FileHelpers.IsVpnConnected();
+
+                if (isConnected && processingDownLoad.Any())
                 {
-                    addItem(DateTime.Now, "Download Fix", null, projectName, 1);
-                }));
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Download Done", null, "Đang có dự án được tải", 2);
+                    }));
+
+                    return;
+                }
+
+                if (!isSyncDone && !processingDownLoad.Any(pId => pId == project.Id))
+                {
+                    displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
+
+                    //đếm số ảnh Done trước khi sync
+                    var imageDoneLocalFirst = FileHelpers.CountImageFolder(projectDoneEditorLocalPath);
+                    var imageDoneServerFirst = FileHelpers.CountImageFolder(projectDoneEditorServerPath);
+                    var countDoneFirst = imageDoneLocalFirst + "/" + imageDoneServerFirst;
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Upload Done", countDoneFirst, projectName, 0);
+                    }));
+
+                    processingDownLoad.Add(project.Id);
+
+                    try
+                    {
+                        FileHelpers.SyncDirectoryDoneVPN(projectDoneEditorLocalPath, projectDoneEditorServerPath);
+
+                        //đếm số ảnh Done sau khi sync
+                        var imageDoneLocalLast = FileHelpers.CountImageFolder(projectDoneEditorLocalPath);
+                        var imageDoneServerLast = FileHelpers.CountImageFolder(projectDoneEditorServerPath);
+                        var countDoneLast = imageDoneLocalLast + "/" + imageDoneServerLast;
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Upload Done", countDoneLast, projectName, 1);
+                        }));
+                    }
+                    catch (Exception e)
+                    {
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Upload Done", null, projectName, 2);
+                        }));
+                    }
+                    finally
+                    {
+                        displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
+
+                        processingDownLoad.Remove(project.Id);
+                    }
+                }
             }
-
-            // Download Done
-
-            FileHelpers.CreateFolder(projectDoneEditorLocalPath);
-            var folderDoneHasFile = FileHelpers.HasFileInFolder(projectDoneEditorLocalPath);
-
-            //Đếm số ảnh Done trước khi tải xuống
-            var imageDoneLocalFirst = FileHelpers.CountImageFolder(projectDoneEditorLocalPath);
-            var imageDoneServerFirst = FileHelpers.CountImageFolder(projectDoneEditorServerPath);
-            var countDoneFirst = imageDoneLocalFirst + "/" + imageDoneServerFirst;
-
-            Invoke((Action)(async () =>
+            catch (Exception err)
             {
-                addItem(DateTime.Now, "Download Done", countDoneFirst, projectName, 0);
-            }));
-
-            processingDownLoad.Add(projectId);
-
-            FileHelpers.DownloadFolderFromServer(projectDoneEditorServerPath, projectDoneEditorLocalPath, null, false, false, isCopyAllFile);
-
-            //Đếm số ảnh Done sau khi tải xuống
-            var imageDoneLocalLast = FileHelpers.CountImageFolder(projectDoneEditorLocalPath);
-            var imageDoneServerLast = FileHelpers.CountImageFolder(projectDoneEditorServerPath);
-            var countDoneLast = imageDoneLocalLast + "/" + imageDoneServerLast;
-
-            Invoke((Action)(async () =>
-            {
-                addItem(DateTime.Now, "Download Done", countDoneLast, projectName, 1);
-            }));
-
-            processingDownLoad.Remove(projectId);
-
-            // Copy Done -> Working
-
-            var checkWorking = displayFolder.CheckFolderSync(projectWorkingEditorLocalPath, projectDoneEditorLocalPath, projectWorkingEditorLocalPath);
-            if (!checkWorking)
-            {
-
-                var imageWorkingLocalFirst = FileHelpers.CountImageFolder(projectWorkingEditorLocalPath);
-                var countDoneToWorkingFirst = imageDoneLocalLast + "/" + imageWorkingLocalFirst;
-
                 Invoke((Action)(async () =>
                 {
-                    addItem(DateTime.Now, "Done => Working", countDoneToWorkingFirst, projectName, 0);
-                }));
-
-                FileHelpers.DownloadFolder(projectDoneEditorLocalPath, projectWorkingEditorLocalPath, null, false, false, isCopyAllFile);
-
-                var imageWorkingLocalLast = FileHelpers.CountImageFolder(projectWorkingEditorLocalPath);
-                var countDoneToWorkingLast = imageDoneLocalLast + "/" + imageWorkingLocalLast;
-                Invoke((Action)(async () =>
-                {
-                    addItem(DateTime.Now, "Done => Working", countDoneToWorkingLast, projectName, 1);
+                    addItem(DateTime.Now, "Error Sync Done", projectName, err.Message, 2);
                 }));
             }
         }
@@ -1539,8 +1235,17 @@ namespace WandSyncFile
                         {
                             return;
                         }
+                        bool isConnected = FileHelpers.IsVpnConnected();
 
-                        SyncDone(projectName, projectPath);
+                        if(isConnected)
+                        {
+                            SyncDoneVPN(projectName, projectPath);
+                        }
+                        else
+                        {
+                            SyncDone(projectName, projectPath);
+                        }
+                      
                     });
                 }
 
@@ -1671,12 +1376,15 @@ namespace WandSyncFile
                             }
 
                             processingDownLoad.Remove(projectId);
-
+                            await Task.Run(() => SyncFix(projectName, projectPath));
                             if (downloadAll || !isConnected)
                             {
                                 await Task.Run(() => SyncDo(projectName, projectPath));
-                                await Task.Run(() => SyncFix(projectName, projectPath));
                                 await Task.Run(() => SyncDone(projectName, projectPath));
+                            }
+                            else
+                            {
+                                await Task.Run(() => SyncDoneVPN(projectName, projectPath));
                             }
 
                             Invoke((Action)(async () =>

@@ -805,6 +805,15 @@ namespace WandSyncFile.Helpers
             Thread.Sleep(2000);
 
         }
+        
+        public static void SyncDirectoryDoneVPN(string fromPath, string toPath)
+        {
+            try
+            { // sync done from client to server
+                DownloadFolder(fromPath, toPath, null, false, true);
+                Thread.Sleep(2000);
+            } catch (Exception e) { }
+        }
 
         public static void SyncDirectory(string fromPath, string toPath, string notMoveFolder = null)
         {
