@@ -454,6 +454,7 @@
     <Compile Include="Data\Mapping\Project.cs" />
     <Compile Include="Data\Mapping\FileDto.cs" />
     <Compile Include="Data\Mapping\DodgeAndBurnDto.cs" />
+    <Compile Include="Data\Mapping\VPNConnectedDto.cs" />
     <Compile Include="Data\Mapping\UserDto.cs" />
     <Compile Include="FormHome.cs">
       <SubType>Form</SubType>

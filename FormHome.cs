@@ -1324,6 +1324,8 @@ namespace WandSyncFile
                                 addItem(DateTime.Now, "Start Download", null, projectName, 0);
                             }));
 
+                            var isProcessing = false;
+
                             if (projectStatus != Options.PROJECT_STATUS_PROCESSING)
                             {
                                 var project = projectService.RequestGetProjectById(projectId);
@@ -1338,13 +1340,20 @@ namespace WandSyncFile
                                     {
                                         // Editor chưa needcheck => Lấy danh sách không có trong Done
                                         imagesPriority = FileHelpers.ListImagePriority(projectPath, userName);
+                                        isProcessing = true;
                                     }
                                 }
+                            }
+                            else
+                            {
+                                // Editor chưa needcheck => Lấy danh sách không có trong Done
+                                imagesPriority = FileHelpers.ListImagePriority(projectPath, userName);
+                                isProcessing = true;
                             }
                             FileHelpers.AddFileLogProjectPath(projectName, projectPath);
                             await FileHelpers.CopyImagePriority(imagesPriority, projectPath, localProjectPath, userName);
 
-                            if (downloadAll || !isConnected)
+                            if (downloadAll || !isConnected || !imagesPriority.Any())
                             {
                                 var listImagesNotPriority = FileHelpers.ListImageNotPriority(projectPath, userName, imagesPriority);
                                 await FileHelpers.CopyImagePriority(listImagesNotPriority, projectPath, localProjectPath, userName);
@@ -1377,7 +1386,7 @@ namespace WandSyncFile
 
                             processingDownLoad.Remove(projectId);
                             await Task.Run(() => SyncFix(projectName, projectPath));
-                            if (downloadAll || !isConnected)
+                            if (isProcessing || downloadAll || !isConnected)
                             {
                                 await Task.Run(() => SyncDo(projectName, projectPath));
                                 await Task.Run(() => SyncDone(projectName, projectPath));
@@ -1466,7 +1475,7 @@ namespace WandSyncFile
                                     imagesPriority = project.ListImages;
                                     await FileHelpers.CopyImagePriority(imagesPriority, projectPath, localProjectPath, userName);
 
-                                    if (downloadAll || !isConnected)
+                                    if (downloadAll || !isConnected || !imagesPriority.Any())
                                     {
                                         var listImagesNotPriority = FileHelpers.ListImageNotPriority(projectPath, userName, imagesPriority);
                                         await FileHelpers.CopyImagePriority(listImagesNotPriority, projectPath, localProjectPath, userName);
@@ -1498,12 +1507,18 @@ namespace WandSyncFile
                             }
 
                             processingDownLoad.Remove(projectId);
+
+                            await Task.Run(() => SyncFix(projectName, projectPath));
                             if (downloadAll || !isConnected)
                             {
                                 await Task.Run(() => SyncDo(projectName, projectPath));
-                                await Task.Run(() => SyncFix(projectName, projectPath));
-                                await Task.Run(() => SyncDone(projectName, projectPath));
+                                await Task.Run(() => SyncDoneVPN(projectName, projectPath));
                             }
+
+                            Invoke((Action)(async () =>
+                            {
+                                addItem(DateTime.Now, "Download Success", null, projectName, 1);
+                            }));
 
                             Invoke((Action)(async () =>
                             {
