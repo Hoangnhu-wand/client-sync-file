@@ -1683,6 +1683,61 @@ namespace WandSyncFile
                         Properties.Settings.Default.Save();
                     }
                 }
+                if (action == "DOWNLOAD_SAMPLE" && user == userId.ToString())
+                {
+
+                    var project = JsonConvert.DeserializeObject<DownloadProjectInfo>(data);
+                    try
+                    {
+                        Task.Run(async () =>
+                        {
+                            var pathDone = Path.Combine(project.Path, Options.PROJECT_DONE_NAME, userName);
+                            if (!Directory.Exists(pathDone))
+                            {
+                                return;
+                            }
+
+                            var localProjectPath = Path.Combine(localPath, project.Name);
+                            if (!Directory.Exists(localProjectPath))
+                            {
+                                Directory.CreateDirectory(localProjectPath);
+                            }
+                            
+
+                            if (processingDownLoad.Any(id => id == project.Id))
+                            {
+                                Invoke((Action)(async () =>
+                                {
+                                    addItem(DateTime.Now, "Downloading ", null, project.Name, 0);
+                                }));
+                                return;
+                            }
+                            Invoke((Action)(async () =>
+                            {
+                                addItem(DateTime.Now, "Start download ", null, project.Name, 0);
+                            }));
+
+                            processingDownLoad.Add(project.Id);
+
+                            FileHelpers.CopyDirectory(pathDone, localProjectPath);
+
+                            Invoke((Action)(async () =>
+                            {
+                                addItem(DateTime.Now, "Download success ", null, project.Name, 0);
+                            }));
+
+                            processingDownLoad.Remove(project.Id);
+                        });
+                    }
+                    catch(Exception e) {
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Error ", null, project.Name, 0);
+                        }));
+                        processingDownLoad.Remove(project.Id);
+                    }
+
+                }
             });
         }
 
