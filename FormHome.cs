@@ -1721,18 +1721,20 @@ namespace WandSyncFile
 
                             FileHelpers.CopyDirectory(pathDone, localProjectPath);
 
+                            processingDownLoad.Remove(project.Id);
+
                             Invoke((Action)(async () =>
                             {
-                                addItem(DateTime.Now, "Download success ", null, project.Name, 0);
+                                addItem(DateTime.Now, "Download success ", null, project.Name, 1);
                             }));
 
-                            processingDownLoad.Remove(project.Id);
+                         
                         });
                     }
                     catch(Exception e) {
                         Invoke((Action)(async () =>
                         {
-                            addItem(DateTime.Now, "Error ", null, project.Name, 0);
+                            addItem(DateTime.Now, "Error ", null, project.Name, 2);
                         }));
                         processingDownLoad.Remove(project.Id);
                     }
