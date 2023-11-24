@@ -996,6 +996,34 @@ namespace WandSyncFile
                         var projectName = editorDownloadItem.ProjectName.Trim(); // ProjectName
                         var projectId = editorDownloadItem.ProjectId; // ProjectName
 
+
+                        try
+                        {
+                            //Create folder
+                            var pathProject = FileHelpers.GetProjectLocalPath(projectName);
+                            var createDo = Path.Combine(pathProject, Options.PROJECT_DO_NAME);
+                            var createDone = Path.Combine(pathProject, Options.PROJECT_DONE_NAME);
+                            var createWorking = Path.Combine(pathProject, Options.PROJECT_WORKING_PATH_NAME);
+                            if (!Directory.Exists(createDo))
+                            {
+                                Directory.CreateDirectory(createDo);
+                            }
+
+                            if (!Directory.Exists(createDone))
+                            {
+                                Directory.CreateDirectory(createDone);
+                            }
+
+                            if (!Directory.Exists(createWorking))
+                            {
+                                Directory.CreateDirectory(createWorking);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+
+                        }
+
                         if (processingDownLoad.Any(id => id == editorDownloadItem.ProjectId))
                         {
                             Invoke((Action)(async () =>
@@ -1290,6 +1318,32 @@ namespace WandSyncFile
                         try
                         {
                             var localProjectPath = Path.Combine(localPath, projectInfo.Name);
+
+                            try
+                            {
+                               
+                                var createDo = Path.Combine(localProjectPath, Options.PROJECT_DO_NAME);
+                                var createDone = Path.Combine(localProjectPath, Options.PROJECT_DONE_NAME);
+                                var createWorking = Path.Combine(localProjectPath, Options.PROJECT_WORKING_PATH_NAME);
+                                if (!Directory.Exists(createDo))
+                                {
+                                    Directory.CreateDirectory(createDo);
+                                }
+
+                                if (!Directory.Exists(createDone))
+                                {
+                                    Directory.CreateDirectory(createDone);
+                                }
+
+                                if (!Directory.Exists(createWorking))
+                                {
+                                    Directory.CreateDirectory(createWorking);
+                                }
+                            }
+                            catch (Exception e)
+                            {
+
+                            }
 
                             var imagesPriority = new List<string>();
 
