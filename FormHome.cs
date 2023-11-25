@@ -703,6 +703,10 @@ namespace WandSyncFile
                 var projectDoneServerPath = Path.Combine(projectPath, Options.PROJECT_DONE_NAME);
                 var projectDoneEditorServerPath = Path.Combine(projectDoneServerPath, editorUserName);
 
+ 
+                var projectWorkingLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_WORKING_PATH_NAME);
+                var projectWorkingEditorLocalPath = Path.Combine(projectWorkingLocalPath, editorUserName);
+
                 var isSyncDone = displayFolder.CheckFolderSyncCompleted(projectDoneEditorLocalPath, projectDoneEditorServerPath);
 
                 if (isSyncDone)
@@ -763,6 +767,9 @@ namespace WandSyncFile
                     {
                         FileHelpers.SyncDirectoryDoneToServer(projectDoneEditorLocalPath, projectDoneEditorServerPath);
 
+                        //DOne to Working
+                        FileHelpers.DownloadFolder(projectDoneEditorLocalPath, projectWorkingEditorLocalPath);
+
                         //đếm số ảnh Done sau khi sync
                         var imageDoneLocalLast = FileHelpers.CountImageFolder(projectDoneEditorLocalPath);
                         var imageDoneServerLast = FileHelpers.CountImageFolder(projectDoneEditorServerPath);
@@ -789,6 +796,10 @@ namespace WandSyncFile
             }
             catch (Exception err)
             {
+
+                var errMessage = DateTime.Now.ToString() + "Sync Done -  " + err.Message + " ---- " + projectName;
+                FileHelpers.WriteLog(errMessage);
+
                 Invoke((Action)(async () =>
                 {
                     addItem(DateTime.Now, "Error Sync Done", projectName, err.Message, 2);
@@ -978,134 +989,142 @@ namespace WandSyncFile
 
 
 
-            connection.On<string, string, string>("SERVER_QUEUE_MESSAGE", (user, action, data) =>
+            connection.On<string, string, string>("SERVER_QUEUE_MESSAGE", async (user, action, data) =>
             {
                 if (action == "EDITOR_DOWNLOAD_FILE" && user == userId.ToString() && UserRoleHelpers.IsEditors())
                 {
                     Task.Run(async () =>
                     {
-                        var editorDownloadItem = JsonConvert.DeserializeObject<EditorDownloadFileProjectDto>(data);
+                        try {
+                            var editorDownloadItem = JsonConvert.DeserializeObject<EditorDownloadFileProjectDto>(data);
 
-                        if (editorDownloadItem == null || !FileHelpers.ExistsPathServer(editorDownloadItem.ProjectPath))
-                        {
-                            return;
-                        }
-
-
-                        var projectPath = editorDownloadItem.ProjectPath.Trim(); // ServerPath\\ProjectName"
-                        var projectName = editorDownloadItem.ProjectName.Trim(); // ProjectName
-                        var projectId = editorDownloadItem.ProjectId; // ProjectName
-
-
-                        try
-                        {
-                            //Create folder
-                            var pathProject = FileHelpers.GetProjectLocalPath(projectName);
-                            var createDo = Path.Combine(pathProject, Options.PROJECT_DO_NAME);
-                            var createDone = Path.Combine(pathProject, Options.PROJECT_DONE_NAME);
-                            var createWorking = Path.Combine(pathProject, Options.PROJECT_WORKING_PATH_NAME);
-                            if (!Directory.Exists(createDo))
+                            if (editorDownloadItem == null || !FileHelpers.ExistsPathServer(editorDownloadItem.ProjectPath))
                             {
-                                Directory.CreateDirectory(createDo);
+                                return;
                             }
 
-                            if (!Directory.Exists(createDone))
+
+                            var projectPath = editorDownloadItem.ProjectPath.Trim(); // ServerPath\\ProjectName"
+                            var projectName = editorDownloadItem.ProjectName.Trim(); // ProjectName
+                            var projectId = editorDownloadItem.ProjectId; // ProjectName
+
+
+                            try
                             {
-                                Directory.CreateDirectory(createDone);
+                                //Create folder
+                                var pathProject = FileHelpers.GetProjectLocalPath(projectName);
+                                var createDo = Path.Combine(pathProject, Options.PROJECT_DO_NAME);
+                                var createDone = Path.Combine(pathProject, Options.PROJECT_DONE_NAME);
+                                var createWorking = Path.Combine(pathProject, Options.PROJECT_WORKING_PATH_NAME);
+                                if (!Directory.Exists(createDo))
+                                {
+                                    Directory.CreateDirectory(createDo);
+                                }
+
+                                if (!Directory.Exists(createDone))
+                                {
+                                    Directory.CreateDirectory(createDone);
+                                }
+
+                                if (!Directory.Exists(createWorking))
+                                {
+                                    Directory.CreateDirectory(createWorking);
+                                }
+                            }
+                            catch (Exception e)
+                            {
+
                             }
 
-                            if (!Directory.Exists(createWorking))
+                            if (processingDownLoad.Any(id => id == editorDownloadItem.ProjectId))
                             {
-                                Directory.CreateDirectory(createWorking);
+                                Invoke((Action)(async () =>
+                                {
+                                    addItem(DateTime.Now, "Downloading", null, projectName, 0);
+                                }));
+
+                                return;
                             }
-                        }
-                        catch (Exception e)
-                        {
 
-                        }
+                            bool isConnected = FileHelpers.IsVpnConnected();
 
-                        if (processingDownLoad.Any(id => id == editorDownloadItem.ProjectId))
-                        {
+                            if (isConnected && processingDownLoad.Any())
+                            {
+                                Invoke((Action)(() =>
+                                {
+                                    addItem(DateTime.Now, "Warning", null, "Đang có dự án được tải", 2);
+                                }));
+
+
+                                return;
+                            }
+
+                            var projectLocalPath = FileHelpers.GetProjectLocalPath(projectName); // LocalPath/ProjectName
+                            var projectDoLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME); // LocalPath/ProjectName/Do
+                            var projectDoEditorLocalPath = FileHelpers.GetProjectDoEditorLocalPath(projectName); // LocalPath/ProjectName/Do/EditorName
+
+                            //Kiếm tra kết nối VPN
+                            //Có kết nối => Chỉ tải 1 dự án /1 lần
+
+                            processingDownLoad.Add(editorDownloadItem.ProjectId);
                             Invoke((Action)(async () =>
                             {
-                                addItem(DateTime.Now, "Downloading", null, projectName, 0);
+                                addItem(DateTime.Now, "Start Download", null, projectName, 0);
                             }));
+                            FileHelpers.CreateFolder(projectDoLocalPath);
+                            FileHelpers.CreateFolder(projectDoEditorLocalPath);
 
-                            return;
-                        }
+                            FileHelpers.AddFileLogProjectPath(projectName, projectPath);
 
-                        bool isConnected = FileHelpers.IsVpnConnected();
+                            var imagesPriority = FileHelpers.ListImagePriority(projectPath, userName);
 
-                        if (isConnected && processingDownLoad.Any())
-                        {
-                            Invoke((Action)(() =>
+                            FileHelpers.AddFileLogProjectPath(projectName, projectPath);
+                            await FileHelpers.CopyImagePriority(imagesPriority, projectPath, projectLocalPath, userName);
+                            var listImagesNotPriority = FileHelpers.ListImageNotPriority(projectPath, userName, imagesPriority);
+                            await FileHelpers.CopyImagePriority(listImagesNotPriority, projectPath, projectLocalPath, userName);
+
+                            var sampleLocalPath = FileHelpers.GetProjectSampleLocalPath(projectName);
+                            var sampleServerPath = Path.Combine(projectPath, Options.PROJECT_SAMPLE_NAME);
+
+                            if (FileHelpers.ExistsServer(sampleServerPath))
                             {
-                                addItem(DateTime.Now, "Warning", null, "Đang có dự án được tải", 2);
-                            }));
+                                var isSyncSample = displayFolder.CheckFolderSync(sampleLocalPath, sampleServerPath);
 
-
-                            return;
-                        }
-
-                        var projectLocalPath = FileHelpers.GetProjectLocalPath(projectName); // LocalPath/ProjectName
-                        var projectDoLocalPath = Path.Combine(projectLocalPath, Options.PROJECT_DO_NAME); // LocalPath/ProjectName/Do
-                        var projectDoEditorLocalPath = FileHelpers.GetProjectDoEditorLocalPath(projectName); // LocalPath/ProjectName/Do/EditorName
-
-                        //Kiếm tra kết nối VPN
-                        //Có kết nối => Chỉ tải 1 dự án /1 lần
-
-                        processingDownLoad.Add(editorDownloadItem.ProjectId);
-                        Invoke((Action)(async () =>
-                        {
-                            addItem(DateTime.Now, "Start Download", null, projectName, 0);
-                        }));
-                        FileHelpers.CreateFolder(projectDoLocalPath);
-                        FileHelpers.CreateFolder(projectDoEditorLocalPath);
-
-                        FileHelpers.AddFileLogProjectPath(projectName, projectPath);
-
-                        var imagesPriority = FileHelpers.ListImagePriority(projectPath, userName);
-
-                        FileHelpers.AddFileLogProjectPath(projectName, projectPath);
-                        await FileHelpers.CopyImagePriority(imagesPriority, projectPath, projectLocalPath, userName);
-                        var listImagesNotPriority = FileHelpers.ListImageNotPriority(projectPath, userName, imagesPriority);
-                        await FileHelpers.CopyImagePriority(listImagesNotPriority, projectPath, projectLocalPath, userName);
-
-                        var sampleLocalPath = FileHelpers.GetProjectSampleLocalPath(projectName);
-                        var sampleServerPath = Path.Combine(projectPath, Options.PROJECT_SAMPLE_NAME);
-
-                        if (FileHelpers.ExistsServer(sampleServerPath))
-                        {
-                            var isSyncSample = displayFolder.CheckFolderSync(sampleLocalPath, sampleServerPath);
-
-                            if (!isSyncSample)
-                            {
-                                Invoke((Action)(() =>
+                                if (!isSyncSample)
                                 {
-                                    addItem(DateTime.Now, "Get Sample", null, projectName, 0);
-                                }));
+                                    Invoke((Action)(() =>
+                                    {
+                                        addItem(DateTime.Now, "Get Sample", null, projectName, 0);
+                                    }));
 
-                                FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true, true);
+                                    FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true, true);
 
-                                Invoke((Action)(() =>
-                                {
-                                    addItem(DateTime.Now, "Get Sample", null, projectName, 1);
-                                }));
+                                    Invoke((Action)(() =>
+                                    {
+                                        addItem(DateTime.Now, "Get Sample", null, projectName, 1);
+                                    }));
+                                }
                             }
+
+                            processingDownLoad.Remove(projectId);
+
+                            await Task.Run(() => SyncDo(projectName, projectPath));
+                            await Task.Run(() => SyncFix(projectName, projectPath));
+                            await Task.Run(() => SyncDone(projectName, projectPath));
+
+                            Invoke((Action)(async () =>
+                            {
+                                addItem(DateTime.Now, "Download Success", null, projectName, 1);
+                            }));
+
+                            await connection.SendAsync("ReceiverMessageAsync", "CLIENT_FILE", editorDownloadItem.MessageId, "REMOVE_PROJECT_QUEUE_MESSAGE", null);
                         }
-
-                        processingDownLoad.Remove(projectId);
-
-                        await Task.Run(() => SyncDo(projectName, projectPath));
-                        await Task.Run(() => SyncFix(projectName, projectPath));
-                        await Task.Run(() => SyncDone(projectName, projectPath));
-
-                        Invoke((Action)(async () =>
+                        catch(Exception e)
                         {
-                            addItem(DateTime.Now, "Download Success", null, projectName, 1);
-                        }));
-
-                        await connection.SendAsync("ReceiverMessageAsync", "CLIENT_FILE", editorDownloadItem.MessageId, "REMOVE_PROJECT_QUEUE_MESSAGE", null);
+                            var errMessage = DateTime.Now.ToString() + "Err download -  " + e.Message + " ---- " + data;
+                            FileHelpers.WriteLog(errMessage);
+                        }
+                       
                     });
                 }
 
@@ -1212,10 +1231,12 @@ namespace WandSyncFile
 
                 if (action == "UPDATE_PROJECT_PATH" && user == userId.ToString() && UserRoleHelpers.IsEditors())
                 {
-                    try {
+                   
                         Task.Run(async () =>
                         {
-                            var updateProjectPath = JsonConvert.DeserializeObject<UpdateProjectPathDto>(data);
+                            try
+                            {
+                                var updateProjectPath = JsonConvert.DeserializeObject<UpdateProjectPathDto>(data);
 
                             var projectName = updateProjectPath.ProjectName;
                             var projectPath = updateProjectPath.ProjectPath;
@@ -1239,164 +1260,155 @@ namespace WandSyncFile
                             }
 
                             await connection.SendAsync("ReceiverMessageAsync", "CLIENT_FILE", updateProjectPath.MessageId, "REMOVE_UPDATE_PROJECT_PATH_QUEUE_MESSAGE", null);
-                        });
-                    }
-                    catch (Exception ex) {
-
-                    }
-
+                            }
+                             catch (Exception ex)
+                            { }
+                         });
                 }
             });
 
-            connection.On<string, string, string>("WAND_ADDON_MESSAGE", (user, action, localProjectName) =>
+            connection.On<string, string, string>("WAND_ADDON_MESSAGE", async (user, action, localProjectName) =>
             {
-                if (action == "UPLOAD_DONE" && UserRoleHelpers.IsEditors() && user == userName)
+            if (action == "UPLOAD_DONE" && UserRoleHelpers.IsEditors() && user == userName)
+            {
+                Task.Run(async () =>
                 {
-                    Task.Run(() =>
+                    var localProjectPath = Path.Combine(localPath, localProjectName);
+
+                    var projectPath = FileHelpers.GetProjectPathByLog(localProjectPath);
+                    var projectName = FileHelpers.GetProjectNameByLog(localProjectPath);
+
+                    if (string.IsNullOrEmpty(projectPath) || string.IsNullOrEmpty(projectName))
                     {
-                        var localProjectPath = Path.Combine(localPath, localProjectName);
+                        return;
+                    }
+                    bool isConnected = FileHelpers.IsVpnConnected();
 
-                        var projectPath = FileHelpers.GetProjectPathByLog(localProjectPath);
-                        var projectName = FileHelpers.GetProjectNameByLog(localProjectPath);
-
-                        if (string.IsNullOrEmpty(projectPath) || string.IsNullOrEmpty(projectName))
-                        {
-                            return;
-                        }
-                        bool isConnected = FileHelpers.IsVpnConnected();
-
-                        if(isConnected)
-                        {
-                            SyncDoneVPN(projectName, projectPath);
-                        }
-                        else
-                        {
-                            SyncDone(projectName, projectPath);
-                        }
-                      
-                    });
-                }
-
-                if (action == "UPLOAD_FIX" && UserRoleHelpers.IsEditors() && user == userName)
-                {
-                    Task.Run(() =>
+                    if (isConnected)
                     {
-                        var localProjectPath = Path.Combine(localPath, localProjectName);
+                        SyncDoneVPN(projectName, projectPath);
+                    }
+                    else
+                    {
+                        SyncDone(projectName, projectPath);
+                    }
 
-                        var projectPath = FileHelpers.GetProjectPathByLog(localProjectPath);
-                        var projectName = FileHelpers.GetProjectNameByLog(localProjectPath);
+                });
+            }
 
-                        if (string.IsNullOrEmpty(projectPath) || string.IsNullOrEmpty(projectName))
-                        {
-                            return;
-                        }
-
-                        SyncFix(projectName, projectPath);
-                    });
-                }
-
-                if (action == "DOWNLOAD_PROJECT" && UserRoleHelpers.IsEditors() && user == userName)
+            if (action == "UPLOAD_FIX" && UserRoleHelpers.IsEditors() && user == userName)
+            {
+                Task.Run(async () =>
                 {
+                    var localProjectPath = Path.Combine(localPath, localProjectName);
+
+                    var projectPath = FileHelpers.GetProjectPathByLog(localProjectPath);
+                    var projectName = FileHelpers.GetProjectNameByLog(localProjectPath);
+
+                    if (string.IsNullOrEmpty(projectPath) || string.IsNullOrEmpty(projectName))
+                    {
+                        return;
+                    }
+
+                    SyncFix(projectName, projectPath);
+                });
+            }
+
+            if (action == "DOWNLOAD_PROJECT" && UserRoleHelpers.IsEditors() && user == userName)
+            {
                     Task.Run(async () =>
                     {
+
                         var projectInfo = JsonConvert.DeserializeObject<DownloadProjectInfo>(localProjectName);
 
-                        if (projectInfo == null || !FileHelpers.ExistsPathServer(projectInfo.Path))
-                        {
+                if (projectInfo == null || !FileHelpers.ExistsPathServer(projectInfo.Path))
+                {
 
-                            Invoke((Action)(async () =>
-                            {
-                                addItem(DateTime.Now, "Error download", null, "Project or path not found", 2);
-                            }));
-                            return;
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Error download", null, "Project or path not found", 2);
+                    }));
+                    return;
+                }
+                var projectId = projectInfo.Id;
+                var projectStatus = projectInfo.Status;
+                var projectPath = projectInfo.Path.Trim();
+                var projectName = projectInfo.Name.Trim();
+                var downloadAll = projectInfo.DownloadAll;
+                try
+                {
+                    var localProjectPath = Path.Combine(localPath, projectInfo.Name);
+
+                    try
+                    {
+
+                        var createDo = Path.Combine(localProjectPath, Options.PROJECT_DO_NAME);
+                        var createDone = Path.Combine(localProjectPath, Options.PROJECT_DONE_NAME);
+                        var createWorking = Path.Combine(localProjectPath, Options.PROJECT_WORKING_PATH_NAME);
+                        if (!Directory.Exists(createDo))
+                        {
+                            Directory.CreateDirectory(createDo);
                         }
-                        var projectId = projectInfo.Id;
-                        var projectStatus = projectInfo.Status;
-                        var projectPath = projectInfo.Path.Trim();
-                        var projectName = projectInfo.Name.Trim();
-                        var downloadAll = projectInfo.DownloadAll;
-                        try
+
+                        if (!Directory.Exists(createDone))
                         {
-                            var localProjectPath = Path.Combine(localPath, projectInfo.Name);
+                            Directory.CreateDirectory(createDone);
+                        }
 
-                            try
+                        if (!Directory.Exists(createWorking))
+                        {
+                            Directory.CreateDirectory(createWorking);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+
+                    }
+
+                    var imagesPriority = new List<string>();
+
+                    if (processingDownLoad.Any(id => id == projectId))
+                    {
+                        Invoke((Action)(async () =>
+                        {
+                            addItem(DateTime.Now, "Downloading", null, projectName, 0);
+                        }));
+
+                        return;
+                    }
+
+                    //Kiếm tra kết nối VPN
+                    //Có kết nối => Chỉ tải 1 dự án /1 lần
+                    bool isConnected = FileHelpers.IsVpnConnected();
+
+                    if (isConnected && processingDownLoad.Any())
+                    {
+                        Invoke((Action)(() =>
+                        {
+                            addItem(DateTime.Now, "Warning", null, "Đang có dự án được tải", 2);
+                        }));
+
+                        return;
+                    }
+
+
+                    processingDownLoad.Add(projectId);
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Start Download", null, projectName, 0);
+                    }));
+
+                    var isProcessing = false;
+
+                    if (projectStatus != Options.PROJECT_STATUS_PROCESSING)
+                    {
+                        var project = projectService.RequestGetProjectById(projectId);
+                        if (project != null)
+                        {
+                            if (project.ListEditors.Any(item => item.Status == ProjectEditorStatus.NEEDCHECK))
                             {
-                               
-                                var createDo = Path.Combine(localProjectPath, Options.PROJECT_DO_NAME);
-                                var createDone = Path.Combine(localProjectPath, Options.PROJECT_DONE_NAME);
-                                var createWorking = Path.Combine(localProjectPath, Options.PROJECT_WORKING_PATH_NAME);
-                                if (!Directory.Exists(createDo))
-                                {
-                                    Directory.CreateDirectory(createDo);
-                                }
-
-                                if (!Directory.Exists(createDone))
-                                {
-                                    Directory.CreateDirectory(createDone);
-                                }
-
-                                if (!Directory.Exists(createWorking))
-                                {
-                                    Directory.CreateDirectory(createWorking);
-                                }
-                            }
-                            catch (Exception e)
-                            {
-
-                            }
-
-                            var imagesPriority = new List<string>();
-
-                            if (processingDownLoad.Any(id => id == projectId))
-                            {
-                                Invoke((Action)(async () =>
-                                {
-                                    addItem(DateTime.Now, "Downloading", null, projectName, 0);
-                                }));
-
-                                return;
-                            }
-
-                            //Kiếm tra kết nối VPN
-                            //Có kết nối => Chỉ tải 1 dự án /1 lần
-                            bool isConnected = FileHelpers.IsVpnConnected();
-                            
-                            if (isConnected && processingDownLoad.Any())
-                            {
-                                Invoke((Action)(() =>
-                                {
-                                    addItem(DateTime.Now, "Warning", null, "Đang có dự án được tải", 2);
-                                }));
-
-                                return;
-                            }
-
-                           
-                            processingDownLoad.Add(projectId);
-                            Invoke((Action)(async () =>
-                            {
-                                addItem(DateTime.Now, "Start Download", null, projectName, 0);
-                            }));
-
-                            var isProcessing = false;
-
-                            if (projectStatus != Options.PROJECT_STATUS_PROCESSING)
-                            {
-                                var project = projectService.RequestGetProjectById(projectId);
-                                if (project != null)
-                                {
-                                    if (project.ListEditors.Any(item => item.Status == ProjectEditorStatus.NEEDCHECK))
-                                    {
-                                        // Editor đã needcheck => lấy danh sách ảnh fix
-                                        imagesPriority = project.ListImages;
-                                    }
-                                    else
-                                    {
-                                        // Editor chưa needcheck => Lấy danh sách không có trong Done
-                                        imagesPriority = FileHelpers.ListImagePriority(projectPath, userName);
-                                        isProcessing = true;
-                                    }
-                                }
+                                // Editor đã needcheck => lấy danh sách ảnh fix
+                                imagesPriority = project.ListImages;
                             }
                             else
                             {
@@ -1404,67 +1416,83 @@ namespace WandSyncFile
                                 imagesPriority = FileHelpers.ListImagePriority(projectPath, userName);
                                 isProcessing = true;
                             }
-                            FileHelpers.AddFileLogProjectPath(projectName, projectPath);
-                            await FileHelpers.CopyImagePriority(imagesPriority, projectPath, localProjectPath, userName);
-
-                            if (downloadAll || !isConnected || !imagesPriority.Any())
-                            {
-                                var listImagesNotPriority = FileHelpers.ListImageNotPriority(projectPath, userName, imagesPriority);
-                                await FileHelpers.CopyImagePriority(listImagesNotPriority, projectPath, localProjectPath, userName);
-
-                            }
-
-
-                            var sampleLocalPath = FileHelpers.GetProjectSampleLocalPath(projectName);
-                            var sampleServerPath = Path.Combine(projectPath, Options.PROJECT_SAMPLE_NAME);
-
-                            if (FileHelpers.ExistsServer(sampleServerPath))
-                            {
-                                var isSyncSample = displayFolder.CheckFolderSync(sampleLocalPath, sampleServerPath);
-
-                                if (!isSyncSample)
-                                {
-                                    Invoke((Action)(() =>
-                                    {
-                                        addItem(DateTime.Now, "Get Sample", null, projectName, 0);
-                                    }));
-
-                                    FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true, true);
-
-                                    Invoke((Action)(() =>
-                                    {
-                                        addItem(DateTime.Now, "Get Sample", null, projectName, 1);
-                                    }));
-                                }
-                            }
-
-                            processingDownLoad.Remove(projectId);
-                            await Task.Run(() => SyncFix(projectName, projectPath));
-                            if (isProcessing || downloadAll || !isConnected)
-                            {
-                                await Task.Run(() => SyncDo(projectName, projectPath));
-                                await Task.Run(() => SyncDone(projectName, projectPath));
-                            }
-                            else
-                            {
-                                await Task.Run(() => SyncDoneVPN(projectName, projectPath));
-                            }
-
-                            Invoke((Action)(async () =>
-                            {
-                                addItem(DateTime.Now, "Download Success", null, projectName, 1);
-                            }));
-
                         }
-                        catch (Exception e)
+                    }
+                    else
+                    {
+                        // Editor chưa needcheck => Lấy danh sách không có trong Done
+                        imagesPriority = FileHelpers.ListImagePriority(projectPath, userName);
+                        isProcessing = true;
+                    }
+                    FileHelpers.AddFileLogProjectPath(projectName, projectPath);
+                    await FileHelpers.CopyImagePriority(imagesPriority, projectPath, localProjectPath, userName);
+
+                    if (downloadAll || !isConnected || !imagesPriority.Any())
+                    {
+                        var listImagesNotPriority = FileHelpers.ListImageNotPriority(projectPath, userName, imagesPriority);
+                        await FileHelpers.CopyImagePriority(listImagesNotPriority, projectPath, localProjectPath, userName);
+
+                    }
+
+
+                    var sampleLocalPath = FileHelpers.GetProjectSampleLocalPath(projectName);
+                    var sampleServerPath = Path.Combine(projectPath, Options.PROJECT_SAMPLE_NAME);
+
+                    if (FileHelpers.ExistsServer(sampleServerPath))
+                    {
+                        var isSyncSample = displayFolder.CheckFolderSync(sampleLocalPath, sampleServerPath);
+
+                        if (!isSyncSample)
                         {
-                            processingDownLoad.Remove(projectInfo.Id);
-                            Invoke((Action)(async () =>
+                            Invoke((Action)(() =>
                             {
-                                addItem(DateTime.Now, "Error download", projectName, e.Message, 2);
+                                addItem(DateTime.Now, "Get Sample", null, projectName, 0);
+                            }));
+
+                            FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true, true);
+
+                            Invoke((Action)(() =>
+                            {
+                                addItem(DateTime.Now, "Get Sample", null, projectName, 1);
                             }));
                         }
-                    }); 
+                    }
+
+                    processingDownLoad.Remove(projectId);
+                    await Task.Run(() => SyncFix(projectName, projectPath));
+                    if (isProcessing || downloadAll || !isConnected)
+                    {
+                        await Task.Run(() => SyncDo(projectName, projectPath));
+                        await Task.Run(() => SyncDone(projectName, projectPath));
+                    }
+                    else
+                    {
+                        await Task.Run(() => SyncDoneVPN(projectName, projectPath));
+                    }
+
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Download Success", null, projectName, 1);
+                    }));
+
+                }
+                catch (Exception e)
+                {
+
+                    processingDownLoad.Remove(projectInfo.Id);
+                    var errMessage = DateTime.Now.ToString() + "Err download -  " + e.Message + " ---- " + projectName;
+                    FileHelpers.WriteLog(errMessage);
+                    Invoke((Action)(async () =>
+                    {
+                        addItem(DateTime.Now, "Error download", projectName, e.Message, 2);
+                    }));
+                }
+
+
+
+            });
+
+                 
                 }
 
                 if (action == "DOWNLOAD_PROJECT_FIX" && UserRoleHelpers.IsEditors() && user == userName)
@@ -1486,8 +1514,6 @@ namespace WandSyncFile
                         var downloadAll = projectInfo.DownloadAll;
                         try
                         {
-
-
                             if (processingDownLoad.Any(id => id == projectId))
                             {
                                 Invoke((Action)(async () =>
@@ -1586,8 +1612,6 @@ namespace WandSyncFile
                                 addItem(DateTime.Now, "Error download fix", projectName, e.Message, 2);
                             }));
                         }
-
-
                     });
 
                 }
@@ -1656,7 +1680,7 @@ namespace WandSyncFile
 
                 if (action == "GET_VPN_CONNECTED" && UserRoleHelpers.IsEditors() && user == userName)
                 {
-                    Task.Run(() =>
+                    Task.Run(async  () =>
                     {
                         try {
                             var tracking = JsonConvert.DeserializeObject<VPNConnectedDto>(localProjectName);

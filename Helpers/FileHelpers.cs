@@ -653,18 +653,11 @@ namespace WandSyncFile.Helpers
 
                 var getListWrite = File.GetLastWriteTime(fromPath);
                 File.SetLastWriteTime(toPath, getListWrite);
-
-                var localPath = Properties.Settings.Default.ProjectLocalPath;
-                if (toPath.IndexOf(Options.PROJECT_DONE_NAME) > -1 && toPath.IndexOf(localPath) > -1)
-                {
-                    var workingPath = toPath.Replace("\\" + Options.PROJECT_DONE_NAME + "\\", "\\" + Options.PROJECT_WORKING_PATH_NAME + "\\");
-                    await CopyFileAsync(toPath, workingPath);
-                }
               
             }
             catch (Exception e)
             {
-                var errMessage = DateTime.Now.ToString() + " " + e.Message + " ---- " + fromPath;
+                var errMessage = DateTime.Now.ToString() + "Copy file -  " + e.Message + " ---- " + fromPath + "---" + toPath;
                 WriteLog(errMessage);
             }
         }
