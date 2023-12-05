@@ -1504,53 +1504,60 @@ namespace WandSyncFile.Helpers
         public static async Task CopyImagePriority(List<string> listImage, string projectPath,string localPath, string userName)
         {
 
-            string[] subdirectoryEntries = Directory.GetDirectories(projectPath);
-            var listFolderFix = new List<string>();
+            try {
+                string[] subdirectoryEntries = Directory.GetDirectories(projectPath);
+                var listFolderFix = new List<string>();
 
-            foreach (var director in subdirectoryEntries)
-            {
-                var dirInfo = new DirectoryInfo(director);
-                if (dirInfo.Name.StartsWith(Options.PROJECT_FIX_PATH_NAME))
+                foreach (var director in subdirectoryEntries)
                 {
-                    listFolderFix.Add(dirInfo.Name);
-                }
-            }
-
-            listFolderFix = listFolderFix.OrderByDescending(str => int.Parse(str.Replace(Options.PROJECT_FIX_PATH_NAME, ""))).ToList();
-
-            foreach (var image in listImage)
-            {
-                var fileName  = Path.GetFileName(image);
-                var subFolder = image.Replace(fileName, "");
-               
-                var pathDoServer = Path.Combine(projectPath, Options.PROJECT_DO_NAME, userName, subFolder);
-                var pathDoLocal = Path.Combine(localPath, Options.PROJECT_DO_NAME, userName, subFolder);
-
-                var pathDoneServer = Path.Combine(projectPath, Options.PROJECT_DONE_NAME, userName, subFolder);
-                var pathDoneLocal = Path.Combine(localPath, Options.PROJECT_DONE_NAME, userName, subFolder);
-
-                var pathWorking = Path.Combine(localPath, Options.PROJECT_WORKING_PATH_NAME, userName, subFolder);
-
-                await GetFileAsync(pathDoServer, pathDoLocal, pathWorking, fileName);
-                
-                foreach (var folderFix in listFolderFix)
-                {
-                    var pathFixServer = Path.Combine(projectPath, folderFix, subFolder);
-                    var pathFixLocal = Path.Combine(localPath, folderFix, subFolder);
-                    if (!Directory.Exists(pathFixLocal))
+                    var dirInfo = new DirectoryInfo(director);
+                    if (dirInfo.Name.StartsWith(Options.PROJECT_FIX_PATH_NAME))
                     {
-                        Directory.CreateDirectory(pathFixLocal);
+                        listFolderFix.Add(dirInfo.Name);
                     }
-                    await GetFileAsync(pathFixServer, pathFixLocal, pathWorking, fileName);
                 }
 
-                if (!Directory.Exists(pathDoneLocal))
+                listFolderFix = listFolderFix.OrderByDescending(str => int.Parse(str.Replace(Options.PROJECT_FIX_PATH_NAME, ""))).ToList();
+
+                foreach (var image in listImage)
                 {
-                    Directory.CreateDirectory(pathDoneLocal);
-                }
+                    var fileName = Path.GetFileName(image);
+                    var subFolder = image.Replace(fileName, "");
 
-                await GetFileAsync(pathDoneServer, pathDoneLocal, pathWorking, fileName);
+                    var pathDoServer = Path.Combine(projectPath, Options.PROJECT_DO_NAME, userName, subFolder);
+                    var pathDoLocal = Path.Combine(localPath, Options.PROJECT_DO_NAME, userName, subFolder);
+
+                    var pathDoneServer = Path.Combine(projectPath, Options.PROJECT_DONE_NAME, userName, subFolder);
+                    var pathDoneLocal = Path.Combine(localPath, Options.PROJECT_DONE_NAME, userName, subFolder);
+
+                    var pathWorking = Path.Combine(localPath, Options.PROJECT_WORKING_PATH_NAME, userName, subFolder);
+
+                    await GetFileAsync(pathDoServer, pathDoLocal, pathWorking, fileName);
+
+                    foreach (var folderFix in listFolderFix)
+                    {
+                        var pathFixServer = Path.Combine(projectPath, folderFix, subFolder);
+                        var pathFixLocal = Path.Combine(localPath, folderFix, subFolder);
+                        if (!Directory.Exists(pathFixLocal))
+                        {
+                            Directory.CreateDirectory(pathFixLocal);
+                        }
+                        await GetFileAsync(pathFixServer, pathFixLocal, pathWorking, fileName);
+                    }
+
+                    if (!Directory.Exists(pathDoneLocal))
+                    {
+                        Directory.CreateDirectory(pathDoneLocal);
+                    }
+
+                    await GetFileAsync(pathDoneServer, pathDoneLocal, pathWorking, fileName);
+                }
+            } catch (Exception e) {
+                var errMessage = DateTime.Now.ToString() + " CopyImagePriority :  " + e.Message + " ---- ";
+                WriteLog(errMessage);
             }
+
+          
         }
         public static async Task GetFileAsync(string formFolder, string toFolder,string workingFolder, string name)
         {
@@ -1568,6 +1575,8 @@ namespace WandSyncFile.Helpers
                 }
             }
             catch (Exception e) {
+                var errMessage = DateTime.Now.ToString() + " GetFileAsync : " + e.Message + " ---- ";
+                WriteLog(errMessage);
             }
         }
         public static async Task CopyFileAsync(string fromPath, string toPath)

@@ -1016,6 +1016,12 @@ namespace WandSyncFile
                                 var createDo = Path.Combine(pathProject, Options.PROJECT_DO_NAME);
                                 var createDone = Path.Combine(pathProject, Options.PROJECT_DONE_NAME);
                                 var createWorking = Path.Combine(pathProject, Options.PROJECT_WORKING_PATH_NAME);
+
+                                if (!Directory.Exists(pathProject))
+                                {
+                                    Directory.CreateDirectory(pathProject);
+                                }
+
                                 if (!Directory.Exists(createDo))
                                 {
                                     Directory.CreateDirectory(createDo);
@@ -1031,9 +1037,10 @@ namespace WandSyncFile
                                     Directory.CreateDirectory(createWorking);
                                 }
                             }
-                            catch (Exception e)
+                            catch (Exception ed)
                             {
-
+                                var errMessageCreat = DateTime.Now.ToString() + "Err Create folder server -  " + ed.Message + " --- " + projectName;
+                                FileHelpers.WriteLog(errMessageCreat);
                             }
 
                             if (processingDownLoad.Any(id => id == editorDownloadItem.ProjectId))
@@ -1121,7 +1128,7 @@ namespace WandSyncFile
                         }
                         catch(Exception e)
                         {
-                            var errMessage = DateTime.Now.ToString() + "Err download -  " + e.Message + " ---- " + data;
+                            var errMessage = DateTime.Now.ToString() + "Err download server -  " + e.Message + " ---- " + data;
                             FileHelpers.WriteLog(errMessage);
                         }
                        
@@ -1341,10 +1348,15 @@ namespace WandSyncFile
 
                     try
                     {
-
+                               
                         var createDo = Path.Combine(localProjectPath, Options.PROJECT_DO_NAME);
                         var createDone = Path.Combine(localProjectPath, Options.PROJECT_DONE_NAME);
                         var createWorking = Path.Combine(localProjectPath, Options.PROJECT_WORKING_PATH_NAME);
+                        if (!Directory.Exists(localProjectPath))
+                        {
+                            Directory.CreateDirectory(localProjectPath);
+                        }  
+                                
                         if (!Directory.Exists(createDo))
                         {
                             Directory.CreateDirectory(createDo);
@@ -1360,10 +1372,11 @@ namespace WandSyncFile
                             Directory.CreateDirectory(createWorking);
                         }
                     }
-                    catch (Exception e)
+                    catch (Exception ed)
                     {
-
-                    }
+                                var errMessageCreat = DateTime.Now.ToString() + "Err Create folder Addon -  " + ed.Message + " ---- " + localProjectPath;
+                                FileHelpers.WriteLog(errMessageCreat);
+                     }
 
                     var imagesPriority = new List<string>();
 
