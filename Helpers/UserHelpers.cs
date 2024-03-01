@@ -13,6 +13,7 @@ namespace WandSyncFile.Helpers
             var isFolder08 = path.Contains(Options.SERVER_FILE_08);
             var isFolder09 = path.Contains(Options.SERVER_FILE_09);
             var isFolder15 = path.Contains(Options.SERVER_FILE_15);
+            var isFolder16 = path.Contains(Options.SERVER_FILE_16);
 
             ServerImpersonate cls = new ServerImpersonate();
 
@@ -41,6 +42,10 @@ namespace WandSyncFile.Helpers
             else if (isFolder15)
             {
                 token = cls.ImpersonateUser(Options.SERVER_USERNAME_15, Options.SERVER_FILE_15, Options.SERVER_PASSWORD_15);
+            }   
+            else if (isFolder16)
+            {
+                token = cls.ImpersonateUser(Options.SERVER_USERNAME_16, Options.SERVER_FILE_16, Options.SERVER_PASSWORD_16);
             }
   /*          else
             {
