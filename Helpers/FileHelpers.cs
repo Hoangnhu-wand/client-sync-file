@@ -11,6 +11,13 @@ using static WandSyncFile.Constants.Values;
 using WandSyncFile.Constants;
 using System.Drawing;
 using System.Threading;
+using WandSyncFile.Data.Mapping;
+using System.Threading.Tasks;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Management;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ProgressBar;
+using System.Windows.Forms.VisualStyles;
+using System.Net.NetworkInformation;
 
 namespace WandSyncFile.Helpers
 {
@@ -459,38 +466,7 @@ namespace WandSyncFile.Helpers
 
                 var newFiles = fromFiles.Where(fromFile => !toFiles.Any(toFile => fromFile == toFile)).ToList();
                 string projectPath = null;
-                //chỉ check tải từ server -> local, còn local => server thì đẩy toàn bộ
-               /*  if (fromPath.IndexOf(Options.SERVER_PATH) > -1  && !isCopyAllFile)
-                 {    
-                //Kiểm tra dự án có thư mục fix không
-                if (fromPath.IndexOf(Options.PROJECT_DO_NAME) > -1)
-                    {
-                        projectPath = fromPath.Substring(0, fromPath.IndexOf(Options.PROJECT_DO_NAME));
-                    }
-
-                    if (fromPath.IndexOf(Options.PROJECT_DONE_NAME) > -1)
-                    {
-                        projectPath = fromPath.Substring(0, fromPath.IndexOf(Options.PROJECT_DONE_NAME));
-                    }
-
-                    if (fromPath.IndexOf(Options.PROJECT_FIX_PATH_NAME) > -1)
-                    {
-                        projectPath = fromPath.Substring(0, fromPath.IndexOf(Options.PROJECT_FIX_PATH_NAME));
-                    }
-
-                    if (projectPath != null)
-                    {
-                        var projectDirectoties = Directory.GetDirectories(projectPath).ToList();
-                        var lastFixFolderLocalPath = projectDirectoties.Where(item => Path.GetFileName(item).Trim().StartsWith(Options.PROJECT_COMPLETED_PATH_NAME)).OrderByDescending(item => Path.GetFileName(item)).FirstOrDefault();
-                        if (lastFixFolderLocalPath != null)
-                        {
-                            newFiles = newFiles.Where(item => item.ToLower().IndexOf(".psd") == -1).ToList();
-                        }
-                    }
-                 }*/
-
-
-
+ 
                 if (isRemoveNotExists)
                 {
                     // Xóa file khong co trong fromPath
@@ -649,7 +625,7 @@ namespace WandSyncFile.Helpers
             return null;
         }
 
-        public static void CopyFile(string fromPath, string toPath, int eachReadLength = 1024 * 1024)
+        public static async void CopyFile(string fromPath, string toPath, int eachReadLength = 1024 * 1024)
         {
             try
             {             
@@ -681,9 +657,8 @@ namespace WandSyncFile.Helpers
             }
             catch (Exception e)
             {
-                var errMessage = DateTime.Now.ToString() + " " + e.Message + " ---- " + fromPath;
+                var errMessage = DateTime.Now.ToString() + "Copy file -  " + e.Message + " ---- " + fromPath + "---" + toPath;
                 WriteLog(errMessage);
-                throw new Exception(e.Message, e);
             }
         }
 
@@ -822,6 +797,15 @@ namespace WandSyncFile.Helpers
 
             Thread.Sleep(2000);
 
+        }
+        
+        public static void SyncDirectoryDoneVPN(string fromPath, string toPath)
+        {
+            try
+            { // sync done from client to server
+                DownloadFolder(fromPath, toPath, null, false, true);
+                Thread.Sleep(2000);
+            } catch (Exception e) { }
         }
 
         public static void SyncDirectory(string fromPath, string toPath, string notMoveFolder = null)
@@ -1385,7 +1369,298 @@ namespace WandSyncFile.Helpers
             {
                 Console.WriteLine(e.Message);
             }
-
         }
+
+        // Start VPN
+
+        //Check VPN
+        public static bool IsVpnConnected()
+        {
+            try
+            {
+
+                NetworkInterface[] networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
+
+                foreach (NetworkInterface nic in networkInterfaces)
+                {
+                    if (nic.OperationalStatus == OperationalStatus.Up && nic.NetworkInterfaceType == NetworkInterfaceType.Ppp)
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message);
+            }
+
+            return false;
+        }
+
+        //Editor processing => lấy danh sách có trong Do mà không có trong Done
+        public static List<string> ListImagePriority(string projectPath, string userName)
+        {
+
+            try {
+                var pathDo = Path.Combine(projectPath, Options.PROJECT_DO_NAME, userName);
+                var pathDone = Path.Combine(projectPath, Options.PROJECT_DONE_NAME, userName);
+
+                var allFileDo = FileHelpers.GetListFileNameAndFolder(pathDo);
+                var allFileDone = FileHelpers.GetListFileNameAndFolder(pathDone);
+
+                var folderDo = "\\" + Options.PROJECT_DO_NAME + "\\";
+                var folderDone = "\\" + Options.PROJECT_DONE_NAME + "\\";
+
+                var listFiles =  allFileDo.Where(fileDo =>
+                     !allFileDone.Any(fileDone => fileDo == fileDone.Replace(folderDone, folderDo))).ToList();
+
+                var listImage = new List<string>();
+
+                foreach (var item in listFiles)
+                {
+                    try {
+                        var startIndex = item.IndexOf("\\" + userName + "\\") + userName.Length + 2;
+                        var endIndex = item.Length - 1;
+
+                        var file = item.Substring(startIndex);
+
+                        listImage.Add(file);
+                    }
+                    catch(Exception e) {
+                    
+                    }
+                  
+                }
+
+                return listImage;
+
+            } catch (Exception ex)
+            {
+                return new List<string> ();
+            }
+        }
+
+        public static List<string> ListImageNotPriority(string projectPath, string userName, List<string> imagesPriority)
+        {
+
+            try {
+                var pathDo = Path.Combine(projectPath, Options.PROJECT_DO_NAME, userName);
+                var allFileDo = FileHelpers.GetListFileNameAndFolder(pathDo);
+
+                var allImageDo = new List<string>();
+
+                foreach (var item in allFileDo)
+                {
+                    try
+                    {
+                        var startIndex = item.IndexOf("\\" + userName + "\\") + userName.Length + 2;
+                        var endIndex = item.Length - 1;
+
+                        var file = item.Substring(startIndex);
+
+                        allImageDo.Add(file);
+                    }
+                    catch (Exception e){}
+                }
+
+                if (!imagesPriority.Any())
+                {
+                    return allImageDo;
+                }
+
+                allImageDo = allImageDo.Where(fileDo =>
+                       !imagesPriority.Any(image => fileDo == image)).ToList();
+
+                return allImageDo;
+            }
+            catch(Exception ex) {
+                return new List<string>();
+            }
+
+      
+        }
+
+        public static List<string> GetListFileNameAndFolder(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                return null;
+            }
+
+            var files = Directory.GetFiles(path).Where(item => !File.GetAttributes(item).HasFlag(FileAttributes.Hidden)).Select(item => Path.GetFullPath(item)).ToList();
+
+            var directories = Directory.GetDirectories(path);
+
+            foreach (var dir in directories)
+            {
+                var fileInDir = GetListFileNameAndFolder(dir);
+                files.AddRange(fileInDir);
+            }
+
+            return files;
+        }
+
+
+        public static async Task CopyImagePriority(List<string> listImage, string projectPath,string localPath, string userName)
+        {
+
+            try {
+                string[] subdirectoryEntries = Directory.GetDirectories(projectPath);
+                var listFolderFix = new List<string>();
+
+                foreach (var director in subdirectoryEntries)
+                {
+                    var dirInfo = new DirectoryInfo(director);
+                    if (dirInfo.Name.StartsWith(Options.PROJECT_FIX_PATH_NAME))
+                    {
+                        listFolderFix.Add(dirInfo.Name);
+                    }
+                }
+
+                listFolderFix = listFolderFix.OrderByDescending(str => int.Parse(str.Replace(Options.PROJECT_FIX_PATH_NAME, ""))).ToList();
+
+                foreach (var image in listImage)
+                {
+                    var fileName = Path.GetFileName(image);
+                    var subFolder = image.Replace(fileName, "");
+
+                    var pathDoServer = Path.Combine(projectPath, Options.PROJECT_DO_NAME, userName, subFolder);
+                    var pathDoLocal = Path.Combine(localPath, Options.PROJECT_DO_NAME, userName, subFolder);
+
+                    var pathDoneServer = Path.Combine(projectPath, Options.PROJECT_DONE_NAME, userName, subFolder);
+                    var pathDoneLocal = Path.Combine(localPath, Options.PROJECT_DONE_NAME, userName, subFolder);
+
+                    var pathWorking = Path.Combine(localPath, Options.PROJECT_WORKING_PATH_NAME, userName, subFolder);
+
+                    await GetFileAsync(pathDoServer, pathDoLocal, pathWorking, fileName);
+
+                    foreach (var folderFix in listFolderFix)
+                    {
+                        var pathFixServer = Path.Combine(projectPath, folderFix, subFolder);
+                        var pathFixLocal = Path.Combine(localPath, folderFix, subFolder);
+                        if (!Directory.Exists(pathFixLocal))
+                        {
+                            Directory.CreateDirectory(pathFixLocal);
+                        }
+                        await GetFileAsync(pathFixServer, pathFixLocal, pathWorking, fileName);
+                    }
+
+                    if (!Directory.Exists(pathDoneLocal))
+                    {
+                        Directory.CreateDirectory(pathDoneLocal);
+                    }
+
+                    await GetFileAsync(pathDoneServer, pathDoneLocal, pathWorking, fileName);
+                }
+            } catch (Exception e) {
+                var errMessage = DateTime.Now.ToString() + " CopyImagePriority :  " + e.Message + " ---- ";
+                WriteLog(errMessage);
+            }
+
+          
+        }
+        public static async Task GetFileAsync(string formFolder, string toFolder,string workingFolder, string name)
+        {
+            try {
+                name = Path.GetFileNameWithoutExtension(name);
+                var files = Directory.GetFiles(formFolder).Where(item => !File.GetAttributes(item).HasFlag(FileAttributes.Hidden) && Path.GetFileNameWithoutExtension(item).Equals(name)).Select(item => Path.GetFileName(item)).ToList();
+
+                foreach (var image in files)
+                {
+                    var fromPath = Path.Combine(formFolder, image);
+                    var toPath = Path.Combine(toFolder, image);
+                    var workingPath = Path.Combine(workingFolder, image);
+                    await CopyFileAsync(fromPath, toPath);
+                    await CopyFileAsync(toPath, workingPath);
+                }
+            }
+            catch (Exception e) {
+                var errMessage = DateTime.Now.ToString() + " GetFileAsync : " + e.Message + " ---- ";
+                WriteLog(errMessage);
+            }
+        }
+        public static async Task CopyFileAsync(string fromPath, string toPath)
+        {
+            try
+            {
+                FileAttributes attributes = File.GetAttributes(fromPath);
+
+                if (attributes.HasFlag(FileAttributes.Hidden) || (File.Exists(fromPath) && File.Exists(toPath) && DateTime.Compare(File.GetLastWriteTime(fromPath), File.GetLastWriteTime(toPath)) <= 0))
+                {
+                    return;
+                }
+
+                var fromPathEx = Path.GetExtension(fromPath);
+                if (fromPathEx.ToLower() == ".tmp")
+                {
+                    return;
+                }
+
+                var directoryName = new FileInfo(toPath).Directory.FullName;
+                if (!Directory.Exists(directoryName))
+                {
+                    Directory.CreateDirectory(directoryName);
+                }
+
+                 await Task.Run(() => File.Copy(fromPath, toPath, true));
+                
+                var getListWrite = File.GetLastWriteTime(fromPath);
+                File.SetLastWriteTime(toPath, getListWrite);
+
+            }
+            catch (Exception e)
+            {
+                var errMessage = DateTime.Now.ToString() + " " + e.Message + " ---- " + fromPath;
+                 WriteLog(errMessage);
+            }
+        }
+
+        public static async Task<CountImageByProjectDto> CountImageByFolder(string path,int status,  string folderName)
+        {
+            var countImage = new CountImageByProjectDto();
+            countImage.Status = status;
+            countImage.Folder = folderName;
+
+            var file = await CountImageByType(path);
+
+            var contentImage = new List<CountImageContentDto>();
+
+            var fileByType = file.GroupBy(item => Path.GetExtension(item).ToLower()).ToList();
+
+            foreach (var item in fileByType)
+            {
+                var content = new CountImageContentDto();
+                content.Type = item.Key;
+                content.Number = item.Count();
+                contentImage.Add(content);
+            }
+
+            countImage.Content = contentImage;
+
+            return countImage;
+        }
+
+        public static async Task<List<string>> CountImageByType(string path)
+        {
+            var file = new List<string>();
+            try { 
+                 file = Directory.GetFiles(path).Where(item => !File.GetAttributes(item).HasFlag(FileAttributes.Hidden)).ToList();
+
+                var directory = Directory.GetDirectories(path);
+
+                foreach (var dir in directory)
+                {
+                    var name = new DirectoryInfo(dir).Name;
+                    var newPath = Path.Combine(path, name);
+                    var newFile = await CountImageByType(newPath);
+                    file.AddRange(newFile);
+                }
+            }
+            catch (Exception e) { }
+           
+            return file;
+        }
+
+
     }
 }

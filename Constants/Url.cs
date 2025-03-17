@@ -21,10 +21,13 @@ namespace WandSyncFile.Constants
         public static string GetDirectories = $"{ServerURI}/api/files/send-directories";
         public static string SyncFileStatus = ServerURI + "/api/projects/{id}/sync-file-status";
         public static string DowloadFileStatus = ServerURI + "/api/projects/{id}/download-file-status";
+        public static string TrackingImage = ServerURI + "/api/add-on/hub-tracking-image";
+        public static string IsVPNConnected = ServerURI + "/api/add-on/is-vpn-connected";
 
         public static string UpdateProjectPath = ServerURI + "/api/projects/{id}/update-path";
 
         public static string GetProject = $"{ServerURI}/api/projects/by-name";
+        public static string GetProjectById = $"{ServerURI}/api/add-on/sync-file/projects"; // + {id}
 
         public static string GetBase64Guidance = $"{ServerFrequency}/api/v1/guidance";
         public static string GetBase64DodgeAndBurn = $"{ServerFrequency}/api/v1/dodge-and-burn";

@@ -37,9 +37,15 @@ namespace WandSyncFile.Constants
         public static string SERVER_USERNAME_09 = @"hrm";
         public static string SERVER_PASSWORD_09 = "wand@hrm1";
 
+        // Server 172.16.0.15
         public static string SERVER_FILE_15 = @"172.16.0.15";
         public static string SERVER_USERNAME_15 = @"hrm";
         public static string SERVER_PASSWORD_15 = "wand@hrm1";
+
+        // Server 172.16.0.16
+        public static string SERVER_FILE_16 = @"172.16.0.16";
+        public static string SERVER_USERNAME_16 = @"hrm";
+        public static string SERVER_PASSWORD_16 = "wand@hrm1";
 
         public static string PROJECT_PATH_FILE_NAME = "Path";
         public static string PROJECT_FILE_NAME = "Name";
@@ -59,7 +65,12 @@ namespace WandSyncFile.Constants
         public static string ROLE_SUBLEADER = "Sub-leader";
         public static string ROLE_ADMIN = "Administrators";
         public static string ROLE_EDITOR = "Editors";
-        
+
+        //Status project
+        public static int PROJECT_STATUS_PROCESSING = 23;
+        public static int PROJECT_STATUS_NEEDCHECK = 24;
+        public static int PROJECT_STATUS_NEEDFIX = 26;
+
 
         // TimeSpan
         public static int TIME_SPAN_READ_FILE_CHANGE = 180;

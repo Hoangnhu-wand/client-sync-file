@@ -5,6 +5,7 @@ using System.Linq;
 using WandSyncFile.Data.Mapping;
 using WandSyncFile.Helpers;
 using WandSyncFile.Constants;
+using System.Collections.Generic;
 
 namespace WandSyncFile.Service
 {
@@ -106,6 +107,56 @@ namespace WandSyncFile.Service
             } catch(Exception e)
             {
                 throw new Exception(e.Message, e);
+            }
+        }
+        public AddonProjectResult RequestGetProjectById(int id)
+        {
+            try
+            {
+                var url = Url.GetProjectById + "/" + id;
+                var data = HttpRequest.GetAsync(url);
+                var project = JsonConvert.DeserializeObject<AddonProjectRequestDto>(data);
+                return project.Result;
+
+            } catch(Exception e)
+            {
+              return new AddonProjectResult();
+            }
+        }
+        
+        public bool RequestTrackingImage(int userId,int projectId ,List<CountImageByProjectDto> TrackingImage)
+        {
+            try
+            { 
+                    HttpRequest.PutAsync(Url.TrackingImage, new
+                    {
+                        TrackingImage = TrackingImage,
+                        UserId = userId,
+                        ProjectId = projectId,
+                    });
+                return true;
+
+            } catch(Exception e)
+            {
+              return false;
+            }
+        }
+
+        public bool RequestIsVPNConnected(int userId,string userName, bool status)
+        {
+            try
+            { 
+                    HttpRequest.PutAsync(Url.IsVPNConnected, new
+                    {
+                        UserName = userName,
+                        UserId = userId,
+                        Status = status,
+                    });
+                return true;
+
+            } catch(Exception e)
+            {
+              return false;
             }
         }
     }
