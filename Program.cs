@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,6 +17,8 @@ namespace WandSyncFile
         [STAThread]
         static void Main()
         {
+            KillRunningInstances();
+
             bool logged = Logged();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
@@ -27,6 +30,30 @@ namespace WandSyncFile
             else
             {
                 Application.Run(new FormLogin());
+            }
+        }
+
+        private static void KillRunningInstances()
+        {
+            var current = Process.GetCurrentProcess();
+            var others = Process.GetProcessesByName(current.ProcessName)
+                .Where(p => p.Id != current.Id);
+
+            foreach (var process in others)
+            {
+                try
+                {
+                    process.Kill();
+                    process.WaitForExit(5000);
+                }
+                catch (Exception)
+                {
+                    // Process đã thoát hoặc không có quyền kill - bỏ qua
+                }
+                finally
+                {
+                    process.Dispose();
+                }
             }
         }
 

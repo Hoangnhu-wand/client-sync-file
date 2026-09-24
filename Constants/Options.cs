@@ -76,6 +76,9 @@ namespace WandSyncFile.Constants
         public static int TIME_SPAN_READ_FILE_CHANGE = 180;
         public static int TIME_SPAN_REMOVE_COMPLETED_PROJECT = 7200;
 
+        // Dự án không tìm thấy trên hệ thống và có dung lượng nhỏ hơn mức này (byte) sẽ bị xoá
+        public static long REMOVE_NOT_FOUND_PROJECT_MAX_SIZE = 1 * 1024 * 1024;
+
         public static readonly List<string> PROJECT_IMAGE_FILE_TYPE_JPG = new List<string> { "JPG", "JPEG" };
 
         public static string SERVER_PATH = "172.16.";

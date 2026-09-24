@@ -1167,25 +1167,10 @@ namespace WandSyncFile.Helpers
                 CreateFolder(localProjectPath);
 
                 var createPath = Path.Combine(localProjectPath, Options.PROJECT_PATH_FILE_NAME);
-
-                if (!File.Exists(createPath))
-                {
-                    using (var file = File.Create(createPath))
-                    {
-                        File.SetAttributes(createPath, FileAttributes.Hidden);
-                    }
-                    File.AppendAllText(createPath, projectPath);
-                }
+                WriteHiddenFile(createPath, projectPath);
 
                 var createPathName = Path.Combine(localProjectPath, Options.PROJECT_FILE_NAME);
-                if (!File.Exists(createPathName))
-                {
-                    using (var file = File.Create(createPathName))
-                    {
-                        File.SetAttributes(createPathName, FileAttributes.Hidden);
-                    }
-                    File.AppendAllText(createPathName, projectName);
-                }
+                WriteHiddenFile(createPathName, projectName);
 
                 return createPath;
             }
@@ -1198,6 +1183,29 @@ namespace WandSyncFile.Helpers
 
             return null;
 
+        }
+
+        // Ghi đè nội dung file ẩn (Path / Name) nếu khác giá trị hiện tại
+        public static void WriteHiddenFile(string filePath, string content)
+        {
+            if (string.IsNullOrEmpty(content))
+            {
+                return;
+            }
+
+            if (File.Exists(filePath))
+            {
+                if (File.ReadAllText(filePath) == content)
+                {
+                    return;
+                }
+
+                // File Hidden không ghi đè được bằng WriteAllText => bỏ thuộc tính trước khi ghi
+                File.SetAttributes(filePath, FileAttributes.Normal);
+            }
+
+            File.WriteAllText(filePath, content);
+            File.SetAttributes(filePath, FileAttributes.Hidden);
         }
 
         public static string WriteLog(string content)
@@ -1278,12 +1286,55 @@ namespace WandSyncFile.Helpers
 
             di.Attributes = FileAttributes.Normal;
 
+            // Bỏ thuộc tính ReadOnly/Hidden/System của file (Path, Name, desktop.ini, ảnh copy từ server...)
+            foreach (var fileItem in di.GetFiles())
+            {
+                fileItem.Attributes = FileAttributes.Normal;
+            }
+
             var allFolders = di.GetDirectories();
 
             foreach (var folderItem in allFolders)
             {
                 FolderSetAttributeNormal(folderItem.FullName);
             }
+        }
+
+        // Xoá toàn bộ thư mục (kể cả thư mục gốc và file ẩn), thử lại nếu file đang bị khoá
+        public static void ForceDeleteDirectory(string path, int maxAttempts = 3)
+        {
+            Exception lastError = null;
+
+            for (var attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                if (!Directory.Exists(path))
+                {
+                    return;
+                }
+
+                try
+                {
+                    FolderSetAttributeNormal(path);
+                    Directory.Delete(path, true);
+                }
+                catch (DirectoryNotFoundException)
+                {
+                    return;
+                }
+                catch (Exception e)
+                {
+                    lastError = e;
+                }
+
+                if (!Directory.Exists(path))
+                {
+                    return;
+                }
+
+                Thread.Sleep(2000 * attempt);
+            }
+
+            throw new IOException("Cannot delete folder: " + path + (lastError != null ? " - " + lastError.Message : ""), lastError);
         }
 
         public static bool ExistsServer(string path)

@@ -269,6 +269,12 @@ namespace WandSyncFile
         {
             Task.Factory.StartNew(async () =>
             {
+                // Chờ form hiển thị xong mới in được lên màn hình (Invoke lỗi khi form chưa tạo handle)
+                while (!IsHandleCreated)
+                {
+                    await Task.Delay(500);
+                }
+
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     ReadAllFileChange();
@@ -281,20 +287,44 @@ namespace WandSyncFile
         {
             Task.Factory.StartNew(async () =>
             {
+                // Chờ form hiển thị xong mới in được lên màn hình (Invoke lỗi khi form chưa tạo handle)
+                while (!IsHandleCreated)
+                {
+                    await Task.Delay(500);
+                }
+
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    RemoveCompletedProjectFolder();
+                    BeginInvoke((Action)(() =>
+                    {
+                        addItem(DateTime.Now, "Remove Folder", null, "Bắt đầu dọn thư mục dự án", 0);
+                    }));
+
+                    var result = RemoveCompletedProjectFolder();
+
+                    BeginInvoke((Action)(() =>
+                    {
+                        var message = "Dọn xong: xoá " + result.deleted + " thư mục" + (result.failed > 0 ? ", lỗi " + result.failed + " thư mục" : "");
+                        addItem(DateTime.Now, "Remove Folder", null, message, result.failed > 0 ? 2 : 1);
+                    }));
+
                     await Task.Delay(TimeSpan.FromSeconds(Options.TIME_SPAN_REMOVE_COMPLETED_PROJECT));
                 }
             });
         }
 
-        public void RemoveCompletedProjectFolder()
+        // Trả về số thư mục đã xoá / xoá lỗi
+        public (int deleted, int failed) RemoveCompletedProjectFolder()
         {
+            var deleted = 0;
+            var failed = 0;
             var displayFolder = new DisplayFolder();
+            Debug.WriteLine("[RemoveCompletedProject] Start - Roles: " + Properties.Settings.Default.Roles);
+
             if (!UserRoleHelpers.IsEditors())
             {
-                return;
+                Debug.WriteLine("[RemoveCompletedProject] Skip: user is not Editors");
+                return (deleted, failed);
             }
 
             // get all folder in project path
@@ -303,45 +333,127 @@ namespace WandSyncFile
 
             if (!Directory.Exists(projectLocalPath))
             {
-                return;
+                Debug.WriteLine("[RemoveCompletedProject] Skip: ProjectLocalPath does not exist: " + projectLocalPath);
+                return (deleted, failed);
             }
 
             try
             {
                 DirectoryInfo info = new DirectoryInfo(projectLocalPath);
                 var directories = info.GetDirectories().OrderBy(p => p.LastWriteTime).ToArray();
+                Debug.WriteLine("[RemoveCompletedProject] " + directories.Length + " folder(s) in " + projectLocalPath);
 
                 foreach (var projectDir in directories)
                 {
-                    DirectoryInfo projectDirInfo = new DirectoryInfo(projectDir.FullName);
-                    var logPath = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_PATH_FILE_NAME).FirstOrDefault();
-                    var logProjectName = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_FILE_NAME).FirstOrDefault();
-
-                    if (logPath == null)
+                    // Lỗi ở 1 dự án không được làm dừng việc dọn các dự án còn lại
+                    try
                     {
-                        continue;
-                    }
+                        var projectName = FileHelpers.GetProjectNameByLog(projectDir.FullName);
 
-                    var projectPath = File.ReadLines(logPath.FullName).FirstOrDefault();
-                    var projectName = File.ReadLines(logProjectName.FullName).FirstOrDefault();
-
-                    var project = projectService.RequestGetProjectByName(projectName);
-
-                    if (project != null && project.StatusId == (int)PROJECT_STATUS.COMPLETED)
-                    {
-                        var localProject = Path.Combine(projectLocalPath, projectName);
-                        if (Directory.Exists(localProject))
+                        // Không có file Name => lấy tên thư mục làm tên dự án
+                        if (string.IsNullOrEmpty(projectName))
                         {
-                            FileHelpers.FolderSetAttributeNormal(localProject);
-
-                            Directory.Delete(localProject, true);
+                            projectName = projectDir.Name;
+                            Debug.WriteLine("[RemoveCompletedProject] Missing Name file, use folder name: " + projectDir.FullName);
                         }
+
+                        ProjectResult project;
+                        try
+                        {
+                            project = projectService.RequestGetProjectByName(projectName);
+                        }
+                        catch (Exception e) when (IsNotFoundError(e))
+                        {
+                            project = null;
+                        }
+
+                        var isNotFound = project == null || project.Id <= 0;
+
+                        if (isNotFound)
+                        {
+                            // Dự án không tìm thấy trên hệ thống => chỉ xoá nếu dung lượng < 5MB
+                            var size = FileHelpers.DirSize(projectDir.FullName);
+                            if (size >= Options.REMOVE_NOT_FOUND_PROJECT_MAX_SIZE)
+                            {
+                                Debug.WriteLine("[RemoveCompletedProject] Skip (not found, size " + size + " bytes >= 5MB): " + projectDir.FullName);
+                                continue;
+                            }
+                        }
+                        else if (project.StatusId != (int)PROJECT_STATUS.COMPLETED || processingDownLoad.Contains(project.Id))
+                        {
+                            Debug.WriteLine("[RemoveCompletedProject] Skip (status " + project.StatusId + (processingDownLoad.Contains(project.Id) ? ", downloading" : "") + "): " + projectDir.FullName);
+                            continue;
+                        }
+
+                        // Xoá đúng thư mục đang duyệt (kể cả thư mục gốc + file ẩn Path/Name)
+                        FileHelpers.ForceDeleteDirectory(projectDir.FullName);
+                        deleted++;
+                        Debug.WriteLine("[RemoveCompletedProject] Deleted (" + (isNotFound ? "not found" : "completed") + "): " + projectDir.FullName);
+                    }
+                    catch (Exception e)
+                    {
+                        failed++;
+                        Debug.WriteLine("[RemoveCompletedProject] Error: " + projectDir.FullName + " - " + e.Message);
                     }
                 }
             }
             catch (Exception e)
             {
+                Debug.WriteLine("[RemoveCompletedProject] Error: " + e.Message);
+            }
 
+            return (deleted, failed);
+        }
+
+        // Server trả về 404 => dự án không tồn tại (lỗi mạng / lỗi khác KHÔNG tính là không tìm thấy)
+        private static bool IsNotFoundError(Exception e)
+        {
+            for (var ex = e; ex != null; ex = ex.InnerException)
+            {
+                if (ex is WebException webEx && webEx.Response is HttpWebResponse response && response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Lấy path của dự án trên hệ thống, nếu khác file Path thì ghi đè. Lỗi => giữ path cũ
+        private string RefreshProjectPath(string localProjectDir, string projectName, string currentPath)
+        {
+            try
+            {
+                var project = projectService.RequestGetProjectByName(projectName);
+                if (project == null || project.Id <= 0)
+                {
+                    return currentPath;
+                }
+
+                var projectDetail = projectService.RequestGetProjectById(project.Id);
+                var serverPath = projectDetail?.Path?.Trim();
+
+                if (string.IsNullOrEmpty(serverPath)
+                    || string.Equals(serverPath, currentPath?.Trim(), StringComparison.OrdinalIgnoreCase)
+                    || !FileHelpers.ExistsPathServer(serverPath))
+                {
+                    return currentPath;
+                }
+
+                FileHelpers.WriteHiddenFile(Path.Combine(localProjectDir, Options.PROJECT_PATH_FILE_NAME), serverPath);
+                Debug.WriteLine("[RefreshProjectPath] " + projectName + ": " + currentPath + " => " + serverPath);
+
+                Invoke((Action)(() =>
+                {
+                    addItem(DateTime.Now, "Update project path", null, projectName, 1);
+                }));
+
+                return serverPath;
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine("[RefreshProjectPath] Error: " + projectName + " - " + e.Message);
+                return currentPath;
             }
         }
 
@@ -373,13 +485,16 @@ namespace WandSyncFile
                     var logPath = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_PATH_FILE_NAME).FirstOrDefault();
                     var logProjectName = projectDirInfo.GetFiles().Where(p => p.Name == Options.PROJECT_FILE_NAME).FirstOrDefault();
 
-                    if (logPath == null)
+                    if (logPath == null || logProjectName == null)
                     {
                         continue;
                     }
 
                     var projectPath = File.ReadLines(logPath.FullName).FirstOrDefault();
                     var projectName = File.ReadLines(logProjectName.FullName).FirstOrDefault();
+
+                    // Path trên hệ thống có thể đã bị đổi => lấy path mới nhất, ghi đè file Path
+                    projectPath = RefreshProjectPath(projectDir.FullName, projectName, projectPath);
 
                     try
                     {
@@ -748,6 +863,9 @@ namespace WandSyncFile
                     return;
                 }
 
+                // Đảm bảo có thư mục Done\<editor> trên máy trước khi sync (dự án tạo từ vòng tự sync chưa có Done)
+                FileHelpers.CreateFolder(projectDoneEditorLocalPath);
+
                 if (!isSyncDone && !processingDownLoad.Any(pId => pId == project.Id))
                 {
                     displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
@@ -863,6 +981,9 @@ namespace WandSyncFile
                     return;
                 }
 
+                // Đảm bảo có thư mục Done\<editor> trên máy trước khi sync (dự án tạo từ vòng tự sync chưa có Done)
+                FileHelpers.CreateFolder(projectDoneEditorLocalPath);
+
                 if (!isSyncDone && !processingDownLoad.Any(pId => pId == project.Id))
                 {
                     displayFolder.CheckFolderSync(projectDoneEditorLocalPath, projectDoneEditorServerPath, projectDoneLocalPath);
@@ -936,30 +1057,6 @@ namespace WandSyncFile
                .WithUrl($"{Url.ServerURI}/appHub")
                .WithAutomaticReconnect(reconnectSeconds.ToArray())
                .Build();
-            try
-            {
-                await connection.StartAsync();
-                Invoke((Action)(() =>
-                {
-                    addItem(DateTime.Now, "Connected!", true);
-                }));
-
-                if (!Directory.Exists(localPath))
-                {
-                    Invoke((Action)(() =>
-                    {
-                        addItem(DateTime.Now, "Error - Folder does not exist: " + localPath, false);
-                    }));
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-                Invoke((Action)(() =>
-                {
-                    addItem(DateTime.Now, "Disconnect!", false);
-                }));
-            }
 
             connection.Reconnecting += connectionId =>
             {
@@ -981,10 +1078,11 @@ namespace WandSyncFile
             };
 
 
+            // StartAsync lỗi ở đây trước kia không được bắt => mất kết nối vĩnh viễn, không nhận message nữa
             connection.Closed += async (error) =>
             {
                 await Task.Delay(new Random().Next(0, 5) * 1000);
-                await connection.StartAsync();
+                await StartConnectionAsync();
             };
 
 
@@ -995,12 +1093,15 @@ namespace WandSyncFile
                 {
                     Task.Run(async () =>
                     {
+                        EditorDownloadFileProjectDto editorDownloadItem = null;
+                        var isAddedProcessing = false;
                         try
                         {
-                            var editorDownloadItem = JsonConvert.DeserializeObject<EditorDownloadFileProjectDto>(data);
+                            editorDownloadItem = JsonConvert.DeserializeObject<EditorDownloadFileProjectDto>(data);
 
                             if (editorDownloadItem == null || !FileHelpers.ExistsPathServer(editorDownloadItem.ProjectPath))
                             {
+                                FileHelpers.WriteLog(DateTime.Now.ToString() + " Skip download - server path not found: " + data);
                                 return;
                             }
 
@@ -1075,6 +1176,7 @@ namespace WandSyncFile
                             //Có kết nối => Chỉ tải 1 dự án /1 lần
 
                             processingDownLoad.Add(editorDownloadItem.ProjectId);
+                            isAddedProcessing = true;
                             Invoke((Action)(async () =>
                             {
                                 addItem(DateTime.Now, "Start Download", null, projectName, 0);
@@ -1131,6 +1233,15 @@ namespace WandSyncFile
                         {
                             var errMessage = DateTime.Now.ToString() + "Err download server -  " + e.Message + " ---- " + data;
                             FileHelpers.WriteLog(errMessage);
+                            ShowLog(() => addItem(DateTime.Now, "Download Error", null, editorDownloadItem?.ProjectName, 2));
+                        }
+                        finally
+                        {
+                            // Lỗi giữa chừng mà không xoá => dự án bị coi là "đang tải" mãi, mọi message sau bị bỏ qua
+                            if (isAddedProcessing)
+                            {
+                                processingDownLoad.Remove(editorDownloadItem.ProjectId);
+                            }
                         }
 
                     });
@@ -1183,57 +1294,69 @@ namespace WandSyncFile
 
                         processingDownLoad.Add(editorDownloadItem.ProjectId);
 
-                        var localFolderFix = FileHelpers.GetProjectLocalPath(editorDownloadItem.ProjectName) + serverFileArr.Last(); //LocalPath\\ProjectName\\Fix_3
-                        FileHelpers.CreateFolder(localFolderFix);
-
-                        FileHelpers.AddFileLogProjectPath(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath);
-
-                        var project = projectService.RequestGetProjectById(editorDownloadItem.ProjectId);
-                        var localProjectPath = Path.Combine(localPath, editorDownloadItem.ProjectName);
-                        if (project != null && project.StatusId == (int)PROJECT_STATUS.NEEDFIX)
+                        try
                         {
-                            var imagesPriority = new List<string>();
-                            imagesPriority = project.ListImages;
-                            await FileHelpers.CopyImagePriority(imagesPriority, editorDownloadItem.ProjectPath, localProjectPath, userName);
-                            var listImagesNotPriority = FileHelpers.ListImageNotPriority(editorDownloadItem.ProjectPath, userName, imagesPriority);
-                            await FileHelpers.CopyImagePriority(listImagesNotPriority, editorDownloadItem.ProjectPath, localProjectPath, userName);
-                        }
+                            var localFolderFix = FileHelpers.GetProjectLocalPath(editorDownloadItem.ProjectName) + serverFileArr.Last(); //LocalPath\\ProjectName\\Fix_3
+                            FileHelpers.CreateFolder(localFolderFix);
 
-                        var sampleLocalPath = FileHelpers.GetProjectSampleLocalPath(projectName);
-                        var sampleServerPath = Path.Combine(projectPath, Options.PROJECT_SAMPLE_NAME);
+                            FileHelpers.AddFileLogProjectPath(editorDownloadItem.ProjectName, editorDownloadItem.ProjectPath);
 
-                        if (FileHelpers.ExistsServer(sampleServerPath))
-                        {
-                            var isSyncSample = displayFolder.CheckFolderSync(sampleLocalPath, sampleServerPath);
-
-                            if (!isSyncSample)
+                            var project = projectService.RequestGetProjectById(editorDownloadItem.ProjectId);
+                            var localProjectPath = Path.Combine(localPath, editorDownloadItem.ProjectName);
+                            if (project != null && project.StatusId == (int)PROJECT_STATUS.NEEDFIX)
                             {
-                                Invoke((Action)(() =>
-                                {
-                                    addItem(DateTime.Now, "Get Sample", null, projectName, 0);
-                                }));
-
-                                FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true, true);
-
-                                Invoke((Action)(() =>
-                                {
-                                    addItem(DateTime.Now, "Get Sample", null, projectName, 1);
-                                }));
+                                var imagesPriority = new List<string>();
+                                imagesPriority = project.ListImages;
+                                await FileHelpers.CopyImagePriority(imagesPriority, editorDownloadItem.ProjectPath, localProjectPath, userName);
+                                var listImagesNotPriority = FileHelpers.ListImageNotPriority(editorDownloadItem.ProjectPath, userName, imagesPriority);
+                                await FileHelpers.CopyImagePriority(listImagesNotPriority, editorDownloadItem.ProjectPath, localProjectPath, userName);
                             }
+
+                            var sampleLocalPath = FileHelpers.GetProjectSampleLocalPath(projectName);
+                            var sampleServerPath = Path.Combine(projectPath, Options.PROJECT_SAMPLE_NAME);
+
+                            if (FileHelpers.ExistsServer(sampleServerPath))
+                            {
+                                var isSyncSample = displayFolder.CheckFolderSync(sampleLocalPath, sampleServerPath);
+
+                                if (!isSyncSample)
+                                {
+                                    Invoke((Action)(() =>
+                                    {
+                                        addItem(DateTime.Now, "Get Sample", null, projectName, 0);
+                                    }));
+
+                                    FileHelpers.DownloadFolderFromServer(sampleServerPath, sampleLocalPath, null, true, true);
+
+                                    Invoke((Action)(() =>
+                                    {
+                                        addItem(DateTime.Now, "Get Sample", null, projectName, 1);
+                                    }));
+                                }
+                            }
+
+                            processingDownLoad.Remove(projectId);
+
+                            await Task.Run(() => SyncDo(projectName, projectPath));
+                            await Task.Run(() => SyncFix(projectName, projectPath));
+                            await Task.Run(() => SyncDone(projectName, projectPath));
+
+                            Invoke((Action)(async () =>
+                            {
+                                addItem(DateTime.Now, "Download Success", null, projectName, 1);
+                            }));
+
+                            await connection.SendAsync("ReceiverMessageAsync", "CLIENT_FILE", editorDownloadItem.MessageId, "REMOVE_PROJECT_QUEUE_MESSAGE", null);
                         }
-
-                        processingDownLoad.Remove(projectId);
-
-                        await Task.Run(() => SyncDo(projectName, projectPath));
-                        await Task.Run(() => SyncFix(projectName, projectPath));
-                        await Task.Run(() => SyncDone(projectName, projectPath));
-
-                        Invoke((Action)(async () =>
+                        catch (Exception e)
                         {
-                            addItem(DateTime.Now, "Download Success", null, projectName, 1);
-                        }));
-
-                        await connection.SendAsync("ReceiverMessageAsync", "CLIENT_FILE", editorDownloadItem.MessageId, "REMOVE_PROJECT_QUEUE_MESSAGE", null);
+                            FileHelpers.WriteLog(DateTime.Now.ToString() + "Err download fix -  " + e.Message + " ---- " + data);
+                            ShowLog(() => addItem(DateTime.Now, "Download Error", null, projectName, 2));
+                        }
+                        finally
+                        {
+                            processingDownLoad.Remove(projectId);
+                        }
                     });
                 }
 
@@ -1738,14 +1861,9 @@ namespace WandSyncFile
 
                             if (project != null && project.StatusId == (int)PROJECT_STATUS.COMPLETED)
                             {
-                                DirectoryInfo di = new DirectoryInfo(localProjectPath);
-                                var allFolders = di.GetDirectories();
-
-                                FileHelpers.FolderSetAttributeNormal(localProjectPath);
-
                                 try
                                 {
-                                    Directory.Delete(localProjectPath, true);
+                                    FileHelpers.ForceDeleteDirectory(localProjectPath);
                                     Invoke((Action)(() =>
                                     {
                                         addItem(DateTime.Now, "Completed", null, projectName, 1);
@@ -1753,7 +1871,7 @@ namespace WandSyncFile
                                 }
                                 catch (Exception e)
                                 {
-                                    Console.WriteLine(e.Message);
+                                    Debug.WriteLine("[EDITOR_REMOVE_COMPLETED] Error: " + localProjectPath + " - " + e.Message);
                                     Invoke((Action)(() =>
                                     {
                                         addItem(DateTime.Now, "Completed", null, projectName, 2);
@@ -1836,6 +1954,59 @@ namespace WandSyncFile
 
                 }
             });
+
+            // Chỉ kết nối SAU KHI đã đăng ký hết handler, nếu không message server gửi ngay khi vừa kết nối sẽ bị mất
+            await StartConnectionAsync();
+
+            if (!Directory.Exists(localPath))
+            {
+                ShowLog(() => addItem(DateTime.Now, "Error - Folder does not exist: " + localPath, false));
+            }
+        }
+
+        // Kết nối hub, lỗi thì thử lại tới khi được (WithAutomaticReconnect không áp dụng cho lần StartAsync đầu tiên,
+        // VD: máy vừa khởi động, app tự chạy khi mạng chưa sẵn sàng => trước kia không bao giờ kết nối lại)
+        private async Task StartConnectionAsync()
+        {
+            var retryDelay = TimeSpan.FromSeconds(5);
+            var loggedError = false;
+
+            while (connection.State == HubConnectionState.Disconnected)
+            {
+                try
+                {
+                    await connection.StartAsync();
+                    ShowLog(() => addItem(DateTime.Now, "Connected!", true));
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("[HubConnection] Start error: " + ex.Message);
+                    if (!loggedError)
+                    {
+                        loggedError = true;
+                        ShowLog(() => addItem(DateTime.Now, "Disconnect! " + ex.Message, false));
+                    }
+                }
+
+                await Task.Delay(retryDelay);
+            }
+        }
+
+        // In log lên form, bỏ qua nếu form chưa tạo handle / đã đóng
+        private void ShowLog(Action action)
+        {
+            try
+            {
+                if (IsHandleCreated && !IsDisposed)
+                {
+                    BeginInvoke(action);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine("[ShowLog] " + e.Message);
+            }
         }
 
         private void FormHome_Load(object sender, EventArgs e)
